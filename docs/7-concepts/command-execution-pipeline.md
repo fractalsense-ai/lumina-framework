@@ -191,6 +191,7 @@ intent. This is the same TM/SOP separation that governs all domain pack componen
 
 ## References
 
+- [`ai-governance-principles(7)`](ai-governance-principles.md) — principle-level rationale for deterministic gates, ledgering, and HITL authority
 - [`cfg/system-physics.yaml`](../../cfg/system-physics.yaml) — invariant `no_direct_execution`; `ci_output_contract` execution policy fields
 - [`standards/system-physics-schema-v1.json`](../../standards/system-physics-schema-v1.json) — JSON schema for `ci_output_contract`
 - [`standards/domain-physics-schema-v1.json`](../../standards/domain-physics-schema-v1.json) — `execution_policy` property schema

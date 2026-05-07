@@ -254,6 +254,7 @@ when the global store is empty or the result is inconclusive.
 
 ## SEE ALSO
 
+- [`ai-governance-principles(7)`](ai-governance-principles.md) — scoped-context and structural-boundary principles behind per-domain retrieval
 - [`nlp-semantic-router(7)`](nlp-semantic-router.md) — two-tier NLP architecture and full classification pipeline
 - [`group-libraries-and-tools(7)`](group-libraries-and-tools.md) — Group Library dependency-aware rebuilds
 - [`execution-route-compilation(7)`](execution-route-compilation.md) — route compiler uses library indexes built from the same discovery pass
