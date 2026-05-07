@@ -125,3 +125,8 @@ cause this test to fail.
 2. Ensure the handler writes at least one log record via persistence.
 3. Add the function name to `STATE_MUTATING_ENDPOINTS` in `audit_scanner.py`.
 4. Run `python -m pytest tests/test_commit_guard.py -q` to verify.
+
+## SEE ALSO
+
+- [`ai-governance-principles(7)`](ai-governance-principles.md) — principle-level requirement that every state mutation has an auditable record
+- [`command-execution-pipeline(7)`](command-execution-pipeline.md) — Proposal → Validation → HITL flow for governed real-world mutations

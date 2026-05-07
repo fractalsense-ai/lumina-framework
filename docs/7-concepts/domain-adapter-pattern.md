@@ -309,6 +309,7 @@ If `command_dispatch` is non-null in evidence (populated by `slm_parse_admin_com
 
 ## SEE ALSO
 
+- [`ai-governance-principles(7)`](ai-governance-principles.md) — deterministic governance constraints implemented by adapter phases
 - [`domain-pack-anatomy(7)`](domain-pack-anatomy.md) — seven-component anatomy and file layout
 - [`group-libraries-and-tools(7)`](group-libraries-and-tools.md) — Group Libraries and Group Tools declaration, resolution, and examples
 - [`execution-route-compilation(7)`](execution-route-compilation.md) — ahead-of-time route compilation from physics pointers (validates tool and library references)
@@ -316,4 +317,3 @@ If `command_dispatch` is non-null in evidence (populated by `slm_parse_admin_com
 - [`edge-vectorization(7)`](edge-vectorization.md) — per-domain vector stores built from the same adapter-indexer discovery pass
 - [`model-packs/education/controllers/governance_adapters.py`](../../model-packs/education/controllers/governance_adapters.py) — education governance adapter with domain-specific NLP verb/noun command routing
 - [`model-packs/education/cfg/admin-operations.yaml`](../../model-packs/education/cfg/admin-operations.yaml) — education-tailored admin operations descriptions for SLM intent matching
-

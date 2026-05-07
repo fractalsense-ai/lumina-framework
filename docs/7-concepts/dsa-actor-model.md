@@ -174,6 +174,7 @@ When creating a new domain pack:
 
 ## See Also
 
+- [`ai-governance-principles(7)`](ai-governance-principles.md) — principle-level framing for task state, actor baselines, and governance boundaries
 - [`dsa-framework-v1`](../../specs/dsa-framework-v1.md) — Full D.S.A. three-pillar
   specification
 - [`domain-pack-anatomy`](domain-pack-anatomy.md) — Six-component domain pack structure

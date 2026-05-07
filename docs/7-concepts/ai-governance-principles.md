@@ -1,13 +1,13 @@
 ---
 version: 1.0.0
-last_updated: 2026-04-21
+last_updated: 2026-05-06
 ---
 
 # Principles of Well-Governed AI Interaction
 
 **Version:** 1.0.0
 **Status:** Active
-**Last updated:** 2026-04-21
+**Last updated:** 2026-05-06
 
 ---
 

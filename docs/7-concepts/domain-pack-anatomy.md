@@ -623,6 +623,7 @@ enables automated chunking by `## ` headers for embedding pipelines.
 
 ## SEE ALSO
 
+- [`ai-governance-principles(7)`](ai-governance-principles.md) — vendor-neutral governance principles implemented by domain-pack structure
 - [`domain-adapter-pattern(7)`](domain-adapter-pattern.md) — three-layer distinction and Phase A/B lifecycle
 - [`group-libraries-and-tools(7)`](group-libraries-and-tools.md) — Group Libraries and Group Tools: shared resources within a domain pack
 - [`edge-vectorization(7)`](edge-vectorization.md) — per-domain vector stores and rebuild triggers

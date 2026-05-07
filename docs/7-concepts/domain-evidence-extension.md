@@ -203,6 +203,7 @@ To extend the System Logs with a new domain's evidence vocabulary:
 
 ## Related
 
+- [`ai-governance-principles(7)`](ai-governance-principles.md) — governance rationale for deterministic evidence, actor state tracking, and auditability
 - [`standards/system-log-v1.md`](system-log-v1.md) — System Log specification
 - [`standards/domain-evidence-schema-v1.json`](domain-evidence-schema-v1.json) — Meta-schema for evidence declarations
 - [`ledger/trace-event-schema.json`](../ledger/trace-event-schema.json) — TraceEvent JSON Schema
