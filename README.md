@@ -207,6 +207,8 @@ Full reference documentation follows the UNIX man-page section convention:
 | [7](docs/7-concepts/) | Concepts | Architecture and design philosophy |
 | [8](docs/8-admin/) | Administration | Governance, RBAC, audit, operations |
 
+If you're new to Lumina's architecture, start with [`docs/7-concepts/README.md`](docs/7-concepts/README.md). It maps the core philosophy behind scoped context, deterministic turn data, behavioral state management, and governed tool/action execution.
+
 All artifacts are versioned with semver headers, status fields, and SHA-256 integrity records. See [`docs/MANIFEST.yaml`](docs/MANIFEST.yaml) for the machine-readable artifact index.
 
 ---

@@ -1,29 +1,29 @@
 ---
 version: 1.0.0
-last_updated: 2026-04-21
+last_updated: 2026-05-07
 ---
 
 # Compressed State Pattern
 
 **Version:** 1.0.0  
 **Status:** Active  
-**Last updated:** 2026-03-28  
+**Last updated:** 2026-05-07  
 
 ---
 
 ## NAME
 
-compressed-state-pattern — the design philosophy of passing deterministically-compressed historical state, rather than raw data, into SLM and LLM context.
+compressed-state-pattern — deterministic compression of historical streams into authoritative state summaries for model context.
 
 ## Overview
 
-Lumina passes compressed historical state, not raw data, into language model context. Each context element is a deterministic summary that includes trajectory alongside current value, reducing ambiguity the model would otherwise need to infer.
+For the broader architectural argument that context must be managed as structured state rather than reconstructed from conversation history, see [`context-is-not-conversation(7)`](context-is-not-conversation.md). This document focuses on the implementation pattern used to compress historical streams into deterministic state summaries.
 
 ---
 
 ## THE PATTERN
 
-**Compressed state** means: take a raw, historically-ordered stream of data, push it through deterministic math, and output a compact summary that is authoritative about the present *and* its direction.
+**Compressed state** means: take a raw, historically-ordered stream, apply deterministic math, and emit a compact summary that is authoritative about both current value and trajectory.
 
 The key distinction from simply "providing context":
 
@@ -34,7 +34,7 @@ The key distinction from simply "providing context":
 | Model must guess at trend from the data points provided | Trajectory is a field: `"rising"`, `"falling"`, `"spiking"` |
 | Model may hallucinate a direction that is not present | Model can only reason over the authoritative direction |
 
-The model receives *facts about state*, not raw material to interpret. This is intentional. The model's probabilistic nature is a strength when generating language; it is a liability when estimating trends from numbers. Deterministic code handles the estimation; the model handles the language.
+The model receives *facts about state*, not raw material to interpret. Deterministic code handles estimation and trend classification; the model handles reasoning and language over those computed fields.
 
 ---
 
