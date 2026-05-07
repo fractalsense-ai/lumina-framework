@@ -1695,8 +1695,8 @@ artifacts:
   type: doc
   doc_version: 1.0.0
   status: active
-  last_updated: 2026-05-05
-  sha256: 4cd69a22f3f7b5811093d1e71149362ed0196a58043d567b716734a01f6f7c57
+  last_updated: 2026-05-07
+  sha256: d496b0bbff0c225322ff59600354dfa6d122dc55dd705f123dca2ddbc4eda3d4
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
@@ -1714,3 +1714,9 @@ artifacts:
   status: active
   last_updated: 2026-05-07
   sha256: 5ce678ff95bd77b136161cf34153d692b64727f334c3a71b828aa4b4427bff56
+- path: docs/roadmap/slices/04-system-pack-authority-gate.md
+  type: doc
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-05-07
+  sha256: b8d741c8da0a8a97a2e7ab5668e347c4d16cee73c025041d256a1b3e6fc05b11
