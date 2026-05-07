@@ -30,6 +30,7 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [02](slices/02-system-update-vocabulary.md) | System Update Vocabulary | Active |
 | [03](slices/03-request-intake-and-classification.md) | Request Intake and Classification | Active |
 | [04](slices/04-system-pack-authority-gate.md) | System Pack Authority Gate | Active |
+| [05](slices/05-system-pack-sole-coding-agent-ingress.md) | System Pack as Sole Coding Agent Ingress | Active |
 
 ---
 

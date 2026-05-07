@@ -1696,7 +1696,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-05-07
-  sha256: d496b0bbff0c225322ff59600354dfa6d122dc55dd705f123dca2ddbc4eda3d4
+  sha256: 47a8e96547ce1647c1e2fe55358c9431d6434c0c5dd4cea960c59c031a49bbac
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
@@ -1720,3 +1720,9 @@ artifacts:
   status: active
   last_updated: 2026-05-07
   sha256: b8d741c8da0a8a97a2e7ab5668e347c4d16cee73c025041d256a1b3e6fc05b11
+- path: docs/roadmap/slices/05-system-pack-sole-coding-agent-ingress.md
+  type: doc
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-05-07
+  sha256: 286f74731642165f7f630a68e044162a0b11a6b2b4ec9be90c1a3ca100c3d454
