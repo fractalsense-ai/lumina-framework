@@ -391,7 +391,7 @@ def test_list_profiles_delegates(scoped: ScopedPersistenceAdapter) -> None:
 def test_delete_profile_delegates(scoped: ScopedPersistenceAdapter) -> None:
     scoped.save_profile("u40", "education", {"data": 1})
     deleted = scoped.delete_profile("u40", "education")
-    assert deleted is True or deleted is False  # just ensure no exception
+    assert deleted is True
 
 
 @pytest.mark.unit
@@ -412,7 +412,7 @@ def test_list_module_states_delegates(scoped: ScopedPersistenceAdapter) -> None:
 def test_delete_module_state_delegates(scoped: ScopedPersistenceAdapter) -> None:
     scoped.save_module_state("u60", "algebra-v1", {"data": 1})
     result = scoped.delete_module_state("u60", "algebra-v1")
-    assert result is True or result is False
+    assert result is True
 
 
 @pytest.mark.unit

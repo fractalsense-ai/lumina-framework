@@ -50,13 +50,15 @@ def test_colorize_all_known_stages() -> None:
 @pytest.mark.unit
 def test_colored_formatter_default_fmt() -> None:
     fmt = ColoredTurnFormatter()
-    assert fmt is not None
+    assert "%(asctime)s" in fmt._style._fmt
+    assert "%(message)s" in fmt._style._fmt
 
 
 @pytest.mark.unit
 def test_colored_formatter_custom_fmt() -> None:
     fmt = ColoredTurnFormatter(fmt="%(message)s", datefmt="%H:%M:%S")
-    assert fmt is not None
+    assert fmt._style._fmt == "%(message)s"
+    assert fmt.datefmt == "%H:%M:%S"
 
 
 @pytest.mark.unit
