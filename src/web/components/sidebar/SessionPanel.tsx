@@ -35,6 +35,7 @@ export function SessionPanel({
   refreshKey,
 }: SessionPanelProps) {
   const [sessions, setSessions] = useState<SessionSummary[]>([])
+  const learningModuleLockLabel = 'Learning module — deletion requires teacher approval'
 
   const refresh = useCallback(async () => {
     try {
@@ -99,10 +100,14 @@ export function SessionPanel({
                   </p>
                 </div>
                 {s.moduleId && s.moduleId !== 'domain/edu/general-education/v1' ? (
-                  <Lock
-                    size={14}
+                  <span
+                    role="img"
+                    aria-label={learningModuleLockLabel}
+                    title={learningModuleLockLabel}
                     className="flex-shrink-0 text-muted-foreground"
-                  />
+                  >
+                    <Lock size={14} aria-hidden="true" />
+                  </span>
                 ) : (
                   <Button
                     variant="ghost"
