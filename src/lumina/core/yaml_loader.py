@@ -211,6 +211,35 @@ def _parse_yaml_lines(lines: list[str], pos: list[int]) -> Any:
 # Public API
 # ─────────────────────────────────────────────────────────────
 
+def load_yaml_string(text: str) -> dict[str, Any]:
+    """
+    Parse a YAML string and return its contents as a Python dict.
+
+    Accepts raw YAML text rather than a file path.  Uses the same
+    minimal built-in parser as :func:`load_yaml`.
+
+    Args:
+        text: YAML-formatted string to parse.
+
+    Returns:
+        A dict representing the top-level YAML mapping, or an empty dict
+        if the text does not parse to a mapping.
+    """
+    raw_lines = text.splitlines(keepends=True)
+
+    lines: list[str] = []
+    for raw in raw_lines:
+        stripped = _strip_inline_comment(raw.rstrip("\n"))
+        if stripped.lstrip().startswith("#"):
+            lines.append("")
+        else:
+            lines.append(stripped)
+
+    pos = [0]
+    result = _parse_yaml_lines(lines, pos)
+    return result if isinstance(result, dict) else {}
+
+
 def load_yaml(path: str | Path) -> dict[str, Any]:
     """
     Load a YAML file and return its contents as a Python dict.

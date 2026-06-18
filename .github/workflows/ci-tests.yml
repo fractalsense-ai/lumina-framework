@@ -31,14 +31,15 @@ jobs:
       - name: Secret hygiene check
         run: bash scripts/check-local-secret-hygiene.sh
 
-      # CI stabilization baseline: true coverage was ~69.96% when this gate was
-      # set. Raise the threshold incrementally as test-hardening work progresses.
-      - name: Backend tests + coverage gate (>=69%)
+      # Coverage ratchet: baseline was ~69.96% (PR #37). Raised to 72% after
+      # targeted test-hardening in PR #40. Continue raising toward 85% through
+      # focused test-hardening PRs; do not lower this threshold.
+      - name: Backend tests + coverage gate (>=72%)
         run: >
           python -m pytest tests -q
           --cov=lumina
           --cov-report=term-missing
-          --cov-fail-under=69
+          --cov-fail-under=72
 
       - name: Setup Node
         uses: actions/setup-node@v4

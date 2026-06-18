@@ -11,8 +11,11 @@ from pathlib import Path
 import pytest
 
 from lumina.api.structured_content import (
-    build_escalation_card,
+    build_command_list_card,
     build_command_proposal_card,
+    build_escalation_card,
+    build_ingestion_review_card,
+    build_physics_edit_card,
 )
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -227,3 +230,193 @@ def test_card_types_in_schema() -> None:
     c = build_command_proposal_card({"staged_id": "c"})
     assert e["card_type"] in valid_types
     assert c["card_type"] in valid_types
+
+
+# ── Physics Edit Proposal Card ───────────────────────────────
+
+
+@pytest.mark.unit
+def test_physics_edit_card_basic_fields() -> None:
+    staged = {"staged_id": "phys-001", "actor_id": "teacher-1", "actor_role": "teacher"}
+    proposal = {
+        "target_section": "constraints",
+        "operation_type": "modify",
+        "proposed_patch": {"max_turns": 20},
+        "diff_summary": "Increased max_turns to 20",
+        "affected_ids": ["c-001"],
+        "confidence": 0.9,
+    }
+    card = build_physics_edit_card(staged, proposal, {})
+
+    assert card["type"] == "action_card"
+    assert card["card_type"] == "physics_edit_proposal"
+    assert card["id"] == "phys-001"
+    assert card["title"] == "Physics Edit Proposal"
+    assert "Increased max_turns" in card["body"]
+    assert card["resolve_endpoint"] == "/api/admin/command/phys-001/resolve"
+
+
+@pytest.mark.unit
+def test_physics_edit_card_escalation_flag() -> None:
+    staged = {"staged_id": "phys-002"}
+    card = build_physics_edit_card(staged, {}, {}, requires_escalation=True)
+    assert "approval" in card["body"].lower() or "escalation" in card["body"].lower()
+    assert card["context"]["requires_escalation"] is True
+
+
+@pytest.mark.unit
+def test_physics_edit_card_escalation_record_id() -> None:
+    staged = {"staged_id": "phys-003"}
+    card = build_physics_edit_card(
+        staged, {}, {}, requires_escalation=True, escalation_record_id="esc-xyz"
+    )
+    assert card["context"].get("escalation_record_id") == "esc-xyz"
+
+
+@pytest.mark.unit
+def test_physics_edit_card_list_section_snapshot_capped() -> None:
+    """List sections are capped at 20 entries in the snapshot."""
+    staged = {"staged_id": "phys-004"}
+    proposal = {"target_section": "items"}
+    domain_physics = {"items": list(range(50))}
+    card = build_physics_edit_card(staged, proposal, domain_physics)
+    assert len(card["context"]["current_snapshot"].get("items", [])) == 20
+
+
+@pytest.mark.unit
+def test_physics_edit_card_dict_section_snapshot() -> None:
+    staged = {"staged_id": "phys-005"}
+    proposal = {"target_section": "meta"}
+    domain_physics = {"meta": {"version": "1.0"}}
+    card = build_physics_edit_card(staged, proposal, domain_physics)
+    assert card["context"]["current_snapshot"]["meta"] == {"version": "1.0"}
+
+
+@pytest.mark.unit
+def test_physics_edit_card_unknown_section_no_snapshot() -> None:
+    staged = {"staged_id": "phys-006"}
+    proposal = {"target_section": "other"}
+    card = build_physics_edit_card(staged, proposal, {"constraints": {}})
+    assert card["context"]["current_snapshot"] == {}
+
+
+@pytest.mark.unit
+def test_physics_edit_card_action_ids() -> None:
+    card = build_physics_edit_card({"staged_id": "p"}, {}, {})
+    ids = [a["id"] for a in card["actions"]]
+    assert "accept" in ids
+    assert "modify" in ids
+    assert "reject" in ids
+
+
+# ── Ingestion Review Card ─────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_ingestion_review_card_basic_fields() -> None:
+    record = {
+        "document_id": "doc-001",
+        "original_filename": "lesson.pdf",
+        "status": "review_pending",
+        "domain_id": "education",
+    }
+    card = build_ingestion_review_card(record)
+
+    assert card["type"] == "action_card"
+    assert card["card_type"] == "ingestion_review"
+    assert card["id"] == "doc-001"
+    assert card["title"] == "Ingestion Review"
+    assert "lesson.pdf" in card["body"]
+    assert card["resolve_endpoint"] == "/api/ingest/doc-001/review"
+
+
+@pytest.mark.unit
+def test_ingestion_review_card_record_id_fallback() -> None:
+    record = {"record_id": "rec-999", "original_filename": "f.txt"}
+    card = build_ingestion_review_card(record)
+    assert card["id"] == "rec-999"
+
+
+@pytest.mark.unit
+def test_ingestion_review_card_with_interpretations() -> None:
+    record = {
+        "document_id": "doc-002",
+        "interpretations": [
+            {"label": "lesson_plan", "confidence": 0.9},
+            {"label": "homework", "confidence": 0.6},
+        ],
+    }
+    card = build_ingestion_review_card(record)
+    assert "lesson_plan" in card["body"]
+    assert "90%" in card["body"]
+
+
+@pytest.mark.unit
+def test_ingestion_review_card_action_ids() -> None:
+    card = build_ingestion_review_card({"document_id": "d"})
+    ids = [a["id"] for a in card["actions"]]
+    assert "approve" in ids
+    assert "reject" in ids
+
+
+@pytest.mark.unit
+def test_ingestion_review_card_context_fields() -> None:
+    record = {
+        "document_id": "doc-003",
+        "domain_id": "science",
+        "content_type": "pdf",
+        "content_hash": "abc123",
+        "ingesting_actor_id": "teacher-2",
+        "status": "extraction_complete",
+    }
+    card = build_ingestion_review_card(record)
+    ctx = card["context"]
+    assert ctx["domain_id"] == "science"
+    assert ctx["content_type"] == "pdf"
+    assert ctx["ingesting_actor_id"] == "teacher-2"
+
+
+# ── Command List Card ─────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_command_list_card_basic_structure() -> None:
+    result = {"commands": [
+        {"name": "list_commands", "hitl_exempt": True, "description": "List commands", "min_role": "admin"},
+        {"name": "update_physics", "hitl_exempt": False, "description": "Edit physics", "min_role": "admin"},
+    ]}
+    card = build_command_list_card(result)
+
+    assert card["type"] == "command_list"
+    assert card["title"] == "Available Commands"
+    assert len(card["sections"]) == 2
+    assert card["total_count"] == 2
+
+
+@pytest.mark.unit
+def test_command_list_card_immediate_vs_staged() -> None:
+    result = {"commands": [
+        {"name": "cmd_a", "hitl_exempt": True},
+        {"name": "cmd_b", "hitl_exempt": False},
+        {"name": "cmd_c", "hitl_exempt": False},
+    ]}
+    card = build_command_list_card(result)
+    immediate = card["sections"][0]["commands"]
+    staged = card["sections"][1]["commands"]
+    assert len(immediate) == 1
+    assert immediate[0]["name"] == "cmd_a"
+    assert len(staged) == 2
+
+
+@pytest.mark.unit
+def test_command_list_card_empty_commands() -> None:
+    card = build_command_list_card({"commands": []})
+    assert card["total_count"] == 0
+    assert card["sections"][0]["commands"] == []
+    assert card["sections"][1]["commands"] == []
+
+
+@pytest.mark.unit
+def test_command_list_card_missing_commands_key() -> None:
+    card = build_command_list_card({})
+    assert card["total_count"] == 0
