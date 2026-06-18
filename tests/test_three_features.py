@@ -145,7 +145,8 @@ class TestListCommandsOperation:
     @pytest.mark.integration
     def test_list_commands_via_api(self, client: TestClient, api_module) -> None:
         token = _register_root(client)
-        with patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
+        with patch("lumina.core.slm.slm_available", return_value=True), \
+             patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
             mock_parse.return_value = {"operation": "list_commands", "params": {}}
             resp = client.post(
                 "/api/admin/command",
@@ -175,7 +176,8 @@ class TestListCommandsOperation:
     @pytest.mark.integration
     def test_list_commands_names_only(self, client: TestClient, api_module) -> None:
         token = _register_root(client)
-        with patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
+        with patch("lumina.core.slm.slm_available", return_value=True), \
+             patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
             mock_parse.return_value = {
                 "operation": "list_commands",
                 "params": {"include_details": False},
@@ -195,7 +197,8 @@ class TestListCommandsOperation:
     @pytest.mark.integration
     def test_list_commands_sorted(self, client: TestClient, api_module) -> None:
         token = _register_root(client)
-        with patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
+        with patch("lumina.core.slm.slm_available", return_value=True), \
+             patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
             mock_parse.return_value = {"operation": "list_commands", "params": {}}
             resp = client.post(
                 "/api/admin/command",
@@ -227,7 +230,8 @@ class TestListCommandsDomainScoping:
     def test_system_domain_excludes_education_ops(self, multi_client: TestClient, multi_api_module) -> None:
         """When domain_id='system', education-specific ops must not appear."""
         token = _register_root(multi_client)
-        with patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
+        with patch("lumina.core.slm.slm_available", return_value=True), \
+             patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
             mock_parse.return_value = {
                 "operation": "list_commands",
                 "params": {"domain_id": "system"},
@@ -246,7 +250,8 @@ class TestListCommandsDomainScoping:
     def test_education_domain_includes_education_ops(self, multi_client: TestClient, multi_api_module) -> None:
         """When domain_id='education', education-specific ops should appear."""
         token = _register_root(multi_client)
-        with patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
+        with patch("lumina.core.slm.slm_available", return_value=True), \
+             patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
             mock_parse.return_value = {
                 "operation": "list_commands",
                 "params": {"domain_id": "education"},
@@ -266,7 +271,8 @@ class TestListCommandsDomainScoping:
     def test_domain_id_from_request_body(self, multi_client: TestClient, multi_api_module) -> None:
         """domain_id in the request body gets injected into params."""
         token = _register_root(multi_client)
-        with patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
+        with patch("lumina.core.slm.slm_available", return_value=True), \
+             patch("lumina.core.slm.slm_parse_admin_command") as mock_parse:
             # SLM returns no domain_id in params; the endpoint injects it from req.domain_id
             mock_parse.return_value = {
                 "operation": "list_commands",
@@ -437,7 +443,8 @@ class TestGracefulDegradationAdmin:
     @pytest.mark.integration
     def test_admin_hitl_exempt_policy_error_422(self, client: TestClient, api_module) -> None:
         token = _register_root(client)
-        with patch("lumina.core.slm.slm_parse_admin_command") as mock_parse, \
+        with patch("lumina.core.slm.slm_available", return_value=True), \
+             patch("lumina.core.slm.slm_parse_admin_command") as mock_parse, \
              patch(
                  "lumina.api.routes.admin._execute_admin_operation",
                  side_effect=RuntimeError("policy commitment mismatch"),
