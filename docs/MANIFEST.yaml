@@ -1695,8 +1695,8 @@ artifacts:
   type: doc
   doc_version: 1.0.0
   status: active
-  last_updated: 2026-05-07
-  sha256: 47a8e96547ce1647c1e2fe55358c9431d6434c0c5dd4cea960c59c031a49bbac
+  last_updated: 2026-06-18
+  sha256: a8cfa214aa21f3ae37477dba37b060adba6fbc647c16a6d1610b571e75d8de14
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
@@ -1726,3 +1726,9 @@ artifacts:
   status: active
   last_updated: 2026-05-07
   sha256: 286f74731642165f7f630a68e044162a0b11a6b2b4ec9be90c1a3ca100c3d454
+- path: docs/roadmap/slices/06-coding-agent-model-pack-architecture-v2.md
+  type: doc
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-06-18
+  sha256: 6329f6c147cb46f6da6fb311a2cbe31d77526d25dbaa18e7dc79bff3f6346a5f

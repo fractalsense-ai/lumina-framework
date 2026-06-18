@@ -1,13 +1,13 @@
 ---
 version: 1.0.0
-last_updated: 2026-05-07
+last_updated: 2026-06-18
 ---
 
 # Lumina Framework Roadmap
 
 **Version:** 1.0.0
 **Status:** Active
-**Last updated:** 2026-05-07
+**Last updated:** 2026-06-18
 
 ---
 
@@ -31,6 +31,7 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [03](slices/03-request-intake-and-classification.md) | Request Intake and Classification | Active |
 | [04](slices/04-system-pack-authority-gate.md) | System Pack Authority Gate | Active |
 | [05](slices/05-system-pack-sole-coding-agent-ingress.md) | System Pack as Sole Coding Agent Ingress | Active |
+| [06](slices/06-coding-agent-model-pack-architecture-v2.md) | Coding Agent Model Pack Architecture V2 | Active |
 
 ---
 
