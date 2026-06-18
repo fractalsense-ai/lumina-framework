@@ -250,3 +250,215 @@ def test_iter_all_ledger_paths(fs_adapter: FilesystemPersistenceAdapter) -> None
     assert any("system" in s for s in path_strs)
     assert any("education" in s and "domain.jsonl" in s for s in path_strs)
     assert any("algebra-v1" in s for s in path_strs)
+
+
+# ── _is_in_scope ─────────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_is_in_scope_exact_domain_id(scoped: ScopedPersistenceAdapter) -> None:
+    assert scoped._is_in_scope("education") is True
+
+
+@pytest.mark.unit
+def test_is_in_scope_hierarchical_in_domain(scoped: ScopedPersistenceAdapter) -> None:
+    assert scoped._is_in_scope("education/algebra-v1") is True
+
+
+@pytest.mark.unit
+def test_is_in_scope_cross_domain_rejected(scoped: ScopedPersistenceAdapter) -> None:
+    assert scoped._is_in_scope("science/chemistry") is False
+
+
+@pytest.mark.unit
+def test_is_in_scope_simple_name_allowed(scoped: ScopedPersistenceAdapter) -> None:
+    # Simple names (no slash) are in-scope
+    assert scoped._is_in_scope("algebra-v1") is True
+
+
+# ── update_user_governed_modules scoping ─────────────────────
+
+
+@pytest.mark.unit
+def test_update_governed_modules_in_scope(
+    scoped: ScopedPersistenceAdapter,
+    fs_adapter,
+) -> None:
+    fs_adapter.create_user("u10", "charlie", "salt:hash", "teacher", [])
+    result = scoped.update_user_governed_modules("u10", add=["education/algebra-v1"])
+    # Should succeed without PermissionError
+    user = fs_adapter.get_user("u10")
+    assert user is not None
+
+
+@pytest.mark.unit
+def test_update_governed_modules_out_of_scope_add(
+    scoped: ScopedPersistenceAdapter,
+) -> None:
+    with pytest.raises(PermissionError, match="not in domain scope"):
+        scoped.update_user_governed_modules("u-any", add=["science/chemistry"])
+
+
+@pytest.mark.unit
+def test_update_governed_modules_out_of_scope_remove(
+    scoped: ScopedPersistenceAdapter,
+) -> None:
+    with pytest.raises(PermissionError, match="not in domain scope"):
+        scoped.update_user_governed_modules("u-any", remove=["other/module"])
+
+
+@pytest.mark.unit
+def test_update_domain_roles_out_of_scope(scoped: ScopedPersistenceAdapter) -> None:
+    with pytest.raises(PermissionError, match="not in domain scope"):
+        scoped.update_user_domain_roles("u-any", {"science/chemistry": "teacher"})
+
+
+# ── Ledger path accessors ─────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_get_domain_ledger_path_explicit(
+    scoped: ScopedPersistenceAdapter, fs_adapter
+) -> None:
+    path = scoped.get_domain_ledger_path("science")
+    assert "science" in path
+
+
+@pytest.mark.unit
+def test_get_domain_ledger_path_defaults_to_domain_id(
+    scoped: ScopedPersistenceAdapter,
+) -> None:
+    path = scoped.get_domain_ledger_path()
+    assert "education" in path
+
+
+@pytest.mark.unit
+def test_get_module_ledger_path_explicit(
+    scoped: ScopedPersistenceAdapter,
+) -> None:
+    path = scoped.get_module_ledger_path("education", "algebra-v1")
+    assert "algebra-v1" in path
+
+
+@pytest.mark.unit
+def test_get_log_ledger_path(scoped: ScopedPersistenceAdapter) -> None:
+    path = scoped.get_log_ledger_path("sess-1")
+    assert isinstance(path, str)
+
+
+# ── Query and delegation methods ──────────────────────────────
+
+
+@pytest.mark.unit
+def test_query_log_records_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.query_log_records(record_type="CommitmentRecord", limit=10)
+    assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_get_user_consent_delegates(
+    scoped: ScopedPersistenceAdapter, fs_adapter
+) -> None:
+    fs_adapter.create_user("u20", "dave", "salt:hash", "user", [])
+    result = scoped.get_user_consent("u20")
+    # No consent set → None or empty
+    assert result is None or isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_load_profile_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.load_profile("u-none", "education")
+    assert result is None or isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_save_and_load_profile(
+    scoped: ScopedPersistenceAdapter, fs_adapter
+) -> None:
+    scoped.save_profile("u30", "education", {"score": 42})
+    result = scoped.load_profile("u30", "education")
+    assert result is not None
+    assert result.get("score") == 42
+
+
+@pytest.mark.unit
+def test_list_profiles_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.list_profiles("u-none")
+    assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_delete_profile_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    scoped.save_profile("u40", "education", {"data": 1})
+    deleted = scoped.delete_profile("u40", "education")
+    assert deleted is True or deleted is False  # just ensure no exception
+
+
+@pytest.mark.unit
+def test_save_and_load_module_state(scoped: ScopedPersistenceAdapter) -> None:
+    scoped.save_module_state("u50", "algebra-v1", {"turn_count": 3})
+    state = scoped.load_module_state("u50", "algebra-v1")
+    assert state is not None
+    assert state.get("turn_count") == 3
+
+
+@pytest.mark.unit
+def test_list_module_states_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.list_module_states("u-none")
+    assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_delete_module_state_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    scoped.save_module_state("u60", "algebra-v1", {"data": 1})
+    result = scoped.delete_module_state("u60", "algebra-v1")
+    assert result is True or result is False
+
+
+@pytest.mark.unit
+def test_load_session_state_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.load_session_state("sess-none")
+    assert result is None or isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_save_session_state_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    scoped.save_session_state("sess-1", {"active": True})  # should not raise
+
+
+@pytest.mark.unit
+def test_list_log_session_ids_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.list_log_session_ids()
+    assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_validate_log_chain_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.validate_log_chain()
+    assert isinstance(result, dict)
+
+
+@pytest.mark.unit
+def test_has_policy_commitment_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.has_policy_commitment("education", "1.0", "abc123")
+    assert isinstance(result, bool)
+
+
+@pytest.mark.unit
+def test_list_log_sessions_summary_delegates(
+    scoped: ScopedPersistenceAdapter,
+) -> None:
+    result = scoped.list_log_sessions_summary()
+    assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_query_escalations_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.query_escalations()
+    assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_query_commitments_delegates(scoped: ScopedPersistenceAdapter) -> None:
+    result = scoped.query_commitments("education")
+    assert isinstance(result, list)

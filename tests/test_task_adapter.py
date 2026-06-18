@@ -125,3 +125,116 @@ async def test_task_failure_captured() -> None:
     assert result["completed_domains"] == 1  # error result still counted
     assert result["results"][0]["success"] is False
     assert "boom" in result["results"][0]["error"]
+
+
+# ── run_cross_domain_task_preemptible ─────────────────────────────────────────
+
+from lumina.daemon.task_adapter import run_cross_domain_task_preemptible
+
+
+def _cross_domain_task(domains, **kw):
+    return {"processed": len(domains)}
+
+
+def _cross_domain_task_result(domains, **kw):
+    return TaskResult(task="cross_domain", domain_id="all", success=True)
+
+
+def _failing_cross_domain_task(domains, **kw):
+    raise RuntimeError("cross-domain boom")
+
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_run_cross_domain_task_unknown() -> None:
+    token = PreemptionToken()
+    with patch("lumina.daemon.task_adapter.get_cross_domain_task", return_value=None):
+        result = await run_cross_domain_task_preemptible("unknown_cross", token)
+
+    assert "error" in result
+    assert result["preempted"] is False
+
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_run_cross_domain_task_success() -> None:
+    token = PreemptionToken()
+    with patch("lumina.daemon.task_adapter.get_cross_domain_task",
+               return_value=_cross_domain_task):
+        result = await run_cross_domain_task_preemptible("cross_domain", token)
+
+    assert result["preempted"] is False
+    assert result["results"] is not None
+
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_run_cross_domain_task_task_result_wrapping() -> None:
+    token = PreemptionToken()
+    with patch("lumina.daemon.task_adapter.get_cross_domain_task",
+               return_value=_cross_domain_task_result):
+        result = await run_cross_domain_task_preemptible("cross_domain", token)
+
+    assert result["preempted"] is False
+    assert len(result["results"]) == 1
+
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_run_cross_domain_task_preempted() -> None:
+    token = PreemptionToken()
+
+    def _preempting_checkpoint():
+        raise TaskPreempted("test")
+
+    token.checkpoint_sync = _preempting_checkpoint  # type: ignore[assignment]
+    with patch("lumina.daemon.task_adapter.get_cross_domain_task",
+               return_value=_cross_domain_task):
+        result = await run_cross_domain_task_preemptible("cross_domain", token)
+
+    assert result["preempted"] is True
+
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_run_cross_domain_task_failure() -> None:
+    token = PreemptionToken()
+    with patch("lumina.daemon.task_adapter.get_cross_domain_task",
+               return_value=_failing_cross_domain_task):
+        result = await run_cross_domain_task_preemptible("cross_domain", token)
+
+    assert result["preempted"] is False
+    assert "error" in result
+
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_run_cross_domain_task_task_preempted_internally() -> None:
+    """TaskPreempted raised inside the task function."""
+    token = PreemptionToken()
+
+    def _task_raises_preempted(domains, **kw):
+        raise TaskPreempted("inside task")
+
+    with patch("lumina.daemon.task_adapter.get_cross_domain_task",
+               return_value=_task_raises_preempted):
+        result = await run_cross_domain_task_preemptible("cross_domain", token)
+
+    assert result["preempted"] is True
+
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_run_task_result_dict_pass_through() -> None:
+    """When task returns a plain dict (not TaskResult), a success entry is recorded."""
+    token = PreemptionToken()
+
+    def _plain_dict_task(domain_id, domain_physics, persistence=None, call_slm_fn=None):
+        return {"custom": "output", "domain_id": domain_id}
+
+    with patch("lumina.daemon.task_adapter.get_task", return_value=_plain_dict_task):
+        result = await run_task_preemptible("plain_dict", token)
+
+    assert result["completed_domains"] == 1
+    # Non-TaskResult returns are wrapped with a success=True entry
+    assert result["results"][0]["success"] is True
