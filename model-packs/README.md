@@ -2,6 +2,47 @@
 
 Model-packs are authored system models loaded by the Lumina Framework. They are the "mods" layer: the same engine underneath, a different modeled system on top. This directory contains the reference model-packs for education, agriculture, assistant, system administration, and the template scaffold.
 
+---
+
+## Base Framework vs Reference Packs
+
+Not all packs in this directory have equal status. The table below captures the
+boundary defined in
+[`docs/7-concepts/framework-boundary.md`](../docs/7-concepts/framework-boundary.md).
+
+### Base Framework Packs
+
+These three packs are required framework infrastructure. Every Lumina deployment
+inherits them unchanged.
+
+| Pack | Directory | Role | Status |
+|------|-----------|------|--------|
+| System Model Pack | `model-packs/system/` | Sole governance, authority, and ingress layer — all requests route through it | Required |
+| Template Model Pack | `model-packs/template/` | Canonical scaffold shapes used by System Pack routing and the Coding Agent | Required |
+| Coding Agent Model Pack | `model-packs/coding-agent/` *(planned)* | Bounded artifact factory — receives scoped jobs from System Pack, produces build artefacts | Planned — architecture contract in `docs/roadmap/slices/06-coding-agent-model-pack-architecture-v2.md` |
+
+### Reference / Provisional Packs
+
+These packs were built to think through the flow of information, adapter
+patterns, domain-physics structure, and world-sim conventions. They are **not
+base framework infrastructure**. They demonstrate how a domain author would
+use the framework, and may be extracted into separate repositories once the
+base framework boundary is stable.
+
+| Pack | Directory | Purpose |
+|------|-----------|---------|
+| Education | `model-packs/education/` | Reference domain — algebra module, ZPD/fluency state estimators, world-sim persona |
+| Agriculture | `model-packs/agriculture/` | Reference domain — environmental sensor adapters, operations-level module |
+| Assistant | `model-packs/assistant/` | Reference domain — conversational assistant pattern |
+
+> **Why they are still here:** The base framework engine is domain-agnostic.
+> Reference packs exercise every part of the adapter pattern, runtime loader,
+> domain registry, and signal pipeline in a realistic way during R&D. They
+> remain useful examples until the Coding Agent Pack skeleton exists and the
+> extraction process is ready.
+
+---
+
 Each model-pack owns its own:
 - principles
 - rules and invariants
