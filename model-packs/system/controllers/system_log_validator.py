@@ -486,7 +486,7 @@ def main() -> None:
     parser.add_argument(
         "--log-dir",
         metavar="DIR",
-        default=os.environ.get("LUMINA_LOG_DIR", str(Path(sys.argv[0]).resolve().parents[3] / "ctl")),
+        default=os.environ.get("LUMINA_LOG_DIR", str(Path(__file__).resolve().parents[3] / "ctl")),
         help="System Log root directory (for --verify-system-chain). Defaults to LUMINA_LOG_DIR env var.",
     )
     parser.add_argument(
