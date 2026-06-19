@@ -978,3 +978,24 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
                 )
             )
         return result.rowcount > 0
+
+    # ── Lifecycle ────────────────────────────────────────────
+
+    async def aclose(self) -> None:
+        """Dispose the SQLAlchemy async engine.
+
+        Awaiting this lets aiosqlite background worker threads finish their
+        pending callbacks before the event loop is closed, preventing the
+        ``RuntimeError: Event loop is closed`` warnings seen in tests.
+        """
+        await self._engine.dispose()
+
+    def close(self) -> None:
+        """Synchronous close — disposes the async engine via ``asyncio.run``.
+
+        Call this in test teardown (pytest fixture ``yield`` + ``adapter.close()``)
+        or on application shutdown.  This is the counterpart to the
+        ``asyncio.run(self._create_tables())`` call in ``__init__``, ensuring
+        aiosqlite worker threads drain before the event loop is destroyed.
+        """
+        asyncio.run(self.aclose())
