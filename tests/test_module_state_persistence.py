@@ -144,43 +144,42 @@ class TestSQLiteAdapterModuleState:
         db_url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
         return SQLitePersistenceAdapter(repo_root=_REPO_ROOT, database_url=db_url)
 
-    def test_save_load_roundtrip(self, tmp_path: Path) -> None:
+    @pytest.fixture
+    def db(self, tmp_path: Path):
         adapter = self._make_adapter(tmp_path)
+        yield adapter
+        adapter.close()
+
+    def test_save_load_roundtrip(self, db) -> None:
         state = {"mastery": {"tier_1": 0.8}, "challenge": 0.5}
-        adapter.save_module_state("u1", "algebra", state)
-        loaded = adapter.load_module_state("u1", "algebra")
+        db.save_module_state("u1", "algebra", state)
+        loaded = db.load_module_state("u1", "algebra")
         assert loaded == state
 
-    def test_load_missing_returns_none(self, tmp_path: Path) -> None:
-        adapter = self._make_adapter(tmp_path)
-        assert adapter.load_module_state("u1", "algebra") is None
+    def test_load_missing_returns_none(self, db) -> None:
+        assert db.load_module_state("u1", "algebra") is None
 
-    def test_upsert_overwrites(self, tmp_path: Path) -> None:
-        adapter = self._make_adapter(tmp_path)
-        adapter.save_module_state("u1", "algebra", {"v": 1})
-        adapter.save_module_state("u1", "algebra", {"v": 2})
-        assert adapter.load_module_state("u1", "algebra") == {"v": 2}
+    def test_upsert_overwrites(self, db) -> None:
+        db.save_module_state("u1", "algebra", {"v": 1})
+        db.save_module_state("u1", "algebra", {"v": 2})
+        assert db.load_module_state("u1", "algebra") == {"v": 2}
 
-    def test_list_module_states(self, tmp_path: Path) -> None:
-        adapter = self._make_adapter(tmp_path)
-        adapter.save_module_state("u1", "algebra", {"a": 1})
-        adapter.save_module_state("u1", "geometry", {"b": 2})
-        keys = adapter.list_module_states("u1")
+    def test_list_module_states(self, db) -> None:
+        db.save_module_state("u1", "algebra", {"a": 1})
+        db.save_module_state("u1", "geometry", {"b": 2})
+        keys = db.list_module_states("u1")
         assert sorted(keys) == ["algebra", "geometry"]
 
-    def test_delete_existing(self, tmp_path: Path) -> None:
-        adapter = self._make_adapter(tmp_path)
-        adapter.save_module_state("u1", "algebra", {"a": 1})
-        assert adapter.delete_module_state("u1", "algebra") is True
-        assert adapter.load_module_state("u1", "algebra") is None
+    def test_delete_existing(self, db) -> None:
+        db.save_module_state("u1", "algebra", {"a": 1})
+        assert db.delete_module_state("u1", "algebra") is True
+        assert db.load_module_state("u1", "algebra") is None
 
-    def test_delete_missing(self, tmp_path: Path) -> None:
-        adapter = self._make_adapter(tmp_path)
-        assert adapter.delete_module_state("u1", "algebra") is False
+    def test_delete_missing(self, db) -> None:
+        assert db.delete_module_state("u1", "algebra") is False
 
-    def test_isolation_between_users(self, tmp_path: Path) -> None:
-        adapter = self._make_adapter(tmp_path)
-        adapter.save_module_state("u1", "algebra", {"owner": "u1"})
-        adapter.save_module_state("u2", "algebra", {"owner": "u2"})
-        assert adapter.load_module_state("u1", "algebra")["owner"] == "u1"
-        assert adapter.load_module_state("u2", "algebra")["owner"] == "u2"
+    def test_isolation_between_users(self, db) -> None:
+        db.save_module_state("u1", "algebra", {"owner": "u1"})
+        db.save_module_state("u2", "algebra", {"owner": "u2"})
+        assert db.load_module_state("u1", "algebra")["owner"] == "u1"
+        assert db.load_module_state("u2", "algebra")["owner"] == "u2"

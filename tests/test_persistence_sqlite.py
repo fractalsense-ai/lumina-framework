@@ -8,11 +8,13 @@ from lumina.persistence.sqlite import SQLitePersistenceAdapter
 
 
 @pytest.fixture
-def sqlite_adapter(tmp_path: Path) -> SQLitePersistenceAdapter:
+def sqlite_adapter(tmp_path: Path):
     db_path = tmp_path / "lumina_test.db"
     db_url = f"sqlite+aiosqlite:///{db_path.as_posix()}"
     repo_root = Path(__file__).resolve().parents[1]
-    return SQLitePersistenceAdapter(repo_root=repo_root, database_url=db_url)
+    adapter = SQLitePersistenceAdapter(repo_root=repo_root, database_url=db_url)
+    yield adapter
+    adapter.close()
 
 
 @pytest.mark.unit
