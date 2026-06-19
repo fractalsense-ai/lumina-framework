@@ -426,6 +426,257 @@ class TestIngestService:
         page2 = svc.list_records(limit=2, offset=2)
         assert len(page2) == 2
 
+    # ── accept_document field storage ──
+
+    def test_accept_stores_module_id(self):
+        svc = self._make_service()
+        doc_id = svc.accept_document(
+            file_bytes=b"x",
+            filename="f.md",
+            content_type="markdown",
+            actor_id="u",
+            domain_id="d",
+            module_id="mod-42",
+        )
+        assert svc.get_record(doc_id)["module_id"] == "mod-42"
+
+    def test_accept_stores_actor_filename_content_type(self):
+        svc = self._make_service()
+        doc_id = svc.accept_document(
+            file_bytes=b"hello",
+            filename="notes.csv",
+            content_type="csv",
+            actor_id="user-99",
+            domain_id="d",
+        )
+        rec = svc.get_record(doc_id)
+        assert rec["ingesting_actor_id"] == "user-99"
+        assert rec["original_filename"] == "notes.csv"
+        assert rec["content_type"] == "csv"
+
+    def test_accept_content_hash_is_sha256(self):
+        import hashlib
+        payload = b"deterministic content"
+        svc = self._make_service()
+        doc_id = svc.accept_document(
+            file_bytes=payload,
+            filename="f.md",
+            content_type="markdown",
+            actor_id="u",
+            domain_id="d",
+        )
+        expected = hashlib.sha256(payload).hexdigest()
+        assert svc.get_record(doc_id)["content_hash"] == expected
+
+    # ── review_interpretation edge cases ──
+
+    def test_review_invalid_decision_raises(self):
+        svc = self._make_service()
+        doc_id = svc.accept_document(
+            file_bytes=b"d", filename="t.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        svc.extract_interpretations(doc_id, domain_physics={"id": "d"})
+        with pytest.raises(ValueError, match="Invalid decision"):
+            svc.review_interpretation(doc_id, decision="skip", reviewer_id="da")
+
+    def test_review_approve_with_bad_interp_id_raises(self):
+        svc = self._make_service()
+        doc_id = svc.accept_document(
+            file_bytes=b"d", filename="t.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        svc.extract_interpretations(doc_id, domain_physics={"id": "d"})
+        with pytest.raises(ValueError, match="not found"):
+            svc.review_interpretation(
+                doc_id,
+                decision="approve",
+                reviewer_id="da",
+                selected_interpretation_id="no-such-id",
+            )
+
+    def test_review_notes_stored_on_record(self):
+        svc = self._make_service()
+        doc_id = svc.accept_document(
+            file_bytes=b"d", filename="t.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        svc.extract_interpretations(doc_id, domain_physics={"id": "d"})
+        svc.review_interpretation(
+            doc_id, decision="reject", reviewer_id="da", review_notes="Not suitable."
+        )
+        rec = svc.get_record(doc_id)
+        assert rec["review_notes"] == "Not suitable."
+        assert rec["reviewer_id"] == "da"
+        assert rec["review_decision"] == "reject"
+
+    def test_review_notes_truncated_at_512_chars(self):
+        svc = self._make_service()
+        doc_id = svc.accept_document(
+            file_bytes=b"d", filename="t.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        svc.extract_interpretations(doc_id, domain_physics={"id": "d"})
+        long_note = "A" * 600
+        svc.review_interpretation(
+            doc_id, decision="reject", reviewer_id="da", review_notes=long_note
+        )
+        assert len(svc.get_record(doc_id)["review_notes"]) == 512
+
+    # ── commit_ingestion extended ──
+
+    def test_commit_returns_record_id_and_document_id(self):
+        svc = self._make_service()
+        doc_id = svc.accept_document(
+            file_bytes=b"data", filename="t.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        interps = svc.extract_interpretations(doc_id, domain_physics={"id": "d"})
+        svc.review_interpretation(
+            doc_id, decision="approve", reviewer_id="da",
+            selected_interpretation_id=interps[0]["id"],
+        )
+        result = svc.commit_ingestion(doc_id, actor_id="da")
+        assert result["record_id"] == svc.get_record(doc_id)["record_id"]
+        assert result["document_id"] == doc_id
+
+    def test_commit_hash_is_deterministic(self):
+        """Same yaml_content always produces same committed_hash."""
+        import json as _json
+
+        fixed_slm = lambda **_kw: _json.dumps({
+            "interpretations": [{
+                "label": "fixed",
+                "yaml_content": "key: value",
+                "confidence": 1.0,
+                "ambiguity_notes": "",
+            }]
+        })
+
+        def _run():
+            svc = self._make_service(call_slm_fn=fixed_slm)
+            doc_id = svc.accept_document(
+                file_bytes=b"same", filename="t.md", content_type="markdown",
+                actor_id="u", domain_id="d",
+            )
+            interps = svc.extract_interpretations(doc_id, domain_physics={"id": "d"})
+            svc.review_interpretation(
+                doc_id, decision="approve", reviewer_id="da",
+                selected_interpretation_id=interps[0]["id"],
+            )
+            return svc.commit_ingestion(doc_id, actor_id="da")["committed_hash"]
+
+        assert _run() == _run()
+
+    def test_commit_calls_persistence_append_when_wired(self):
+        calls = []
+        svc = self._make_service(persistence_append=lambda *a, **kw: calls.append(a))
+        doc_id = svc.accept_document(
+            file_bytes=b"data", filename="t.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        interps = svc.extract_interpretations(doc_id, domain_physics={"id": "d"})
+        svc.review_interpretation(
+            doc_id, decision="approve", reviewer_id="da",
+            selected_interpretation_id=interps[0]["id"],
+        )
+        svc.commit_ingestion(doc_id, actor_id="da")
+        assert len(calls) == 1
+
+    def test_commit_swallows_persistence_append_exception(self):
+        def bad_append(*_a, **_kw):
+            raise RuntimeError("DB down")
+
+        svc = self._make_service(persistence_append=bad_append)
+        doc_id = svc.accept_document(
+            file_bytes=b"data", filename="t.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        interps = svc.extract_interpretations(doc_id, domain_physics={"id": "d"})
+        svc.review_interpretation(
+            doc_id, decision="approve", reviewer_id="da",
+            selected_interpretation_id=interps[0]["id"],
+        )
+        # Should not raise
+        result = svc.commit_ingestion(doc_id, actor_id="da")
+        assert result["status"] == "committed"
+
+    # ── list_records status filter ──
+
+    def test_list_records_status_filter(self):
+        svc = self._make_service()
+        # One doc stays pending, one gets extracted
+        svc.accept_document(
+            file_bytes=b"a", filename="a.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        doc_b = svc.accept_document(
+            file_bytes=b"b", filename="b.md", content_type="markdown",
+            actor_id="u", domain_id="d",
+        )
+        svc.extract_interpretations(doc_b, domain_physics={"id": "d"})
+
+        pending = svc.list_records(status="pending_extraction")
+        assert len(pending) == 1
+        assert pending[0]["document_id"] != doc_b
+
+        extracted = svc.list_records(status="extraction_complete")
+        assert len(extracted) == 1
+        assert extracted[0]["document_id"] == doc_b
+
+    def test_list_records_combined_domain_and_status_filter(self):
+        svc = self._make_service()
+        doc_a = svc.accept_document(
+            file_bytes=b"a", filename="a.md", content_type="markdown",
+            actor_id="u", domain_id="dom-x",
+        )
+        svc.extract_interpretations(doc_a, domain_physics={"id": "dom-x"})
+        svc.accept_document(
+            file_bytes=b"b", filename="b.md", content_type="markdown",
+            actor_id="u", domain_id="dom-y",
+        )
+
+        results = svc.list_records(domain_id="dom-x", status="extraction_complete")
+        assert len(results) == 1
+        assert results[0]["domain_id"] == "dom-x"
+
+        empty = svc.list_records(domain_id="dom-x", status="pending_extraction")
+        assert empty == []
+
+    # ── get_record ──
+
+    def test_get_record_returns_none_for_unknown_id(self):
+        svc = self._make_service()
+        assert svc.get_record("no-such-id") is None
+
+    # ── document isolation ──
+
+    def test_two_documents_do_not_share_state(self):
+        svc = self._make_service()
+        id_a = svc.accept_document(
+            file_bytes=b"doc-a", filename="a.md", content_type="markdown",
+            actor_id="u", domain_id="dom-a",
+        )
+        id_b = svc.accept_document(
+            file_bytes=b"doc-b", filename="b.md", content_type="markdown",
+            actor_id="u", domain_id="dom-b",
+        )
+        interps_a = svc.extract_interpretations(id_a, domain_physics={"id": "dom-a"})
+        svc.review_interpretation(
+            id_a, decision="approve", reviewer_id="da",
+            selected_interpretation_id=interps_a[0]["id"],
+        )
+
+        # doc-b should still be pending
+        rec_b = svc.get_record(id_b)
+        assert rec_b["status"] == "pending_extraction"
+        assert rec_b["interpretations"] == []
+        assert rec_b["review_decision"] is None
+
+        # doc-a should be approved
+        rec_a = svc.get_record(id_a)
+        assert rec_a["status"] == "approved"
+
 
 # ── Content type detection tests ─────────────────────────────
 
