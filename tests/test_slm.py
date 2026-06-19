@@ -11,6 +11,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from pathlib import Path
+
 from lumina.core.slm import (
     ADMIN_OPERATIONS,
     SLM_COMMAND_MAX_TOKENS,
@@ -18,6 +20,9 @@ from lumina.core.slm import (
     TaskWeight,
     _compact_operations,
     _empty_physics_context,
+    _get_admin_operations,
+    _load_admin_operations_from_yaml,
+    _resolve_admin_ops_path,
     call_slm,
     classify_task_weight,
     slm_available,
@@ -704,3 +709,202 @@ class TestAdminCommandLogging:
             mock_log.warning.assert_called_once()
             warning_msg = mock_log.warning.call_args[0][0]
             assert "admin command parsing failed" in warning_msg.lower()
+
+
+# ── Admin Operations Loader ───────────────────────────────────────────────────
+
+
+class TestResolveAdminOpsPath:
+    """Tests for _resolve_admin_ops_path."""
+
+    @pytest.mark.unit
+    def test_env_var_override_is_used_when_file_exists(self, tmp_path: Path) -> None:
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text("operations: []")
+        with patch.dict("os.environ", {"LUMINA_ADMIN_OPS_PATH": str(ops_file)}):
+            result = _resolve_admin_ops_path()
+        assert result == ops_file
+
+    @pytest.mark.unit
+    def test_env_var_override_ignored_when_file_missing(self, tmp_path: Path) -> None:
+        nonexistent = tmp_path / "does_not_exist.yaml"
+        with patch.dict("os.environ", {
+            "LUMINA_ADMIN_OPS_PATH": str(nonexistent),
+            "LUMINA_REPO_ROOT": str(tmp_path),  # default path also absent
+        }):
+            result = _resolve_admin_ops_path()
+        assert result is None
+
+    @pytest.mark.unit
+    def test_default_path_used_when_env_absent(self, tmp_path: Path) -> None:
+        cfg_dir = tmp_path / "model-packs" / "system" / "cfg"
+        cfg_dir.mkdir(parents=True)
+        ops_file = cfg_dir / "admin-operations.yaml"
+        ops_file.write_text("operations: []")
+        with patch.dict("os.environ", {"LUMINA_REPO_ROOT": str(tmp_path)}, clear=False):
+            with patch.dict("os.environ", {"LUMINA_ADMIN_OPS_PATH": ""}, clear=False):
+                # Remove override; default path should resolve
+                import os as _os
+                env = _os.environ.copy()
+                env.pop("LUMINA_ADMIN_OPS_PATH", None)
+                env["LUMINA_REPO_ROOT"] = str(tmp_path)
+                with patch.dict("os.environ", env, clear=True):
+                    result = _resolve_admin_ops_path()
+        assert result == ops_file
+
+    @pytest.mark.unit
+    def test_returns_none_when_neither_path_exists(self, tmp_path: Path) -> None:
+        with patch.dict("os.environ", {"LUMINA_REPO_ROOT": str(tmp_path)}, clear=False):
+            import os as _os
+            env = _os.environ.copy()
+            env.pop("LUMINA_ADMIN_OPS_PATH", None)
+            env["LUMINA_REPO_ROOT"] = str(tmp_path)
+            with patch.dict("os.environ", env, clear=True):
+                result = _resolve_admin_ops_path()
+        assert result is None
+
+
+class TestLoadAdminOperationsFromYaml:
+    """Tests for _load_admin_operations_from_yaml."""
+
+    @pytest.mark.unit
+    def test_parses_valid_operations(self, tmp_path: Path) -> None:
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text(
+            "operations:\n"
+            "  - name: update_domain_physics\n"
+            "    description: Update fields in domain physics.\n"
+            "    params:\n"
+            "      domain_id: string\n"
+            "      updates: object\n"
+        )
+        result = _load_admin_operations_from_yaml(ops_file)
+        assert len(result) == 1
+        assert result[0]["name"] == "update_domain_physics"
+        assert result[0]["description"] == "Update fields in domain physics."
+        assert isinstance(result[0]["params_schema"], dict)
+
+    @pytest.mark.unit
+    def test_raises_when_operations_key_missing(self, tmp_path: Path) -> None:
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text("something_else: []")
+        with pytest.raises(ValueError, match="'operations' key"):
+            _load_admin_operations_from_yaml(ops_file)
+
+    @pytest.mark.unit
+    def test_raises_when_operations_is_not_a_list(self, tmp_path: Path) -> None:
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text("operations: not_a_list")
+        with pytest.raises(ValueError, match="'operations' must be a list"):
+            _load_admin_operations_from_yaml(ops_file)
+
+    @pytest.mark.unit
+    def test_skips_entries_without_name(self, tmp_path: Path) -> None:
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text(
+            "operations:\n"
+            "  - description: No name here.\n"
+            "  - name: valid_op\n"
+            "    description: Has a name.\n"
+        )
+        result = _load_admin_operations_from_yaml(ops_file)
+        assert len(result) == 1
+        assert result[0]["name"] == "valid_op"
+
+    @pytest.mark.unit
+    def test_normalises_null_params_to_empty_dict(self, tmp_path: Path) -> None:
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text(
+            "operations:\n"
+            "  - name: no_params_op\n"
+            "    description: No params.\n"
+        )
+        result = _load_admin_operations_from_yaml(ops_file)
+        assert result[0]["params_schema"] == {}
+
+    @pytest.mark.unit
+    def test_normalises_empty_string_params_to_empty_dict(self, tmp_path: Path) -> None:
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text(
+            "operations:\n"
+            "  - name: empty_params_op\n"
+            "    description: Empty string params.\n"
+            "    params: ''\n"
+        )
+        result = _load_admin_operations_from_yaml(ops_file)
+        assert result[0]["params_schema"] == {}
+
+    @pytest.mark.unit
+    def test_description_defaults_to_empty_string(self, tmp_path: Path) -> None:
+        ops_file = tmp_path / "admin-operations.yaml"
+        # Multi-key entry required: the custom YAML parser treats single-key
+        # list items as plain strings, not dicts.  A second key ensures the
+        # entry is parsed as a dict so the loader can apply the default.
+        ops_file.write_text(
+            "operations:\n"
+            "  - name: no_desc_op\n"
+            "    params:\n"
+            "      domain_id: string\n"
+        )
+        result = _load_admin_operations_from_yaml(ops_file)
+        assert len(result) == 1
+        assert result[0]["description"] == ""
+
+
+class TestGetAdminOperations:
+    """Tests for _get_admin_operations (cache behaviour and fallback)."""
+
+    @staticmethod
+    def _reset_cache() -> None:
+        import lumina.core.slm as slm_mod
+        slm_mod._admin_ops_cache = None
+
+    @pytest.mark.unit
+    def test_falls_back_to_fallback_when_no_yaml(self, tmp_path: Path) -> None:
+        self._reset_cache()
+        import os as _os
+        env = _os.environ.copy()
+        env.pop("LUMINA_ADMIN_OPS_PATH", None)
+        env["LUMINA_REPO_ROOT"] = str(tmp_path)  # empty dir → no YAML
+        with patch.dict("os.environ", env, clear=True):
+            result = _get_admin_operations()
+        from lumina.core.slm import _FALLBACK_ADMIN_OPERATIONS
+        assert result is _FALLBACK_ADMIN_OPERATIONS
+
+    @pytest.mark.unit
+    def test_loads_from_yaml_when_available(self, tmp_path: Path) -> None:
+        self._reset_cache()
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text(
+            "operations:\n"
+            "  - name: test_op\n"
+            "    description: A test operation.\n"
+        )
+        with patch.dict("os.environ", {"LUMINA_ADMIN_OPS_PATH": str(ops_file)}):
+            result = _get_admin_operations()
+        assert len(result) == 1
+        assert result[0]["name"] == "test_op"
+
+    @pytest.mark.unit
+    def test_caches_result_on_second_call(self, tmp_path: Path) -> None:
+        self._reset_cache()
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text(
+            "operations:\n"
+            "  - name: cached_op\n"
+            "    description: Cached.\n"
+        )
+        with patch.dict("os.environ", {"LUMINA_ADMIN_OPS_PATH": str(ops_file)}):
+            first = _get_admin_operations()
+            second = _get_admin_operations()
+        assert first is second
+
+    @pytest.mark.unit
+    def test_falls_back_when_yaml_raises(self, tmp_path: Path) -> None:
+        self._reset_cache()
+        ops_file = tmp_path / "admin-operations.yaml"
+        ops_file.write_text("something_else: []")
+        with patch.dict("os.environ", {"LUMINA_ADMIN_OPS_PATH": str(ops_file)}):
+            result = _get_admin_operations()
+        from lumina.core.slm import _FALLBACK_ADMIN_OPERATIONS
+        assert result is _FALLBACK_ADMIN_OPERATIONS
