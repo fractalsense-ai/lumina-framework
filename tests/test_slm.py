@@ -18,6 +18,7 @@ from lumina.core.slm import (
     SLM_COMMAND_MAX_TOKENS,
     SLM_PHYSICS_MAX_TOKENS,
     TaskWeight,
+    _call_local_slm,
     _compact_operations,
     _empty_physics_context,
     _get_admin_operations,
@@ -908,3 +909,111 @@ class TestGetAdminOperations:
             result = _get_admin_operations()
         from lumina.core.slm import _FALLBACK_ADMIN_OPERATIONS
         assert result is _FALLBACK_ADMIN_OPERATIONS
+
+
+# ── Local SLM Transport (⁠_call_local_slm) ────────────────────────────────────────
+
+
+class TestCallLocalSlm:
+    """Deterministic coverage for _call_local_slm via monkeypatched httpx.post."""
+
+    @staticmethod
+    def _ok_resp(content: str) -> MagicMock:
+        resp = MagicMock()
+        resp.json.return_value = {"choices": [{"message": {"content": content}}]}
+        resp.raise_for_status.return_value = None
+        return resp
+
+    @pytest.mark.unit
+    def test_posts_to_correct_url(self) -> None:
+        with patch("lumina.core.slm.SLM_ENDPOINT", "http://local-slm:11434"):
+            with patch("httpx.post", return_value=self._ok_resp("ok")) as mock_post:
+                _call_local_slm("sys", "usr")
+        url = mock_post.call_args.args[0]
+        assert url == "http://local-slm:11434/v1/chat/completions"
+
+    @pytest.mark.unit
+    def test_trailing_slash_stripped_from_endpoint(self) -> None:
+        with patch("lumina.core.slm.SLM_ENDPOINT", "http://localhost:11434/"):
+            with patch("httpx.post", return_value=self._ok_resp("ok")) as mock_post:
+                _call_local_slm("sys", "usr")
+        url = mock_post.call_args.args[0]
+        assert url == "http://localhost:11434/v1/chat/completions"
+
+    @pytest.mark.unit
+    def test_default_model_used_when_not_specified(self) -> None:
+        with patch("lumina.core.slm.SLM_MODEL", "gemma3:4b"):
+            with patch("httpx.post", return_value=self._ok_resp("ok")) as mock_post:
+                _call_local_slm("sys", "usr")
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["model"] == "gemma3:4b"
+
+    @pytest.mark.unit
+    def test_custom_model_overrides_default(self) -> None:
+        with patch("httpx.post", return_value=self._ok_resp("ok")) as mock_post:
+            _call_local_slm("sys", "usr", model="llama3:8b")
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["model"] == "llama3:8b"
+
+    @pytest.mark.unit
+    def test_default_max_tokens_used_when_none(self) -> None:
+        with patch("lumina.core.slm.SLM_MAX_TOKENS", 512):
+            with patch("httpx.post", return_value=self._ok_resp("ok")) as mock_post:
+                _call_local_slm("sys", "usr")
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["max_tokens"] == 512
+
+    @pytest.mark.unit
+    def test_max_tokens_override_forwarded(self) -> None:
+        with patch("httpx.post", return_value=self._ok_resp("ok")) as mock_post:
+            _call_local_slm("sys", "usr", max_tokens=2048)
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["max_tokens"] == 2048
+
+    @pytest.mark.unit
+    def test_timeout_forwarded_to_httpx(self) -> None:
+        with patch("lumina.core.slm.SLM_TIMEOUT", 45.0):
+            with patch("httpx.post", return_value=self._ok_resp("ok")) as mock_post:
+                _call_local_slm("sys", "usr")
+        assert mock_post.call_args.kwargs["timeout"] == 45.0
+
+    @pytest.mark.unit
+    def test_messages_contain_system_and_user(self) -> None:
+        with patch("httpx.post", return_value=self._ok_resp("ok")) as mock_post:
+            _call_local_slm("system prompt", "user message")
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["messages"][0] == {"role": "system", "content": "system prompt"}
+        assert payload["messages"][1] == {"role": "user", "content": "user message"}
+
+    @pytest.mark.unit
+    def test_empty_content_returns_empty_string(self) -> None:
+        resp = MagicMock()
+        resp.json.return_value = {"choices": [{"message": {"content": None}}]}
+        resp.raise_for_status.return_value = None
+        with patch("httpx.post", return_value=resp):
+            result = _call_local_slm("sys", "usr")
+        assert result == ""
+
+    @pytest.mark.unit
+    def test_raise_for_status_propagates(self) -> None:
+        import httpx as _httpx
+        resp = MagicMock()
+        resp.raise_for_status.side_effect = _httpx.HTTPStatusError(
+            "500", request=MagicMock(), response=MagicMock()
+        )
+        with patch("httpx.post", return_value=resp):
+            with pytest.raises(_httpx.HTTPStatusError):
+                _call_local_slm("sys", "usr")
+
+    @pytest.mark.unit
+    def test_transport_exception_propagates(self) -> None:
+        with patch("httpx.post", side_effect=ConnectionError("refused")):
+            with pytest.raises(ConnectionError, match="refused"):
+                _call_local_slm("sys", "usr")
+
+    @pytest.mark.unit
+    def test_import_error_raises_runtime_error(self) -> None:
+        import sys as _sys
+        with patch.dict(_sys.modules, {"httpx": None}):
+            with pytest.raises(RuntimeError, match="httpx package is required"):
+                _call_local_slm("sys", "usr")
