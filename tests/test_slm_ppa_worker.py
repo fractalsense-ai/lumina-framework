@@ -232,7 +232,7 @@ class TestWorkerEventEmission:
         warn_events = [e for e in received if e.source == "slm_ppa_worker"]
         assert len(warn_events) >= 1
         assert "SLM down" in warn_events[0].message
-b
+
 
 # ── is_running before start ───────────────────────────────────────────────────
 
