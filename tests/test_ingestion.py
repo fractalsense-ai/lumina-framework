@@ -118,6 +118,80 @@ class TestInterpreter:
         )
         assert len(result) == 1
 
+    def test_slm_payload_scopes_context_and_module_context(self):
+        from lumina.ingestion.interpreter import generate_interpretations
+
+        captured = {}
+
+        def capture_slm(**kw):
+            captured.update(kw)
+            return self._mock_slm_single()
+
+        long_text = "x" * 8100
+        result = generate_interpretations(
+            extracted_text=long_text,
+            domain_physics={
+                "id": "domain-a",
+                "description": "A deterministic test domain.",
+                "invariants": [{"id": "inv-1"}],
+                "standing_orders": [{"id": "so-1"}],
+            },
+            glossary=[{"term": "Artifact"}],
+            module_context={"id": "module-a", "version": "1.0.0"},
+            max_interpretations=2,
+            call_slm_fn=capture_slm,
+        )
+
+        user_payload = json.loads(captured["user"])
+        assert result[0]["label"] == "default"
+        assert user_payload["document_text"] == long_text[:8000]
+        assert user_payload["domain_id"] == "domain-a"
+        assert user_payload["domain_description"] == "A deterministic test domain."
+        assert user_payload["existing_invariants"] == ["inv-1"]
+        assert user_payload["existing_standing_orders"] == ["so-1"]
+        assert user_payload["glossary_terms"] == ["Artifact"]
+        assert user_payload["target_module"] == {"id": "module-a", "version": "1.0.0"}
+        assert user_payload["max_interpretations"] == 2
+        assert "structured document interpreter" in captured["system"]
+
+    def test_markdown_fenced_json_response_is_parsed(self):
+        from lumina.ingestion.interpreter import generate_interpretations
+
+        def fenced_slm(**_kw):
+            return "```json\n" + self._mock_slm_single() + "\n```"
+
+        result = generate_interpretations(
+            extracted_text="content",
+            domain_physics={"id": "test"},
+            call_slm_fn=fenced_slm,
+        )
+
+        assert len(result) == 1
+        assert result[0]["label"] == "default"
+        assert result[0]["yaml_content"] == "module_id: test-mod\nartifacts: []"
+
+    @pytest.mark.parametrize(
+        "raw_response",
+        [
+            "[]",
+            json.dumps({"interpretations": []}),
+            json.dumps({"interpretations": "default"}),
+        ],
+    )
+    def test_invalid_slm_response_returns_fallback(self, raw_response):
+        from lumina.ingestion.interpreter import generate_interpretations
+
+        result = generate_interpretations(
+            extracted_text="preserve me",
+            domain_physics={"id": "test"},
+            call_slm_fn=lambda **_kw: raw_response,
+        )
+
+        assert len(result) == 1
+        assert result[0]["label"] == "default"
+        assert result[0]["confidence"] == 0.0
+        assert "preserve me" in result[0]["yaml_content"]
+
     def test_slm_failure_returns_fallback(self):
         from lumina.ingestion.interpreter import generate_interpretations
 

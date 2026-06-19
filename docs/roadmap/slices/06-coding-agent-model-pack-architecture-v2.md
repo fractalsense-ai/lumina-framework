@@ -1,13 +1,13 @@
 ---
 version: 1.0.0
-last_updated: 2026-06-18
+last_updated: 2026-06-19
 ---
 
 # Slice 6: Coding Agent Model Pack Architecture V2
 
 **Version:** 1.0.0
 **Status:** Active
-**Last updated:** 2026-06-18
+**Last updated:** 2026-06-19
 **PR:** This document is itself the primary deliverable of Slice 6.
 
 ---
@@ -76,6 +76,82 @@ The Coding Agent Model Pack receives a fully scoped `CodingAgentJob` from the
 System Pack only. It manufactures and stages artifacts; it does not activate,
 register, or deploy them. Governance approval and registration remain with the
 System Pack.
+
+### Authority Air Gap
+
+The Coding Agent Model Pack is authority-air-gapped from the rest of the
+system. It receives only a fully scoped `CodingAgentJob` created by the System
+Pack. It never receives raw operator requests, user JWTs, developer JWTs,
+production secrets, deployment credentials, ledger signing authority,
+registration authority, or activation authority.
+
+Operator and developer credentials are used by the System Pack and surrounding
+runtime to authenticate users, evaluate tool-call access, constrain allowed
+paths/actions, and record authority decisions in the ledger. Those credentials
+are not included in model prompts, micro-context packets, repair prompts, build
+logs presented to models, or generated artifact instructions.
+
+The Coding Agent may manufacture, test, and stage artifacts. It may produce a
+pull request, patch, build result, provenance manifest, or escalation packet. It
+cannot promote its output to production. A generated artifact remains
+`not_activated` until an authorized developer approves it and the System Pack
+records the approval/activation decision.
+
+"Air-gapped" in this slice means authority/credential air-gapped. It does not
+require every deployment to be physically network-air-gapped. GitHub Actions,
+local CLI execution, Forgejo/Gitea, self-hosted runners, internal model
+gateways, and future decentralized runner systems are all valid deployment
+postures when authority-bearing credentials and production rights do not reach
+the generating model or Coding Agent generation layer.
+
+Intended request/update flow:
+
+```text
+Operator request
+  -> user JWT authenticates operator
+  -> System Pack checks role/scope/tool-call authority
+  -> System Pack writes/consults ledger authority records
+  -> System Pack scopes request into CodingAgentJob
+  -> Coding Agent receives scoped job only
+  -> Coding Agent builds/stages/test-validates artifact
+  -> PR, patch, BuildResult, provenance manifest, or escalation packet is produced
+  -> developer reviews/signs off
+  -> System Pack records approval
+  -> only then can activation/registration/production promotion happen
+```
+
+The model does not receive:
+
+```text
+user JWT
+developer JWT
+GitHub token
+production secrets
+deployment credentials
+ledger signing authority
+activation authority
+registration authority
+raw operator auth context
+```
+
+The model receives:
+
+```text
+scoped job
+allowed paths
+selected template references
+validation requirements
+constraints
+expected output shape
+```
+
+Generated pull requests should preserve a normal developer review experience:
+inspect the diff, inspect CI checks and test output, inspect provenance/risk
+summaries, then approve, request changes, or merge according to policy. Lumina
+metadata such as `CodingAgentJob` ID, authority decision ID, allowed
+boundaries, model/routing policy, commands run, test evidence, provenance
+manifest, and `activation_status: not_activated` is supporting evidence. A PR
+or passing CI result is never production activation.
 
 ```text
 System Pack
@@ -223,6 +299,84 @@ Key behaviours:
 - A passing `SandboxRunResult` stages the artifact and produces the
   `CodingAgentBuildResult`; it does not activate or register the artifact.
 
+#### CI/CD Provider and Forge-Neutral Adapter Posture
+
+The Proving Ground is not itself a replacement for existing CI/CD systems. The
+Coding Agent Model Pack should integrate with mature CI/CD control planes
+through thin provider adapters while keeping execution, model selection, policy,
+and artifact governance under Lumina control.
+
+GitHub Actions is the first/reference adapter because it is widely used by
+open-source and private development teams, supports pull-request checks, logs,
+artifacts, branch protection, workflow dispatch, and self-hosted runners. This
+does not make GitHub a required Lumina backend.
+
+The Coding Agent architecture remains forge-neutral:
+
+```text
+Lumina task contract = source of truth
+CI/CD provider = adapter
+Runner = replaceable execution node
+Repo host / forge = replaceable
+Model provider = local, cloud, internal, or hybrid configuration
+Artifact store = local or provider-specific
+Policy = Lumina-owned
+```
+
+Supported and anticipated execution postures include:
+
+```text
+GitHub repository + GitHub Actions + GitHub-hosted runner
+GitHub private repository + GitHub Actions + self-hosted runner
+GitHub Enterprise + internal runner + internal model gateway
+Local CLI + local git working tree + local model
+Forgejo/Gitea + self-hosted runner + local/internal model
+Future decentralized runner systems with signed tasks and signed results
+```
+
+Using GitHub integration must not imply:
+
+```text
+source code is public
+source code is sent to cloud model providers
+GitHub-hosted runners are required
+GitHub is the only supported forge
+GitHub Actions is the only possible CI/CD control plane
+```
+
+The reference GitHub adapter should treat GitHub as an event bus, PR/check UI,
+artifact index, and audit surface. The actual execution may occur on a
+self-hosted runner controlled by the repository owner or organization.
+
+Corporate and privacy-sensitive deployments must be able to run:
+
+```text
+private repository
+self-hosted runner
+local or internal model endpoint
+restricted network policy
+explicit secrets policy
+Lumina provenance manifest
+human approval gate
+```
+
+without sending source code to external inference providers.
+
+Provider adapters are expected to translate the neutral Coding Agent task
+contract into provider-specific operations such as checkout, status reporting,
+artifact upload, PR comments, or branch/PR creation. Core Coding Agent logic
+must not depend directly on GitHub environment variables, GitHub APIs, or
+GitHub-only concepts.
+
+Provider credentials used by CI/CD adapters, forge adapters, or runners are
+adapter-layer credentials. They may be used to check out code, post statuses,
+upload artifacts, or open pull requests according to configured policy. They
+must not be passed into model prompts, model tool calls, generated code
+instructions, or unfiltered repair context.
+
+Where a provider requires a token, the adapter must expose only the minimal
+operation result to the Coding Agent core, not the credential itself.
+
 Governance invariant:
 
 ```text
@@ -319,17 +473,38 @@ Expected fields/concepts:
 ```text
 job_id
 source_request_id
-authority_decision_id
-requester_context            (from System Pack only)
+authority_decision_ref
+requester_identity_ref       (opaque reference only; no JWT/token)
 target_artifact_type
 requested_scope
 selected_template_refs       (TemplateSelectionRef list)
 scoped_context_refs
 allowed_file_boundaries
+allowed_tool_calls
+forbidden_credentials
 validation_requirements
 registration_expectation
 activation_policy_ref
+requires_developer_approval
 created_by_system_pack       (always true; enforced invariant)
+created_at
+```
+
+### `AuthorityBoundaryRecord` (conceptual)
+
+Expected fields/concepts:
+
+```text
+authority_decision_id
+requester_identity_ref          (opaque reference only; no JWT/token)
+authorized_scope
+allowed_actions
+denied_actions
+allowed_file_boundaries
+allowed_tool_calls
+credential_exposure_policy      (never_expose_to_model)
+activation_requires_developer
+ledger_ref
 created_at
 ```
 
@@ -360,6 +535,53 @@ latency_profile
 cost_profile
 availability                 (local | cloud | hybrid)
 cognitive_weight_tier        (lightweight | standard | frontier)
+last_verified
+```
+
+### `CiCdProviderAdapter` (conceptual)
+
+Expected fields/concepts:
+
+```text
+provider_id
+provider_type                  (github_actions | local_cli | forgejo | gitea | other)
+supported_triggers
+status_reporting_capability
+artifact_capability
+pull_request_capability
+runner_binding_model
+requires_external_network
+```
+
+### `ForgeProviderAdapter` (conceptual)
+
+Expected fields/concepts:
+
+```text
+forge_id
+forge_type                     (github | github_enterprise | forgejo | gitea | local_git | other)
+repository_ref
+change_request_ref             (pull_request | merge_request | patch | none)
+branch_management_capability
+comment_capability
+status_capability
+authentication_boundary
+```
+
+### `RunnerCapabilityProfile` (conceptual)
+
+Expected fields/concepts:
+
+```text
+runner_id
+runner_kind                    (github_hosted | self_hosted | local_cli | decentralized)
+labels
+available_tools
+network_policy
+secrets_policy
+model_access                   (none | local | internal | cloud | hybrid)
+artifact_storage
+is_ephemeral
 last_verified
 ```
 
@@ -420,7 +642,33 @@ staged_artifact_path
 all_sandbox_run_results
 repair_attempts
 hard_stop_escalation_id
+provenance_manifest_ref
 activation_status            (always: not_activated)
+requires_developer_approval  (true)
+created_at
+```
+
+### `CodingAgentProvenanceManifest` (conceptual)
+
+Expected fields/concepts:
+
+```text
+manifest_id
+job_id
+provider_adapter
+forge_adapter
+runner_profile
+base_ref
+head_ref
+base_sha
+head_sha
+model_policy
+network_policy
+secrets_policy
+commands_run
+files_changed
+artifacts_produced
+human_approval_required
 created_at
 ```
 
@@ -476,16 +724,46 @@ docs/
       manufactures/stages; System Pack governs approval/registration/activation.
 - [ ] Documentation states that mechanical success (passing sandbox tests) does
       not equal activation.
+- [ ] Documentation defines the Coding Agent authority air gap.
+- [ ] Documentation states that user JWTs, developer JWTs, production secrets,
+  deployment credentials, and ledger signing authority are never exposed to
+  model context.
+- [ ] Documentation states that operator/developer credentials are used by the
+  System Pack/runtime for authentication, authorization, tool-call access,
+  scoping, and ledgering, not by the generating model.
+- [ ] Documentation states that generated PRs or passing CI checks are staged
+  evidence, not production approval.
+- [ ] Documentation states that developer sign-off plus System Pack ledger
+  approval is required before activation/registration/production promotion.
+- [ ] Documentation states that GitHub Actions is a reference CI/CD adapter,
+  not a required Lumina backend.
+- [ ] Documentation preserves forge-neutrality: GitHub, GitHub Enterprise,
+  Forgejo/Gitea, local CLI, and future decentralized runners are treated as
+  adapter postures.
+- [ ] Documentation states that self-hosted runners are supported for private,
+  local, corporate, and decentralized execution.
+- [ ] Documentation states that GitHub integration must not imply public code,
+  GitHub-hosted execution, or external model inference.
+- [ ] Documentation identifies Lumina-owned responsibilities: task contract,
+  policy, provenance, and activation boundary.
+- [ ] Documentation adds conceptual contracts for authority boundaries, CI/CD
+  provider adapters, forge adapters, runner capability profiles, and
+  provenance manifests.
 - [ ] Documentation states that memory lessons do not autonomously mutate the
       system.
-- [ ] All eight conceptual contracts are documented:
+- [ ] All thirteen conceptual contracts are documented:
   - `CodingAgentJob`
+  - `AuthorityBoundaryRecord`
   - `MicroContextPacket`
   - `ModelCapabilityRecord`
+  - `CiCdProviderAdapter`
+  - `ForgeProviderAdapter`
+  - `RunnerCapabilityProfile`
   - `TemplateSelectionRef`
   - `SandboxRunResult`
   - `RepairAttemptRecord`
   - `CodingAgentBuildResult`
+  - `CodingAgentProvenanceManifest`
   - `CodingAgentMemoryLesson`
 - [ ] `docs/roadmap/README.md` includes a Slice 6 row in the Slice Index table.
 - [ ] `docs/MANIFEST.yaml` includes an entry for this file.
@@ -544,6 +822,18 @@ System Pack-only ingress is enforced. No other caller may invoke the Coding Agen
 The Coding Agent has no activation authority.
 The Coding Agent has no registration authority.
 The Coding Agent has no deployment authority.
+Authority is never delegated to the generating model.
+User JWTs, developer JWTs, production secrets, deployment credentials, and
+  ledger signing authority are never exposed to model context.
+The Coding Agent receives scoped jobs only; it cannot activate, register,
+  deploy, or promote its own output.
+A PR or passing CI result is staged evidence, not production approval.
+Developer sign-off and System Pack ledger approval are required before
+  activation.
+GitHub Actions may be the reference CI/CD adapter, but GitHub is not the Coding
+  Agent architecture. CI/CD control planes, forge hosts, runners, model
+  providers, and artifact stores are replaceable adapters. Lumina owns the task
+  contract, policy, provenance, and activation boundary.
 Mechanical correctness does not equal governance approval.
 Memory lessons do not autonomously mutate the system.
 Sandbox teardown failure is always escalated and ledgered.
@@ -567,3 +857,7 @@ Context presented to generating models is always structured, scoped, and
 | 13 | 3-Strike Error Recovery Loop |
 | 14 | BuildResult and Staging Contract |
 | 15 | Coding Agent Experiential Memory Pipeline |
+| 16 | CI/CD Provider Adapter Contract |
+| 17 | Forge Provider Adapter Contract |
+| 18 | Runner Capability Profile and Execution Postures |
+| 19 | Coding Agent Provenance Manifest Contract |
