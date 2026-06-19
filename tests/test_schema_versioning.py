@@ -102,14 +102,17 @@ class TestDocsFrontmatter:
 
 # ── MANIFEST coverage ───────────────────────────────────────────────────────
 
+
+@pytest.fixture(scope="class")
+def manifest() -> dict:
+    """Load MANIFEST.yaml once per test class."""
+    path = REPO_ROOT / "docs" / "MANIFEST.yaml"
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
 @pytest.mark.unit
 class TestManifestCoverage:
     """MANIFEST.yaml must track all core artifacts and have valid metadata."""
-
-    @pytest.fixture(scope="class")
-    def manifest(self) -> dict:
-        path = REPO_ROOT / "docs" / "MANIFEST.yaml"
-        return yaml.safe_load(path.read_text(encoding="utf-8"))
 
     def test_has_schema_version(self, manifest):
         assert "schema_version" in manifest
