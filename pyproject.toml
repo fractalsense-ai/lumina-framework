@@ -69,4 +69,6 @@ packages = ["src/lumina"]
 [tool.coverage.run]
 omit = [
     "*/systools/dsa_demo.py",
+    "*/systools/ppa_demo.py",
+    "*/controllers/ppa_demo.py",
 ]
