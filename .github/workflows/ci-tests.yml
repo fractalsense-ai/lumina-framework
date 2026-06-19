@@ -33,15 +33,16 @@ jobs:
 
       # Coverage ratchet history:
       #   ~69.96% baseline (PR #37) → 72% (PR #40) → 82% (PR O, 2026-06-19)
-      # Current baseline: ~82.04% on Python 3.13 (after PRs H, N, O omit hygiene).
-      # Continue raising toward 85% through focused test-hardening PRs;
+      #   → 85% (PR Z, 2026-06-19, after PRs S-Y: admin ops, interceptors,
+      #     pipeline commands, runtime helpers, coercion, SQLite persistence)
+      # Current baseline: ~85% on Python 3.13.
       # do not lower this threshold.
-      - name: Backend tests + coverage gate (>=82%)
+      - name: Backend tests + coverage gate (>=85%)
         run: >
           python -m pytest tests -q
           --cov=lumina
           --cov-report=term-missing
-          --cov-fail-under=82
+          --cov-fail-under=85
 
       - name: Setup Node
         uses: actions/setup-node@v4
