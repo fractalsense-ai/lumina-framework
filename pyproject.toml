@@ -68,7 +68,15 @@ packages = ["src/lumina"]
 
 [tool.coverage.run]
 omit = [
+    # Executable developer documentation — not product code
     "*/systools/dsa_demo.py",
     "*/systools/ppa_demo.py",
     "*/controllers/ppa_demo.py",
+    # Thin FastAPI app-factory/import glue — behavior is in the route modules
+    "*/services/admin/app.py",
+    "*/services/auth/app.py",
+    "*/services/dashboard/app.py",
+    "*/services/domain/app.py",
+    "*/services/ingestion/app.py",
+    "*/services/system_log/app.py",
 ]
