@@ -1252,6 +1252,30 @@ artifacts:
   status: active
   last_updated: 2026-04-04
   sha256: a766abd2992e805b02434ee52774817508fefb5437d8ee2f372fe8ec1fe64023
+- path: model-packs/coding-agent/modules/core/tool-adapters/read-file-adapter-v1.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 16a5a9d55e9ac9ddb630ce793a51fbc1c7ae2d620ec679de070e3e42b983a27b
+- path: model-packs/coding-agent/modules/core/tool-adapters/write-file-adapter-v1.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 66de66c13d9aa9aabb406fff4942a1eb806f20a727df52f834043a8eec1e30db
+- path: model-packs/coding-agent/modules/core/tool-adapters/run-tests-adapter-v1.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 08fc994258fc86cde7acb1a3b44fbd4348c87802fc17ebe428259c91f6da8c27
+- path: model-packs/coding-agent/modules/core/tool-adapters/stage-patch-adapter-v1.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 6af89453a31d2700dca5bf4f401876d7eab4652171632ef99325a5f3de44d6ba
 - path: model-packs/education/modules/domain-authority/tool-adapters/role-assignment-adapter-v1.yaml
   type: config
   doc_version: 1.0.0
