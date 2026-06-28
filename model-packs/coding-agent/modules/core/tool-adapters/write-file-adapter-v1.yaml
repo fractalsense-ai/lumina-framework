@@ -1,3 +1,5 @@
+ # version: 0.1.0
+ # last_updated: 2026-06-28
 id: adapter/ca/write-file/v1
 call_types: [write_file]
 input_schema:
