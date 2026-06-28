@@ -42,8 +42,12 @@ def domain_step(
     new_state = dict(state)
     new_state["turn_count"] = int(new_state.get("turn_count", 0)) + 1
 
-    boundary_violation = bool(evidence.get("authority_boundary_violation", False))
-    scope_valid = bool(evidence.get("job_scope_valid", False))
+    # Prefer micro-context if provided by the pre-interpreter
+    micro = evidence.get("micro_context") if isinstance(evidence.get("micro_context"), dict) else None
+    boundary_violation = bool(evidence.get("authority_boundary_violation", False)) or bool(
+        micro and micro.get("authority_boundary")
+    )
+    scope_valid = bool(evidence.get("job_scope_valid", False)) or bool(micro and micro.get("scope_valid"))
     patch_generated = bool(evidence.get("patch_generated", False))
     tests_passed = evidence.get("tests_passed")
 

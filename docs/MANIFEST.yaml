@@ -1630,6 +1630,18 @@ artifacts:
   status: active
   last_updated: 2026-06-28
   sha256: 83bfef3bdbdbb691900950b26334ae0a85dafadcf3f98409dfb9146fbe7928e7
+- path: model-packs/coding-agent/domain-lib/job_intake.py
+  type: code
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 0476461c73b048535e10ccce821a505ebff0bab92f7eefd3d5b60431cf97cb42
+- path: model-packs/coding-agent/domain-lib/micro_context.py
+  type: code
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 342a8794d1187b65b68630d1b2fa78200830506784fb7fc6ddaaed56ad455086
 - path: model-packs/coding-agent/modules/core/tool-adapters/read-file-adapter-v1.yaml
   type: config
   doc_version: 0.1.0
