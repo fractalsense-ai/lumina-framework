@@ -31,6 +31,7 @@ coverage.xml
 *.swo
 .idea/
 .vscode/
+hermesport/
 
 # Frontend (src/web/)
 src/web/node_modules/
