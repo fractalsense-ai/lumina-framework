@@ -1,0 +1,108 @@
+{
+  "id": "domain/ca/coding-agent-core/v1",
+  "version": "0.1.0",
+  "domain_authority": {
+    "name": "Lumina System Authority",
+    "role": "meta_authority"
+  },
+  "meta_authority_id": "domain/sys/system-core/v1",
+  "description": "Bounded coding-agent artifact factory. All task authority is delegated by the System Pack; this domain never self-authorizes work.",
+  "department": "Framework Engineering",
+  "lumina_core_version": "1.0.0",
+  "invariants": [
+    {
+      "id": "system_pack_sole_ingress",
+      "description": "Coding-agent jobs must originate from a System Pack-approved request scope.",
+      "severity": "critical",
+      "check": "job_scope_valid == true",
+      "standing_order_on_violation": "reject_out_of_scope"
+    },
+    {
+      "id": "no_authority_escalation_inside_pack",
+      "description": "The coding agent must not expand permissions, credentials, forge targets, or task scope on its own authority.",
+      "severity": "critical",
+      "check": "authority_boundary_violation == false",
+      "standing_order_on_violation": "request_system_scope"
+    },
+    {
+      "id": "validate_generated_artifacts",
+      "description": "Generated artifacts should be locally validated or explicitly marked unverified before completion.",
+      "severity": "warning",
+      "check": "patch_generated == false || tests_passed != false",
+      "standing_order_on_violation": "run_local_validation"
+    }
+  ],
+  "standing_orders": [
+    {
+      "id": "reject_out_of_scope",
+      "action": "reject_out_of_scope",
+      "trigger_condition": "system_pack_sole_ingress",
+      "max_attempts": 1,
+      "escalation_on_exhaust": true,
+      "description": "Reject work that is not backed by a System Pack-approved job scope."
+    },
+    {
+      "id": "request_system_scope",
+      "action": "request_system_scope",
+      "trigger_condition": "no_authority_escalation_inside_pack",
+      "max_attempts": 1,
+      "escalation_on_exhaust": true,
+      "description": "Ask the System Pack to restate or narrow the authorized work scope."
+    },
+    {
+      "id": "run_local_validation",
+      "action": "run_local_validation",
+      "trigger_condition": "validate_generated_artifacts",
+      "max_attempts": 2,
+      "escalation_on_exhaust": false,
+      "description": "Run focused local checks for generated changes before declaring completion."
+    },
+    {
+      "id": "stage_patch_for_review",
+      "action": "stage_patch_for_review",
+      "trigger_condition": "patch_generated == true && tests_passed == true",
+      "max_attempts": 1,
+      "escalation_on_exhaust": false,
+      "description": "Summarize validated changes for human or System Pack review."
+    }
+  ],
+  "escalation_triggers": [
+    {
+      "id": "repeated_boundary_violation",
+      "condition": "boundary_violations > 0",
+      "target_role": "meta_authority",
+      "sla_minutes": 30
+    },
+    {
+      "id": "validation_exhausted",
+      "condition": "validation_attempts >= 2 && tests_passed == false",
+      "target_role": "domain_authority",
+      "sla_minutes": 60
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "bounded_patch",
+      "name": "Bounded Patch",
+      "description": "A repository patch generated inside the approved job scope.",
+      "unlock_condition": "patch_generated == true && job_scope_valid == true",
+      "mastery_threshold": 0.8,
+      "skills_required": [
+        "inspect_scope",
+        "generate_patch"
+      ]
+    },
+    {
+      "id": "validated_patch",
+      "name": "Validated Patch",
+      "description": "A bounded patch with focused local validation completed.",
+      "unlock_condition": "patch_generated == true && tests_passed == true",
+      "mastery_threshold": 0.9,
+      "skills_required": [
+        "inspect_scope",
+        "generate_patch",
+        "validate_changes"
+      ]
+    }
+  ]
+}

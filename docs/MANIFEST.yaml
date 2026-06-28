@@ -1,5 +1,5 @@
 schema_version: 1.0.0
-last_updated: 2026-06-19
+last_updated: 2026-06-28
 artifacts:
 - path: docs/1-commands/README.md
   type: doc
@@ -1594,6 +1594,42 @@ artifacts:
   status: active
   last_updated: 2026-07-15
   sha256: 03af717ed3daaabbf019fc59d769b9ee23735fec10ee8893650f2eeddc1e0046
+- path: model-packs/coding-agent/pack.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 015d4c1d008555045d353ebcdca5297fdb1e244ddbfb83e66f5b4367598c83f5
+- path: model-packs/coding-agent/cfg/runtime-config.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 5d885123c0101e464205c7467e52024250eeb43e26d98925998358a136979332
+- path: model-packs/coding-agent/cfg/ui-config.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 009f97f9af1c5b2dbd71e588540bca3dde5e2aa03853301b4966c278f7652a15
+- path: model-packs/coding-agent/cfg/domain-profile-extension.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: ce3e5ac7c0842e1b68de070df07413a36349d5af526f93116ff6bba2fcb68236
+- path: model-packs/coding-agent/profiles/entity.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 70c9d2190e15750ea8ddf4aa009dbb98f91c3d1018d81ed59ced16fc4a6ff3d8
+- path: model-packs/coding-agent/modules/core/module-config.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 79f7cff8baec1e70075f8482e32b6321a4dc05aab7788e94cdc3e0b74b15afd3
 - path: examples/escalation-example-packet.yaml
   type: doc
   doc_version: 1.0.0
@@ -1732,3 +1768,9 @@ artifacts:
   status: active
   last_updated: 2026-06-19
   sha256: 183f1f7db4a902937e6067c5607cefb3e7a972c66970d14633cb700a88606976
+- path: docs/roadmap/slices/07-coding-agent-pack-skeleton.md
+  type: doc
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 153d4e78f0564c09fdcb29a27bbb53a67b2a33e221f9e9b26a035ceac66c014b

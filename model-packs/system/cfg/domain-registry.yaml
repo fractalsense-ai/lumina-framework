@@ -96,6 +96,21 @@ domains:
       - task
       - general
 
+  coding-agent:
+    runtime_config_path: model-packs/coding-agent/cfg/runtime-config.yaml
+    label: Coding Agent — Bounded Artifact Factory
+    description: Coding-agent model pack for System Pack-approved artifact generation, validation, and patch review.
+    module_prefix: ca
+    keywords:
+      - coding agent
+      - code generation
+      - artifact factory
+      - patch
+      - validation
+      - ci
+      - pull request
+      - repository
+
   # ── Template domain (commented out) ──────────────────────────────
   # Uncomment and customise when building a new domain from the template.
   # See: model-packs/template/README.md

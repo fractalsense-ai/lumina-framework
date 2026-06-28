@@ -1,0 +1,39 @@
+# ─── Coding Agent Core Module Configuration ──────────────────────────
+# Module sidecar for the initial coding-agent skeleton.
+#
+# version: 1.0.0
+# last_updated: 2026-06-28
+# ──────────────────────────────────────────────────────────────────────
+
+module_id: domain/ca/coding-agent-core/v1
+module_path: model-packs/coding-agent/modules/core
+domain_physics_path: model-packs/coding-agent/modules/core/domain-physics.json
+domain_system_prompt_path: model-packs/coding-agent/prompts/domain-persona-v1.md
+turn_interpretation_prompt_path: model-packs/coding-agent/domain-lib/reference/turn-interpretation-spec-v1.md
+local_only: true
+
+initial_module_state:
+  turn_count: 0
+  scoped_jobs_completed: 0
+  boundary_violations: 0
+  pending_validation: false
+
+default_task_spec:
+  task_id: coding-agent-skeleton-task
+  nominal_difficulty: 0.4
+  skills_required:
+    - inspect_scope
+    - generate_patch
+    - validate_changes
+
+domain_step_params:
+  max_boundary_violations: 1
+  require_scope_valid: true
+
+turn_input_defaults:
+  job_scope_valid: false
+  authority_boundary_violation: false
+  requested_files: []
+  patch_generated: false
+  tests_passed: null
+  confidence: 0.5

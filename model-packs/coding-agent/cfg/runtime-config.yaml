@@ -1,0 +1,99 @@
+# ─── Coding Agent Domain — Runtime Configuration ─────────────────────
+# Skeleton runtime config for a bounded artifact factory domain.
+# All executable jobs must arrive through the System Pack authority gate.
+#
+# version: 1.0.0
+# last_updated: 2026-06-28
+# ──────────────────────────────────────────────────────────────────────
+
+runtime:
+  global_system_prompt_path: docs/5-standards/global-system-prompt.md
+  domain_system_prompt_path: model-packs/coding-agent/prompts/domain-persona-v1.md
+  turn_interpretation_prompt_path: model-packs/coding-agent/domain-lib/reference/turn-interpretation-spec-v1.md
+
+  domain_physics_path: model-packs/coding-agent/modules/core/domain-physics.json
+  subject_profile_path: model-packs/coding-agent/profiles/entity.yaml
+
+  base_profile_path: model-packs/system/cfg/base-entity-profile.yaml
+  domain_profile_extension_path: model-packs/coding-agent/cfg/domain-profile-extension.yaml
+
+  profile_templates:
+    default: model-packs/coding-agent/profiles/entity.yaml
+
+  slm_weight_overrides:
+    turn_interpretation: low
+
+  module_map:
+    domain/ca/coding-agent-core/v1:
+      module_path: model-packs/coding-agent/modules/core
+
+  role_to_default_module:
+    root: domain/ca/coding-agent-core/v1
+    super_admin: domain/ca/coding-agent-core/v1
+    domain_authority: domain/ca/coding-agent-core/v1
+
+  domain_roles:
+    domain_authority: { tier: admin, label: "Coding Agent Domain Authority" }
+    operator:         { tier: operator, label: "Coding Agent Operator" }
+    observer:         { tier: guest, label: "Coding Agent Observer" }
+
+  access_control:
+    required_role: admin
+    min_tier: admin
+
+  turn_input_schema:
+    job_scope_valid:
+      type: bool
+      default: false
+      description: "Whether the requested work fits the System-approved job scope."
+    authority_boundary_violation:
+      type: bool
+      default: false
+      description: "Whether the turn asks the coding agent to bypass System Pack authority."
+    requested_files:
+      type: list
+      default: []
+      description: "Workspace-relative files or directories named by the job."
+    patch_generated:
+      type: bool
+      default: false
+      description: "Whether the current turn produced repository edits or patch artifacts."
+    tests_passed:
+      type: bool
+      nullable: true
+      default: null
+      description: "Known test status after generated changes; null means not yet verified."
+    confidence:
+      type: float
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: "Interpreter confidence that the job is bounded and actionable."
+
+  action_prompt_type_map:
+    reject_out_of_scope: authority_boundary_response
+    request_system_scope: scope_clarification
+    run_local_validation: validation_request
+    stage_patch_for_review: patch_summary
+
+  deterministic_templates:
+    task_presentation: "I can work on the approved coding task {task_id}."
+    authority_boundary_response: "This request must be routed through the System Pack authority gate."
+    scope_clarification: "Please provide the System-approved job scope for {task_id}."
+    validation_request: "I will run local validation for {task_id} before proposing completion."
+    patch_summary: "I staged the bounded patch for {task_id} and will report validation status."
+    default: "I will continue within the approved coding-agent job scope."
+
+adapters:
+  state_builder:
+    module_path: model-packs/coding-agent/controllers/runtime_adapters.py
+    callable: build_initial_state
+  domain_step:
+    module_path: model-packs/coding-agent/controllers/runtime_adapters.py
+    callable: domain_step
+  turn_interpreter:
+    module_path: model-packs/coding-agent/controllers/runtime_adapters.py
+    callable: interpret_turn_input
+  nlp_pre_interpreter:
+    module_path: model-packs/coding-agent/controllers/nlp_pre_interpreter.py
+    callable: pre_interpret

@@ -1,0 +1,17 @@
+# ─── Coding Agent Domain — Default Entity Profile ────────────────────
+# Layer 3 profile defaults for bounded coding-agent sessions.
+#
+# version: 1.0.0
+# last_updated: 2026-06-28
+# ──────────────────────────────────────────────────────────────────────
+
+preferences:
+  explanation_style: concise
+  validation_preference: focused_first
+
+entity_state:
+  active_task_id: null
+  total_sessions: 0
+  last_session_utc: null
+  completed_jobs: 0
+  rejected_boundary_requests: 0

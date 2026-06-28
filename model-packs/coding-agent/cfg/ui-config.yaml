@@ -1,0 +1,21 @@
+# ─── Coding Agent Domain — UI Configuration ──────────────────────────
+# Frontend metadata for the coding-agent pack skeleton.
+#
+# version: 1.0.0
+# last_updated: 2026-06-28
+# ──────────────────────────────────────────────────────────────────────
+
+ui_manifest:
+  title: "Project Lumina"
+  subtitle: "Coding Agent"
+  domain_label: "Coding Agent"
+  consent_heading: "Coding Agent Authority Boundary"
+  consent_text: "Coding Agent sessions are bounded artifact-generation tasks. All work must be authorized through the System Pack authority gate before execution."
+  consent_button_label: "I Acknowledge"
+  placeholder_text: "Describe the approved coding task..."
+  theme:
+    primary: "oklch(0.42 0.14 250)"
+    accent: "oklch(0.62 0.16 190)"
+    background: "oklch(0.97 0.01 250)"
+  panels: []
+  role_layouts: {}

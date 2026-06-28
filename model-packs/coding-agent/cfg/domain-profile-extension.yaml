@@ -1,0 +1,21 @@
+# ─── Coding Agent Domain — Domain Profile Extension ──────────────────
+# Layer 2 of the hierarchical profile system for coding-agent sessions.
+#
+# version: 1.0.0
+# last_updated: 2026-06-28
+# ──────────────────────────────────────────────────────────────────────
+
+consent:
+  accepted: false
+  consent_timestamp_utc: null
+  consent_version: null
+
+session_history:
+  total_sessions: 0
+  last_session_utc: null
+  total_turns: 0
+
+coding_agent:
+  authority_gate: system_pack_only
+  default_patch_mode: review_only
+  allow_live_model_calls: false

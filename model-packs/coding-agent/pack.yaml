@@ -1,0 +1,38 @@
+# ─── Coding Agent Domain Pack Manifest ───────────────────────────────
+# HMVC identity card for the bounded artifact factory domain.
+# The System Pack remains the sole ingress and authority gate.
+# ──────────────────────────────────────────────────────────────────────
+
+# version: 1.0.0
+# last_updated: 2026-06-28
+
+pack_id: coding-agent
+version: "0.1.0"
+description: "Coding Agent domain pack skeleton — bounded artifact generation behind the System Pack authority gate."
+
+layers:
+  model:
+    - modules/*/domain-physics.json
+    - domain-lib/
+  controller:
+    - controllers/runtime_adapters.py
+    - controllers/nlp_pre_interpreter.py
+  domain_lib:
+    - domain-lib/job_contracts.py
+    - domain-lib/reference/turn-interpretation-spec-v1.md
+  view:
+    - prompts/domain-persona-v1.md
+  docs:
+    - README.md
+    - CHANGELOG.md
+
+modules:
+  - core
+
+default_module: core
+
+entry_points:
+  runtime_config: cfg/runtime-config.yaml
+  ui_config: cfg/ui-config.yaml
+  runtime_adapter: controllers/runtime_adapters.py
+  nlp_pre_interpreter: controllers/nlp_pre_interpreter.py
