@@ -1,0 +1,12 @@
+domain_id: 'coding-agent'
+version: '0.1.0'
+invariants:
+  - 'No generated artifact may be activated without explicit System Pack authorization.'
+standing_orders:
+  - 'Accept only fully scoped CodingAgentJob inputs from the System Pack. Reject all other ingress.'
+escalation_triggers:
+  three_strike_failure:
+    action: 'hard stop + HITL'
+permissions:
+  mode: '770'
+tool_call_policies: {}

@@ -1,0 +1,12 @@
+pack_id: coding-agent
+version: "0.1.0"
+description: 'An authority-air-gapped artifact factory'
+layers:
+  model: 'model-packs/coding-agent/model'
+  controller: 'model-packs/coding-agent/controller'
+  domain_lib: 'model-packs/coding-agent/domain_lib'
+  view: 'model-packs/coding-agent/view'
+modules: [coding-agent-core]
+entry_points:
+  runtime_config: 'model-packs/coding-agent/runtime_config'
+  runtime_adapter: 'model-packs/coding-agent/runtime_adapter'
