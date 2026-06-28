@@ -1,13 +1,13 @@
 ---
 version: 1.0.0
-last_updated: 2026-06-18
+last_updated: 2026-06-28
 ---
 
 # Lumina Framework Roadmap
 
 **Version:** 1.0.0
 **Status:** Active
-**Last updated:** 2026-06-18
+**Last updated:** 2026-06-28
 
 ---
 
@@ -32,6 +32,9 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [04](slices/04-system-pack-authority-gate.md) | System Pack Authority Gate | Active |
 | [05](slices/05-system-pack-sole-coding-agent-ingress.md) | System Pack as Sole Coding Agent Ingress | Active |
 | [06](slices/06-coding-agent-model-pack-architecture-v2.md) | Coding Agent Model Pack Architecture V2 | Active |
+| [07](slices/07-coding-agent-pack-skeleton.md) | Coding Agent Pack Skeleton | Delivered |
+| [08](slices/08-job-intake-micro-context.md) | Job Intake and Micro-Context Injector | Delivered |
+| [09](slices/09-context-staging-and-job-interpretation.md) | Context Staging and Job Interpretation | Planned |
 
 ---
 
