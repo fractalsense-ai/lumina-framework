@@ -1605,7 +1605,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 920f013e477501c3a2ba0df1f455f6477beebcd853d18277d64993534d9969d9
+  sha256: a2d0b562422d780e8417461db21d7d428137bdcb376a9fc581704ec3d93f4097
 - path: model-packs/coding-agent/cfg/ui-config.yaml
   type: config
   doc_version: 0.1.0

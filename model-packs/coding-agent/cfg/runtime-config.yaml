@@ -144,3 +144,17 @@ model_hints:
   tier_1_hint: gpt-5.5-class
   tier_2_hint: sonnet-4.6-class
   tier_3_hint: qwen-2.5-14b-awq
+
+tools:
+  adapter/ca/read-file/v1:
+    backing_function: read_file_tool
+    module: tool_adapters
+  adapter/ca/write-file/v1:
+    backing_function: write_file_tool
+    module: tool_adapters
+  adapter/ca/run-tests/v1:
+    backing_function: run_tests_tool
+    module: tool_adapters
+  adapter/ca/stage-patch/v1:
+    backing_function: stage_patch_tool
+    module: tool_adapters

@@ -112,8 +112,16 @@
     "adapter/ca/run-tests/v1",
     "adapter/ca/stage-patch/v1"
   ],
-  "standing_order_tools": {
-    "run_local_validation": ["adapter/ca/run-tests/v1"],
-    "stage_patch_for_review": ["adapter/ca/stage-patch/v1"]
+  "execution_policy": {
+    "precompiled_routes": {
+      "standing_order_tools": {
+        "run_local_validation": {
+          "tool_chain": ["adapter/ca/run-tests/v1"]
+        },
+        "stage_patch_for_review": {
+          "tool_chain": ["adapter/ca/stage-patch/v1"]
+        }
+      }
+    }
   }
 }
