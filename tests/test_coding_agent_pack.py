@@ -74,6 +74,18 @@ class TestCodingAgentPackFiles:
             assert adapters[adapter_name]["module_path"] == "model-packs/coding-agent/controllers/runtime_adapters.py"
             assert adapters[adapter_name]["callable"]
 
+    def test_tools_registered_in_runtime_config(self):
+        data = _load_yaml(PACK / "cfg" / "runtime-config.yaml")
+        tools = data.get("tools", {})
+        expected = [
+            "adapter/ca/read-file/v1",
+            "adapter/ca/write-file/v1",
+            "adapter/ca/run-tests/v1",
+            "adapter/ca/stage-patch/v1",
+        ]
+        for t in expected:
+            assert t in tools
+
 
 @pytest.mark.base_framework
 class TestCodingAgentAdapters:
@@ -164,3 +176,15 @@ class TestCodingAgentPhysicsAndRegistry:
         entry = registry["domains"]["coding-agent"]
         assert entry["runtime_config_path"] == "model-packs/coding-agent/cfg/runtime-config.yaml"
         assert entry["module_prefix"] == "ca"
+
+    def test_tool_adapters_listed_in_physics(self):
+        physics = _load_json(PHYSICS_PATH)
+        assert "tool_adapters" in physics
+        adapters = set(physics["tool_adapters"])
+        for expected in (
+            "adapter/ca/read-file/v1",
+            "adapter/ca/write-file/v1",
+            "adapter/ca/run-tests/v1",
+            "adapter/ca/stage-patch/v1",
+        ):
+            assert expected in adapters

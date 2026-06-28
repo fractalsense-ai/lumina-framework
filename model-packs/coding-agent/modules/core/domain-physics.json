@@ -105,4 +105,15 @@
       ]
     }
   ]
+  ,
+  "tool_adapters": [
+    "adapter/ca/read-file/v1",
+    "adapter/ca/write-file/v1",
+    "adapter/ca/run-tests/v1",
+    "adapter/ca/stage-patch/v1"
+  ],
+  "standing_order_tools": {
+    "run_local_validation": ["adapter/ca/run-tests/v1"],
+    "stage_patch_for_review": ["adapter/ca/stage-patch/v1"]
+  }
 }

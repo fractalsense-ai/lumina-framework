@@ -1,0 +1,21 @@
+id: adapter/ca/read-file/v1
+call_types: [read_file]
+input_schema:
+  type: object
+  properties:
+    path:
+      type: string
+  required: [path]
+output_schema:
+  type: object
+  properties:
+    read_ok:
+      type: boolean
+    content:
+      type: string
+authorization:
+  who_may_call: [orchestrator]
+  logged_in_system_log: true
+error_handling:
+  on_failure: fallback_to_standing_order
+  fallback_standing_order_id: run_local_validation

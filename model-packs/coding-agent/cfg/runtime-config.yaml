@@ -97,3 +97,50 @@ adapters:
   nlp_pre_interpreter:
     module_path: model-packs/coding-agent/controllers/nlp_pre_interpreter.py
     callable: pre_interpret
+  tools:
+    # Tool adapters registered by adapter id -> backing function
+    adapter/ca/read-file/v1:
+      backing_function: read_file_tool
+      module: tool_adapters
+    adapter/ca/write-file/v1:
+      backing_function: write_file_tool
+      module: tool_adapters
+    adapter/ca/run-tests/v1:
+      backing_function: run_tests_tool
+      module: tool_adapters
+    adapter/ca/stage-patch/v1:
+      backing_function: stage_patch_tool
+      module: tool_adapters
+
+tier_routing:
+  architecture_planning:
+    tier: 1
+    weight: high
+  api_ingestion:
+    tier: 1
+    weight: high
+  feature_planning:
+    tier: 2
+    weight: high
+  code_execution:
+    tier: 3
+    weight: low
+  run_tests:
+    tier: 3
+    weight: low
+
+context_routing:
+  tier_1:
+    knowledge_retrieval: true
+    sequential_thinking: false
+  tier_2:
+    knowledge_retrieval: true
+    sequential_thinking: false
+  tier_3:
+    knowledge_retrieval: false
+    sequential_thinking: true
+
+model_hints:
+  tier_1_hint: gpt-5.5-class
+  tier_2_hint: sonnet-4.6-class
+  tier_3_hint: qwen-2.5-14b-awq
