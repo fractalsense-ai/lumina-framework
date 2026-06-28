@@ -1,0 +1,29 @@
+ # version: 0.1.0
+ # last_updated: 2026-06-28
+id: adapter/ca/run-tests/v1
+call_types: [run_tests]
+input_schema:
+  type: object
+  properties:
+    commands:
+      type: array
+      items:
+        type: string
+  required: [commands]
+output_schema:
+  type: object
+  properties:
+    tests_passed:
+      type: boolean
+authorization:
+  who_may_call: [orchestrator]
+  logged_in_system_log: true
+allowed_tools:
+  - run_terminal
+denied_tools:
+  - git_commit
+  - git_push
+  - deploy
+error_handling:
+  on_failure: fallback_to_standing_order
+  fallback_standing_order_id: run_local_validation

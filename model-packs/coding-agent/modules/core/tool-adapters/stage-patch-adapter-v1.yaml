@@ -1,0 +1,35 @@
+ # version: 0.1.0
+ # last_updated: 2026-06-28
+id: adapter/ca/stage-patch/v1
+call_types: [stage_patch]
+input_schema:
+  type: object
+  properties:
+    files:
+      type: array
+      items:
+        type: string
+  required: [files]
+output_schema:
+  type: object
+  properties:
+    staged:
+      type: boolean
+    files:
+      type: array
+      items:
+        type: string
+authorization:
+  who_may_call: [orchestrator]
+  logged_in_system_log: true
+allowed_tools:
+  - git_add
+denied_tools:
+  - git_commit
+  - git_push
+  - deploy
+  - ssh
+  - credentials
+error_handling:
+  on_failure: fallback_to_standing_order
+  fallback_standing_order_id: request_system_scope

@@ -1,0 +1,28 @@
+ # version: 0.1.0
+ # last_updated: 2026-06-28
+id: adapter/ca/write-file/v1
+call_types: [write_file]
+input_schema:
+  type: object
+  properties:
+    path:
+      type: string
+    contents:
+      type: string
+  required: [path, contents]
+output_schema:
+  type: object
+  properties:
+    write_ok:
+      type: boolean
+authorization:
+  who_may_call: [orchestrator]
+  logged_in_system_log: true
+denied_tools:
+  - run_terminal
+  - git_commit
+  - git_push
+  - deploy
+error_handling:
+  on_failure: fallback_to_standing_order
+  fallback_standing_order_id: request_system_scope

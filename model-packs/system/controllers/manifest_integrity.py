@@ -51,7 +51,11 @@ _LAST_UPDATED_TOP_RE = re.compile(r"^(last_updated:[ \t]+)\S+")
 # ─────────────────────────────────────────────────────────────
 
 def _sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    # Normalise CRLF → LF so hashes are identical on Windows and Linux.
+    # Git stores files with LF; without this, regen on Windows produces hashes
+    # that mismatch on CI (Ubuntu) where files are checked out with LF endings.
+    data = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 
 def _parse_artifacts(manifest_path: Path) -> list[dict[str, str]]:

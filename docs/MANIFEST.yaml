@@ -1,4 +1,4 @@
-schema_version: 1.0.0
+﻿schema_version: 1.0.0
 last_updated: 2026-06-28
 artifacts:
 - path: docs/1-commands/README.md
@@ -21,7 +21,7 @@ artifacts:
   doc_version: 1.3.0
   status: active
   last_updated: 2026-03-31
-  sha256: 76ce9b1c7a01e049ed95231f5084efb80630707ce61364b3cbc70724952ec2fc
+  sha256: c1943a464d082a72ab8f7b0f46aaa69c997e29db316a3eaefe613515d3d6e201
 - path: docs/1-commands/integrity-check.md
   type: doc
   section: 1
@@ -147,14 +147,14 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-12
-  sha256: 9e7ac6895bfcb334a30ad032ffbe483020a059418933a07e70e18678f497d11b
+  sha256: a6e9be21b12b49d5be6f6e20591f59d53628112d7fa44f240548113d69c2e75d
 - path: docs/4-formats/tool-adapter-versioning.md
   type: doc
   section: 4
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-12
-  sha256: d65dfd92acf897d1e8d1bfe1a0015246f03d7e32949a9f5931afb8581e704a68
+  sha256: e7bad43cda2433825a93da8487aeaa7dada8e9689eed2c50eb2e5b80209afcb6
 - path: docs/5-standards/README.md
   type: doc
   section: 5
@@ -175,14 +175,14 @@ artifacts:
   doc_version: 1.1.0
   status: active
   last_updated: 2026-04-16
-  sha256: 320f61d3dadc908173544945e4c5be32870917ca55b893cd5d2f24dea7d0b06c
+  sha256: 4156c39dc87c7c25057ef113f18820050805605b3ffac647c851fc1f54a6d35d
 - path: docs/5-standards/domain-library-lifecycle.md
   type: doc
   section: 5
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-12
-  sha256: a8241625a6cf62a6387d0e3869eea8a20b4835e8969403f2887456b376788871
+  sha256: f713ab51ffcb7afb72737c7214fc8298447a9bff48379de74918ac08d5a5eac1
 - path: docs/6-examples/README.md
   type: doc
   section: 6
@@ -561,7 +561,7 @@ artifacts:
   doc_version: 1.1.0
   status: active
   last_updated: 2026-03-15
-  sha256: 909a04fb6cd2782ecffa4f3329a0b54a42e7e65d033a1573696de3f9245cd58f
+  sha256: 85aeea68dacbe5ae9f4aa4e6e1d6c468ca61d9173caa9b266c7a4cb42eaddfec
 - path: docs/8-admin/system-domain-operations.md
   type: doc
   section: 8
@@ -717,7 +717,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-08
-  sha256: 9bd1fd87d44d7d9412495f89948326ad9dd562eff7a1f11c719a99539ec6776b
+  sha256: d7c3159bd28f52816ef7a6881e7ba4710df8cc501b8d248ad9e9f6b734968aa2
 - path: standards/domain-role-schema-v1.json
   type: schema
   doc_version: 1.0.0
@@ -1047,7 +1047,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-20
-  sha256: fe9d7b2468639893d1e1081d3d50b4723ef10c128e115dda3a770abac9230003
+  sha256: dd9b7533b0bfd817a1a595d04e2563b8fee98105cc9b52539d3836dcd12d6932
 - path: model-packs/system/cfg/system-physics.json
   type: config
   doc_version: 1.0.0
@@ -1599,37 +1599,61 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 015d4c1d008555045d353ebcdca5297fdb1e244ddbfb83e66f5b4367598c83f5
+  sha256: 419db37ca2b646a20c6b6f1daca99b44320976a56762a5a0a82e6fe10f65681d
 - path: model-packs/coding-agent/cfg/runtime-config.yaml
   type: config
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 5d885123c0101e464205c7467e52024250eeb43e26d98925998358a136979332
+  sha256: fbaa8c23abe16afb482835c1497ea1852c264b722941ca038a3d464b36ffa095
 - path: model-packs/coding-agent/cfg/ui-config.yaml
   type: config
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 009f97f9af1c5b2dbd71e588540bca3dde5e2aa03853301b4966c278f7652a15
+  sha256: 774a5017f6d9f2b0a96ce0a5950bc2cbfcbed504c1c14f1b5c5eb73058225587
 - path: model-packs/coding-agent/cfg/domain-profile-extension.yaml
   type: config
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: ce3e5ac7c0842e1b68de070df07413a36349d5af526f93116ff6bba2fcb68236
+  sha256: a3287b0e79890df54da9bde1e1dff6f3ff99d37017aea665dc3b81596bf1d9c0
 - path: model-packs/coding-agent/profiles/entity.yaml
   type: config
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 70c9d2190e15750ea8ddf4aa009dbb98f91c3d1018d81ed59ced16fc4a6ff3d8
+  sha256: 06730dabfda42758406a3880c401080519355a74dae39628eab69ee4c4215eea
 - path: model-packs/coding-agent/modules/core/module-config.yaml
   type: config
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 79f7cff8baec1e70075f8482e32b6321a4dc05aab7788e94cdc3e0b74b15afd3
+  sha256: 83bfef3bdbdbb691900950b26334ae0a85dafadcf3f98409dfb9146fbe7928e7
+- path: model-packs/coding-agent/modules/core/tool-adapters/read-file-adapter-v1.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 41a8296be322b9de02dfc06f4a91530651352c1b7aab638cd921e11aade844f5
+- path: model-packs/coding-agent/modules/core/tool-adapters/write-file-adapter-v1.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: fc4f184cf6c963edede3671f3ba9e01bc29e33f3d9c9fa4c19c6d744a6343905
+- path: model-packs/coding-agent/modules/core/tool-adapters/run-tests-adapter-v1.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: b0f424fb3730ac51c0568cc7774aa4c7ca6107a1e15c631f4a48337d9cb5db62
+- path: model-packs/coding-agent/modules/core/tool-adapters/stage-patch-adapter-v1.yaml
+  type: config
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 5b2c5f4734e9c9c32c25a684d253f5f6d1e47ad2710d3e356edd74db83740742
 - path: examples/escalation-example-packet.yaml
   type: doc
   doc_version: 1.0.0
@@ -1773,4 +1797,4 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-28
-  sha256: 153d4e78f0564c09fdcb29a27bbb53a67b2a33e221f9e9b26a035ceac66c014b
+  sha256: a9c4ba94f5f1206a59a9108f37a60d4a1c7ba336f37b3763d2f387f119a968fa

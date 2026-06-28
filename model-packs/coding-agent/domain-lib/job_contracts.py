@@ -23,6 +23,7 @@ class CodingAgentJob:
         "authority_expansion",
         "unapproved_deploy",
     )
+    task_graph: tuple[object, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -34,3 +35,23 @@ class CodingAgentResult:
     validation_status: str = "not_run"
     summary: str = ""
     evidence: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TaskNode:
+    """Represents a single task node in a deterministic DAG handed to the pack.
+
+    Lightweight and intentionally generic — `mcp_tools` is a placeholder for
+    future MCP integration.
+    """
+
+    task_id: str
+    task_type: str
+    tier: int
+    allowed_tools: tuple[str, ...] = ()
+    denied_tools: tuple[str, ...] = ()
+    blocked_by: tuple[str, ...] = ()
+    success_emit: str | None = None
+    fail_emit: str | None = None
+    context_mode: str = "rag"
+    mcp_tools: tuple[str, ...] = ()

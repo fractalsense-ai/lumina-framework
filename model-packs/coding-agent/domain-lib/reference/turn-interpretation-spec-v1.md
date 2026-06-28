@@ -1,3 +1,5 @@
+# version: 0.1.0
+# last_updated: 2026-06-28
 # Coding Agent Turn Interpretation Spec V1
 
 The turn interpreter emits bounded evidence for coding-agent governance. It must not authorize new scope, request credentials, select a forge provider, or claim tests passed unless local validation has actually run.
