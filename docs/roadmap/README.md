@@ -36,6 +36,8 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [08](slices/08-job-intake-micro-context.md) | Job Intake and Micro-Context Injector | Delivered |
 | [09](slices/09-context-staging-and-job-interpretation.md) | Context Staging and Job Interpretation | Delivered |
 | [10](slices/10-tool-call-policy-enforcement.md) | Tool-Call Policy Enforcement & Real Test Runner | Delivered |
+| [11](slices/11-three-tier-execution-interface.md) | Three-tier Execution Interface | Delivered |
+| [12](slices/12-tier-2-decomposer.md) | Tier-2 Decomposer & DAG Planner | Planned |
 
 ---
 

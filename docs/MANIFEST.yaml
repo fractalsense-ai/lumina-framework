@@ -1599,7 +1599,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 0476126cd3f7010a4a480e5e800d5b355dc04085050243cef994f8926d3ae554
+  sha256: 62c14e0e27c80f9ffae166af4f5d0204fc8ec0146115374c9e83ae7364b5656d
 - path: model-packs/coding-agent/cfg/runtime-config.yaml
   type: config
   doc_version: 0.1.0
@@ -1768,7 +1768,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: 6343dc363118905ab017b0301f529e36e60729dadf9a943bf6268f2dbfdd0368
+  sha256: 7f55e900a3a0a1be747b306f3fbc2f26d44073d028a73fbc2850606b1495dc87
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
