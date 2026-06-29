@@ -34,7 +34,8 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [06](slices/06-coding-agent-model-pack-architecture-v2.md) | Coding Agent Model Pack Architecture V2 | Active |
 | [07](slices/07-coding-agent-pack-skeleton.md) | Coding Agent Pack Skeleton | Delivered |
 | [08](slices/08-job-intake-micro-context.md) | Job Intake and Micro-Context Injector | Delivered |
-| [09](slices/09-context-staging-and-job-interpretation.md) | Context Staging and Job Interpretation | Planned |
+| [09](slices/09-context-staging-and-job-interpretation.md) | Context Staging and Job Interpretation | Delivered |
+| [10](slices/10-tool-call-policy-enforcement.md) | Tool-Call Policy Enforcement & Real Test Runner | Delivered |
 
 ---
 

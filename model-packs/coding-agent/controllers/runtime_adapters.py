@@ -42,6 +42,44 @@ def domain_step(
     new_state = dict(state)
     new_state["turn_count"] = int(new_state.get("turn_count", 0)) + 1
 
+    # Policy gate: if a tool_call is present in evidence, check deny-by-default policy
+    tool_call = evidence.get("tool_call") if isinstance(evidence.get("tool_call"), dict) else None
+    if tool_call:
+        try:
+            import importlib.util, pathlib
+
+            tp_path = pathlib.Path(__file__).parent.parent / "domain-lib" / "tool_policies.py"
+            spec = importlib.util.spec_from_file_location("coding_agent_tool_policies", str(tp_path))
+            tp = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(tp)
+
+            registered = [
+                "adapter/ca/read-file/v1",
+                "adapter/ca/write-file/v1",
+                "adapter/ca/run-tests/v1",
+                "adapter/ca/stage-patch/v1",
+            ]
+            policy = tp.build_default_policy(registered)
+            req = tp.ToolCallRequest(tool_id=tool_call.get("tool_id"), payload=tool_call.get("payload", {}), caller_context=tool_call.get("caller_context", {}))
+            allowed, reason = tp.check_tool_call(req, policy)
+            if not allowed:
+                return new_state, {
+                    "tier": "critical",
+                    "action": "reject_unauthorized_tool",
+                    "frustration": False,
+                    "escalation_eligible": False,
+                    "reason": reason,
+                }
+        except Exception:
+            # If policy module fails to load, fallback to safe behavior: deny
+            return new_state, {
+                "tier": "critical",
+                "action": "reject_unauthorized_tool",
+                "frustration": False,
+                "escalation_eligible": False,
+                "reason": "policy_load_failure",
+            }
+
     # Prefer micro-context if provided by the pre-interpreter
     micro = evidence.get("micro_context") if isinstance(evidence.get("micro_context"), dict) else None
     boundary_violation = bool(evidence.get("authority_boundary_violation", False)) or bool(

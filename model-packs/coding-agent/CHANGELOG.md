@@ -19,3 +19,11 @@
 
 - Design for Slice 9: `context_staging.py`, `job_interpreter.py`, `change_request.py` (planned). 
 - Added tests for hermes abstractions: `tests/test_coding_agent_hermes_abstractions.py` (planned execution in Slice 9).
+
+## 0.4.0 — 2026-06-28
+
+- Slice 10: Tool-call policy enforcement and real test runner
+- Added `domain-lib/tool_policies.py`: deny-by-default tool-call policy builder and checker
+- Replaced `controllers/tool_adapters.py::run_tests_tool()` with a safe subprocess-backed runner guarded by an explicit command allowlist
+- Wired policy check in `controllers/runtime_adapters.py::domain_step()` to reject unauthorized tool calls
+- Added `tests/test_coding_agent_tool_policies.py` covering policy logic and safe test runner behavior

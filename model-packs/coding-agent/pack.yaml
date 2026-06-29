@@ -7,7 +7,7 @@
 # last_updated: 2026-06-28
 
 pack_id: coding-agent
-version: "0.1.0"
+version: "0.4.0"
 description: "Coding Agent domain pack skeleton — bounded artifact generation behind the System Pack authority gate."
 
 layers:
@@ -19,6 +19,9 @@ layers:
     - controllers/nlp_pre_interpreter.py
   domain_lib:
     - domain-lib/job_contracts.py
+    - domain-lib/context_staging.py
+    - domain-lib/change_request.py
+    - domain-lib/tool_policies.py
     - domain-lib/reference/turn-interpretation-spec-v1.md
   view:
     - prompts/domain-persona-v1.md
