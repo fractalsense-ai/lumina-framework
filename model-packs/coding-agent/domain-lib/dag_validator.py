@@ -2,7 +2,22 @@ from __future__ import annotations
 
 from typing import List
 
-from . import tier_contracts
+# Robust imports: allow module to be loaded as a standalone file during tests
+try:
+    from . import tier_contracts
+except Exception:
+    import importlib.util
+    import pathlib
+    import sys
+
+    base = pathlib.Path(__file__).parent
+    tc_path = base / "tier_contracts.py"
+    if not tc_path.exists():
+        tc_path = base.parent / "domain-lib" / "tier_contracts.py"
+    spec = importlib.util.spec_from_file_location("coding_agent_tier_contracts", str(tc_path))
+    tier_contracts = importlib.util.module_from_spec(spec)
+    sys.modules["coding_agent_tier_contracts"] = tier_contracts
+    spec.loader.exec_module(tier_contracts)
 
 
 def validate_dag(dag: tier_contracts.PlanDAG) -> List[str]:

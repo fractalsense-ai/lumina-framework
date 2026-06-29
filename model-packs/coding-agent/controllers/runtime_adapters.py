@@ -120,19 +120,24 @@ def domain_step(
             "reason": "validated_patch",
         }
 
-    return new_state, {
-        "tier": "ok",
-        "action": None,
-        "frustration": False,
-        "escalation_eligible": False,
-        "reason": task_spec.get("task_id", "coding_agent_step"),
-    }
-    # If the evidence contains a task_slice, dispatch to the execution tier
+    # Prioritise execution-phase dispatch when a `task_slice` is present
     if evidence and evidence.get("task_slice"):
         try:
             from model_packs.coding_agent.controllers import tier_dispatcher as _td
         except Exception:
-            return {"action": "dispatch_failed", "reason": "dispatcher_missing"}
+            # robust fallback: load by path
+            try:
+                import importlib.util, pathlib, sys
+
+                td_path = pathlib.Path(__file__).parent / "controllers" / "tier_dispatcher.py"
+                if not td_path.exists():
+                    td_path = pathlib.Path(__file__).parent.parent / "controllers" / "tier_dispatcher.py"
+                spec = importlib.util.spec_from_file_location("coding_agent_tier_dispatcher", str(td_path))
+                _td = importlib.util.module_from_spec(spec)
+                sys.modules["coding_agent_tier_dispatcher"] = _td
+                spec.loader.exec_module(_td)
+            except Exception:
+                return new_state, {"action": "dispatch_failed", "reason": "dispatcher_missing"}
 
         # execution_tier expected from micro_context if present
         execution_tier = None
@@ -142,7 +147,39 @@ def domain_step(
             execution_tier = 3
 
         dispatch_result = _td.dispatch_to_tier(int(execution_tier), evidence.get("task_slice"))
-        return {"action": "dispatched", "dispatch_result": dispatch_result}
+        return new_state, {"action": "dispatched", "dispatch_result": dispatch_result}
+
+    # Tier-2 planning: if micro-context prefers tier 2 and a job payload exists, decompose
+    micro = evidence.get("micro_context") or {}
+    execution_tier = micro.get("execution_tier") if isinstance(micro, dict) else None
+    if execution_tier == 2 and evidence.get("job"):
+        try:
+            from model_packs.coding_agent.controllers import tier_dispatcher as _td
+        except Exception:
+            try:
+                import importlib.util, pathlib, sys
+
+                td_path = pathlib.Path(__file__).parent / "controllers" / "tier_dispatcher.py"
+                if not td_path.exists():
+                    td_path = pathlib.Path(__file__).parent.parent / "controllers" / "tier_dispatcher.py"
+                spec = importlib.util.spec_from_file_location("coding_agent_tier_dispatcher", str(td_path))
+                _td = importlib.util.module_from_spec(spec)
+                sys.modules["coding_agent_tier_dispatcher"] = _td
+                spec.loader.exec_module(_td)
+            except Exception:
+                return new_state, {"tier": "critical", "action": "decompose_failed", "reason": "dispatcher_missing"}
+
+        job = evidence.get("job")
+        dispatch_result = _td.dispatch_to_tier(2, job)
+        return new_state, {"tier": "decomposed", "action": "decompose_job", "dispatch_result": dispatch_result}
+
+    return new_state, {
+        "tier": "ok",
+        "action": None,
+        "frustration": False,
+        "escalation_eligible": False,
+        "reason": task_spec.get("task_id", "coding_agent_step"),
+    }
 
 
 def _strip_markdown_fences(raw: str) -> str:

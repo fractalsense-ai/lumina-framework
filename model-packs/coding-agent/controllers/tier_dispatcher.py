@@ -47,6 +47,49 @@ def _resolve_tool_registry() -> Dict[str, Any]:
 def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
     registry = _resolve_tool_registry()
 
+    # Tier-2: perform decomposition/planning and return a PlanDAG + TaskSlices
+    if tier == 2:
+        try:
+            # task_slice will be the job payload when called from runtime
+            job = task_slice if isinstance(task_slice, dict) else {}
+            # robust import of decomposer & validator (pack may be loaded as file)
+            try:
+                from ..domain_lib import tier2_decomposer, dag_validator
+            except Exception:
+                import importlib.util, pathlib, sys
+
+                base = pathlib.Path(__file__).parent
+                dec_path = base.parent / "domain-lib" / "tier2_decomposer.py"
+                spec = importlib.util.spec_from_file_location("coding_agent_tier2_decomposer", str(dec_path))
+                tier2_decomposer = importlib.util.module_from_spec(spec)
+                sys.modules["coding_agent_tier2_decomposer"] = tier2_decomposer
+                spec.loader.exec_module(tier2_decomposer)
+
+                val_path = base.parent / "domain-lib" / "dag_validator.py"
+                spec = importlib.util.spec_from_file_location("coding_agent_dag_validator", str(val_path))
+                dag_validator = importlib.util.module_from_spec(spec)
+                sys.modules["coding_agent_dag_validator"] = dag_validator
+                spec.loader.exec_module(dag_validator)
+
+            dag, node_tools = tier2_decomposer.decompose_job(job)
+            errors = dag_validator.validate_dag(dag)
+            allowed = job.get("allowed_tools") or [
+                "adapter/ca/read-file/v1",
+                "adapter/ca/write-file/v1",
+                "adapter/ca/run-tests/v1",
+                "adapter/ca/stage-patch/v1",
+            ]
+            slices = tier2_decomposer.assign_task_slices(dag, node_tools, allowed)
+            return {
+                "tier": 2,
+                "dispatched": True,
+                "plan": dag.to_dict(),
+                "task_slices": [s.to_dict() for s in slices],
+                "validation": errors,
+            }
+        except Exception as exc:
+            return {"tier": 2, "dispatched": False, "reason": f"decompose_failed: {exc}"}
+
     if tier != 3:
         return {"tier": tier, "dispatched": False, "reason": "not_implemented_yet"}
 
