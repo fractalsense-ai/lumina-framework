@@ -88,12 +88,51 @@ def topological_sort(dag: tier_contracts.PlanDAG) -> List[tier_contracts.PlanNod
 
 
 def _estimate_tokens_for_node(node: tier_contracts.PlanNode) -> int:
-    """Rudimentary token-estimate: base + length-based cost.
+    """Token estimate improved with length, priority, tool-costs, and dependency awareness.
 
-    This is intentionally conservative and deterministic so tests remain stable.
+    Parameters are intentionally deterministic so tests remain stable. The
+    function accepts optional context via `node_tools` and `dag` when callers
+    have that information; otherwise falls back to conservative defaults.
     """
-    base = 50
-    length_cost = max(0, len(node.description or "") // 4)
+    import math
+
+    def _tool_weight(toolid: str) -> int:
+        # lightweight cost model for adapters; defaults to 20 for unknown adapters
+        weights = {
+            "adapter/ca/run-tests/v1": 60,
+            "adapter/ca/read-file/v1": 10,
+            "adapter/ca/write-file/v1": 20,
+            "adapter/ca/stage-patch/v1": 40,
+        }
+        return weights.get(toolid, 20)
+
+    base = 40
+    length_cost = max(0, len(node.description or "") // 6)
+
+    # priority adjustment: higher tier_hint reduces effective cost
+    tier_hint = getattr(node, "tier_hint", 2) if hasattr(node, "tier_hint") else 2
+    priority_adjust = int(tier_hint) * 6
+
+    # default tool cost is zero unless node_tools and dag are provided by caller
+    tool_cost = 0
+    dep_adjust = 0
+    try:
+        # node_tools and dag may be attached to the node for callers that pass them
+        node_tools = getattr(node, "_node_tools", None)
+    except Exception:
+        node_tools = None
+
+    if node_tools and isinstance(node_tools, dict):
+        for t in node_tools.get(node.node_id, []):
+            tool_cost += _tool_weight(t)
+
+    # dependency awareness: prefer nodes with many downstream dependents (lower cost)
+    if hasattr(node, "_dependents_map") and isinstance(node._dependents_map, dict):
+        dep_count = node._dependents_map.get(node.node_id, 0)
+        dep_adjust = int(math.log1p(dep_count + 1) * 4)
+
+    effective = base + length_cost + tool_cost - priority_adjust - dep_adjust
+    return max(8, int(effective))
     return base + length_cost
 
 
@@ -105,6 +144,12 @@ def group_nodes_into_slices(
     Returns list of node lists representing each slice's assignment.
     """
     ordered = topological_sort(dag)
+    # precompute dependents map and attach to nodes for _estimate_tokens_for_node
+    dependents_map: Dict[str, int] = _count_dependents(dag)
+    for n in ordered:
+        # attach node_tools map and dependents map for richer estimates
+        setattr(n, "_node_tools", node_tools)
+        setattr(n, "_dependents_map", dependents_map)
     groups: List[List[tier_contracts.PlanNode]] = []
     cur: List[tier_contracts.PlanNode] = []
     cur_cost = 0
@@ -129,6 +174,35 @@ def group_nodes_into_slices(
         groups.append(cur)
 
     return groups
+
+
+def _count_dependents(dag: tier_contracts.PlanDAG) -> Dict[str, int]:
+    """Return a map node_id -> count of downstream dependents (transitive).
+
+    This is a simple BFS per node; DAGs are expected to be small so O(N^2)
+    worst-case is acceptable and keeps implementation straightforward.
+    """
+    graph = {n.node_id: list(n.depends_on or []) for n in dag.nodes}
+    # build forward adjacency (node -> children)
+    children: Dict[str, List[str]] = {n.node_id: [] for n in dag.nodes}
+    for nid, deps in graph.items():
+        for d in deps:
+            children.setdefault(d, []).append(nid)
+
+    result: Dict[str, int] = {}
+    for n in dag.nodes:
+        seen = set()
+        stack = list(children.get(n.node_id, []))
+        while stack:
+            c = stack.pop()
+            if c in seen:
+                continue
+            seen.add(c)
+            for ch in children.get(c, []):
+                if ch not in seen:
+                    stack.append(ch)
+        result[n.node_id] = len(seen)
+    return result
 
 
 def assign_task_slices(

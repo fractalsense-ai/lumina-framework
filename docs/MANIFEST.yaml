@@ -7,7 +7,7 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-29
-  sha256: 67bf875a6e6d51cbc8df0c803c41d27614fc75988130e3e65b991f64e659a9a5
+  sha256: 9cb840df9e26ad4d938a7bb9ec480b7ebe2beeb5ba52180a8a9130e724d027a0
 - path: docs/1-commands/README.md
   type: doc
   section: 1

@@ -95,3 +95,23 @@ def test_oversized_node_marked_in_description():
     slices = dec.assign_task_slices(dag, node_tools, allowed_tools=["adapter/ca/read-file/v1"], max_tokens_per_slice=200)
     assert len(slices) == 1
     assert "OVERSIZED" in slices[0].task_description
+
+
+def test_dependency_aware_cost_reduction():
+    dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
+    from model_packs.coding_agent.domain_lib import tier_contracts
+
+    # A is a root with many dependents; B is a leaf
+    A = tier_contracts.PlanNode(node_id="A", description="root", depends_on=[])
+    B = tier_contracts.PlanNode(node_id="B", description="leaf", depends_on=["A"])
+    C = tier_contracts.PlanNode(node_id="C", description="leaf2", depends_on=["A"])
+    D = tier_contracts.PlanNode(node_id="D", description="leaf3", depends_on=["A"])
+
+    dag = tier_contracts.PlanDAG(nodes=[A, B, C, D], created_at="now")
+    node_tools = {n.node_id: [] for n in [A, B, C, D]}
+
+    groups = dec.group_nodes_into_slices(dag, node_tools, max_tokens_per_slice=1024)
+    # estimator should have attached dependents map
+    cost_A = dec._estimate_tokens_for_node(A)
+    cost_B = dec._estimate_tokens_for_node(B)
+    assert cost_A <= cost_B
