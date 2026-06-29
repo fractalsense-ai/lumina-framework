@@ -47,6 +47,67 @@ def _resolve_tool_registry() -> Dict[str, Any]:
 def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
     registry = _resolve_tool_registry()
 
+    # Tier-1: build a global architect plan and validate DAG invariants before handoff.
+    if tier == 1:
+        try:
+            job = task_slice if isinstance(task_slice, dict) else {}
+            try:
+                from ..domain_lib import tier1_architect, tier2_decomposer, dag_validator
+            except Exception:
+                import importlib.util, pathlib, sys
+
+                base = pathlib.Path(__file__).parent
+
+                a_path = base.parent / "domain-lib" / "tier1_architect.py"
+                spec = importlib.util.spec_from_file_location("coding_agent_tier1_architect", str(a_path))
+                tier1_architect = importlib.util.module_from_spec(spec)
+                sys.modules["coding_agent_tier1_architect"] = tier1_architect
+                spec.loader.exec_module(tier1_architect)
+
+                dec_path = base.parent / "domain-lib" / "tier2_decomposer.py"
+                spec = importlib.util.spec_from_file_location("coding_agent_tier2_decomposer", str(dec_path))
+                tier2_decomposer = importlib.util.module_from_spec(spec)
+                sys.modules["coding_agent_tier2_decomposer"] = tier2_decomposer
+                spec.loader.exec_module(tier2_decomposer)
+
+                val_path = base.parent / "domain-lib" / "dag_validator.py"
+                spec = importlib.util.spec_from_file_location("coding_agent_dag_validator", str(val_path))
+                dag_validator = importlib.util.module_from_spec(spec)
+                sys.modules["coding_agent_dag_validator"] = dag_validator
+                spec.loader.exec_module(dag_validator)
+
+            architect_plan = tier1_architect.architect_global_plan(job)
+            dag = architect_plan.global_dag
+            validation = list(architect_plan.validation_errors or [])
+            if validation:
+                return {
+                    "tier": 1,
+                    "dispatched": False,
+                    "reason": "invalid_global_dag",
+                    "architect_plan": architect_plan.to_dict(),
+                    "validation": validation,
+                }
+
+            _dag, node_tools = tier2_decomposer.decompose_job(job)
+            model_class_map = tier1_architect.build_model_class_map(dag)
+            allowed = job.get("allowed_tools") or [
+                "adapter/ca/read-file/v1",
+                "adapter/ca/write-file/v1",
+                "adapter/ca/run-tests/v1",
+                "adapter/ca/stage-patch/v1",
+            ]
+            slices = tier2_decomposer.assign_task_slices(dag, node_tools, allowed, model_class_map=model_class_map)
+            lineage_errors = dag_validator.validate_task_slice_lineage(dag, slices)
+            return {
+                "tier": 1,
+                "dispatched": not lineage_errors,
+                "architect_plan": architect_plan.to_dict(),
+                "task_slices": [s.to_dict() for s in slices],
+                "validation": lineage_errors,
+            }
+        except Exception as exc:
+            return {"tier": 1, "dispatched": False, "reason": f"architect_failed: {exc}"}
+
     # Tier-2: perform decomposition/planning and return a PlanDAG + TaskSlices
     if tier == 2:
         try:
@@ -73,6 +134,14 @@ def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
 
             dag, node_tools = tier2_decomposer.decompose_job(job)
             errors = dag_validator.validate_dag(dag)
+            if errors:
+                return {
+                    "tier": 2,
+                    "dispatched": False,
+                    "reason": "invalid_dag",
+                    "plan": dag.to_dict(),
+                    "validation": errors,
+                }
             # Tier-1 architect: classify nodes and build a model_class map
             try:
                 from ..domain_lib import tier1_architect
