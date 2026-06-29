@@ -1,6 +1,13 @@
 ﻿schema_version: 1.0.0
 last_updated: 2026-06-29
 artifacts:
+- path: docs/roadmap/slices/12-tier-2-decomposer.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-29
+  sha256: 67bf875a6e6d51cbc8df0c803c41d27614fc75988130e3e65b991f64e659a9a5
 - path: docs/1-commands/README.md
   type: doc
   section: 1
@@ -1599,7 +1606,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 62c14e0e27c80f9ffae166af4f5d0204fc8ec0146115374c9e83ae7364b5656d
+  sha256: a0f100f00340a71a74fbe51f88c38fe763a201a08364e2f7f76afcdf8a8ce27c
 - path: model-packs/coding-agent/cfg/runtime-config.yaml
   type: config
   doc_version: 0.1.0

@@ -1,5 +1,13 @@
 # Coding Agent Pack Changelog
 
+## 0.7.0 — 2026-06-29
+
+- Phase 3: Tier-2 decomposer heuristics and robustness
+	- Added conservative token-cost estimation (`_estimate_tokens_for_node`) with `tier_hint` prioritization
+	- Grouping heuristics (`group_nodes_into_slices`) to pack `PlanNode`s into `TaskSlice`s within a token budget
+	- `assign_task_slices` supports grouped slices and marks oversized nodes in `TaskSlice.task_description`
+	- Added unit tests for grouping, priority effects, missing allowed tool handling, and oversized-node detection
+
 ## 0.2.0 — 2026-06-28
 
 - Added `domain-lib/job_intake.py`: `ValidationResult` class and `validate_job()` — lightweight deterministic payload validation (title required, description ≥ 10 chars, priority enum check).

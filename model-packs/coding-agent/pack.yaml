@@ -4,10 +4,10 @@
 # ──────────────────────────────────────────────────────────────────────
 
 # version: 1.0.0
-# last_updated: 2026-06-28
+# last_updated: 2026-06-29
 
 pack_id: coding-agent
-version: "0.6.0"
+version: "0.7.0"
 description: "Coding Agent domain pack skeleton — bounded artifact generation behind the System Pack authority gate."
 
 layers:
