@@ -73,13 +73,33 @@ def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
 
             dag, node_tools = tier2_decomposer.decompose_job(job)
             errors = dag_validator.validate_dag(dag)
+            # Tier-1 architect: classify nodes and build a model_class map
+            try:
+                from ..domain_lib import tier1_architect
+            except Exception:
+                import importlib.util, pathlib, sys
+
+                base = pathlib.Path(__file__).parent
+                a_path = base.parent / "domain-lib" / "tier1_architect.py"
+                spec = importlib.util.spec_from_file_location("coding_agent_tier1_architect", str(a_path))
+                tier1_architect = importlib.util.module_from_spec(spec)
+                sys.modules["coding_agent_tier1_architect"] = tier1_architect
+                spec.loader.exec_module(tier1_architect)
+
+            try:
+                classified = tier1_architect.classify_nodes(dag)
+                model_class_map = tier1_architect.build_model_class_map(classified)
+                # prefer using classified DAG moving forward
+                dag = classified
+            except Exception:
+                model_class_map = {}
             allowed = job.get("allowed_tools") or [
                 "adapter/ca/read-file/v1",
                 "adapter/ca/write-file/v1",
                 "adapter/ca/run-tests/v1",
                 "adapter/ca/stage-patch/v1",
             ]
-            slices = tier2_decomposer.assign_task_slices(dag, node_tools, allowed)
+            slices = tier2_decomposer.assign_task_slices(dag, node_tools, allowed, model_class_map=model_class_map)
             return {
                 "tier": 2,
                 "dispatched": True,
@@ -98,6 +118,28 @@ def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
         ts = tier_contracts.TaskSlice.from_dict(task_slice)
     except Exception as exc:
         return {"tier": 3, "dispatched": False, "reason": f"invalid_task_slice: {exc}"}
+
+    # If the slice requests the SLM, use the lumina SLM API for document-style tasks.
+    try:
+        model_class = getattr(ts, "model_class", "llm")
+    except Exception:
+        model_class = "llm"
+
+    if model_class == "slm":
+        try:
+            from lumina.core import slm
+        except Exception:
+            slm = None
+
+        if slm and slm.slm_available():
+            try:
+                # Use the slice description as the user payload; callers may later
+                # enrich this into a more structured prompt.
+                out = slm.call_slm(system="", user=ts.task_description)
+                return {"tier": 3, "dispatched": True, "model_class": "slm", "slm_output": out}
+            except Exception as exc:
+                return {"tier": 3, "dispatched": False, "reason": f"slm_failed: {exc}"}
+        # else: fallthrough to adapter execution path
 
     denied = []
     allowed = []

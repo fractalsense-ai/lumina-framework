@@ -26,6 +26,10 @@ jobs:
           # importable by tests and by subprocess calls (e.g. manifest_integrity).
           # The `providers` extra brings in openai + anthropic for provider tests.
           python -m pip install -e '.[providers,sqlite,passwords,nlp,math,retrieval,calendar,dev]'
+          # Explicitly install/verify numpy because multiple test modules import
+          # it directly during collection; fail fast if wheel resolution regresses.
+          python -m pip install --only-binary=:all: "numpy>=1.26.0"
+          python -c "import numpy as np; print('numpy', np.__version__)"
           python -m spacy download en_core_web_sm
 
       - name: Secret hygiene check
