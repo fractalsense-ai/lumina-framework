@@ -1,5 +1,7 @@
 ---
 title: "Slice 11 — Three-tier Execution Interface"
+version: 0.5.0
+last_updated: 2026-06-28
 date: 2026-06-28
 ---
 
