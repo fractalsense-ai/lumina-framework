@@ -98,3 +98,17 @@ tests/artifacts/phase7-full-suite-results.txt
 src/web/package-lock.json
 
 
+install_log.txt
+.gitignore
+pip_reinstall_log.txt
+.gitignore
+pytest_full_log.txt
+.gitignore
+pytest_log.txt
+pytest_run.txt
+pytest_full_log_utf8.txt
+install_editable_log.txt
+.gitignore
+.gitignore
+pytest_log2.txt
+install_providers_log.txt
