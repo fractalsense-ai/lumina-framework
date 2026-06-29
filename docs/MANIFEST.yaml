@@ -36,6 +36,13 @@ artifacts:
   status: planned
   last_updated: 2026-06-29
   sha256: 30b5abd06617db949bebb5478f4b28d2c12c5f65aa7e91191689ab5259bc4a45
+- path: docs/roadmap/slices/15-tier3-execution-gating.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-29
+  sha256: 88c058c2267f99f9f6f427e6217aecd8dc59aa60bc4d0739771c6328d04ce2f1
 - path: docs/1-commands/README.md
   type: doc
   section: 1

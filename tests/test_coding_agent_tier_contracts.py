@@ -60,3 +60,23 @@ def test_dispatch_to_tier_3_runs_allowed_tools():
     # scratchpad should be present and contain steps
     sp = result.get("scratchpad")
     assert sp and isinstance(sp.get("steps"), list)
+
+
+def test_execution_context_round_trip():
+    ctx = tier_contracts.ExecutionContext(
+        completed_node_ids=["A"],
+        failed_node_ids=["B"],
+        retry_counts={"C": 1},
+        max_retries_per_node=3,
+        base_backoff_seconds=2.0,
+        max_backoff_seconds=40.0,
+    )
+
+    restored = tier_contracts.ExecutionContext.from_dict(ctx.to_dict())
+
+    assert restored.completed_node_ids == ["A"]
+    assert restored.failed_node_ids == ["B"]
+    assert restored.retry_counts == {"C": 1}
+    assert restored.max_retries_per_node == 3
+    assert restored.base_backoff_seconds == 2.0
+    assert restored.max_backoff_seconds == 40.0

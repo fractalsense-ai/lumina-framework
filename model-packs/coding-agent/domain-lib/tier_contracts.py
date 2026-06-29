@@ -98,3 +98,35 @@ class TaskSlice:
             depends_on=list(data.get("depends_on") or []),
             parent_node_id=str(data.get("parent_node_id", "")),
         )
+
+
+@dataclass
+class ExecutionContext:
+    completed_node_ids: List[str] = field(default_factory=list)
+    failed_node_ids: List[str] = field(default_factory=list)
+    retry_counts: Dict[str, int] = field(default_factory=dict)
+    max_retries_per_node: int = 2
+    base_backoff_seconds: float = 1.0
+    max_backoff_seconds: float = 30.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "completed_node_ids": list(self.completed_node_ids or []),
+            "failed_node_ids": list(self.failed_node_ids or []),
+            "retry_counts": {str(k): int(v) for k, v in dict(self.retry_counts or {}).items()},
+            "max_retries_per_node": int(self.max_retries_per_node),
+            "base_backoff_seconds": float(self.base_backoff_seconds),
+            "max_backoff_seconds": float(self.max_backoff_seconds),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any] | None) -> "ExecutionContext":
+        payload = data or {}
+        return cls(
+            completed_node_ids=[str(x) for x in list(payload.get("completed_node_ids") or [])],
+            failed_node_ids=[str(x) for x in list(payload.get("failed_node_ids") or [])],
+            retry_counts={str(k): int(v) for k, v in dict(payload.get("retry_counts") or {}).items()},
+            max_retries_per_node=int(payload.get("max_retries_per_node", 2)),
+            base_backoff_seconds=float(payload.get("base_backoff_seconds", 1.0)),
+            max_backoff_seconds=float(payload.get("max_backoff_seconds", 30.0)),
+        )
