@@ -1,6 +1,27 @@
 ﻿schema_version: 1.0.0
 last_updated: 2026-06-29
 artifacts:
+- path: docs/5-standards/manifest-regen-policy.md
+  type: doc
+  section: 5
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-06-29
+  sha256: 08ef014c4c1f11188c088bc04cd1d55bf2f1768cef8a8559cda5cce67f8f1aa9
+- path: model-packs/coding-agent/domain-lib/reference/manifest-regen-rules-v1.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-06-29
+  sha256: a8792d14d042f53c628090cfa29d2992b45be0d96f4f6ace714265fe91631650
+- path: docs/roadmap/slices/12-tier-2-decomposer.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-29
+  sha256: 9cb840df9e26ad4d938a7bb9ec480b7ebe2beeb5ba52180a8a9130e724d027a0
 - path: docs/1-commands/README.md
   type: doc
   section: 1
@@ -1599,7 +1620,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 0476126cd3f7010a4a480e5e800d5b355dc04085050243cef994f8926d3ae554
+  sha256: a0f100f00340a71a74fbe51f88c38fe763a201a08364e2f7f76afcdf8a8ce27c
 - path: model-packs/coding-agent/cfg/runtime-config.yaml
   type: config
   doc_version: 0.1.0
@@ -1768,7 +1789,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: 6343dc363118905ab017b0301f529e36e60729dadf9a943bf6268f2dbfdd0368
+  sha256: 7f55e900a3a0a1be747b306f3fbc2f26d44073d028a73fbc2850606b1495dc87
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
