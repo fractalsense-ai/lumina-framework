@@ -29,6 +29,13 @@ artifacts:
   status: planned
   last_updated: 2026-06-29
   sha256: 8a5536032d1c2e8d34951bcf25b5a08a3c07837c927a22514784fba56039e294
+- path: docs/roadmap/slices/14-dag-correct-compute-orchestration.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-29
+  sha256: 30b5abd06617db949bebb5478f4b28d2c12c5f65aa7e91191689ab5259bc4a45
 - path: docs/1-commands/README.md
   type: doc
   section: 1

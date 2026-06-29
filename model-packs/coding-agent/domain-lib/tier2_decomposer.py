@@ -20,8 +20,12 @@ except Exception:
     sys.modules["coding_agent_tier_contracts"] = tier_contracts
     spec.loader.exec_module(tier_contracts)
 
+PlanDAG = tier_contracts.PlanDAG
+PlanNode = tier_contracts.PlanNode
+TaskSlice = tier_contracts.TaskSlice
 
-def decompose_job(job: Dict[str, Any]) -> Tuple[tier_contracts.PlanDAG, Dict[str, List[str]]]:
+
+def decompose_job(job: Dict[str, Any]) -> Tuple[PlanDAG, Dict[str, List[str]]]:
     """Produce a PlanDAG and a mapping of node_id -> allowed_tools.
 
     Accepts either a dict-shaped job or a CodingAgentJob-like object with
@@ -32,7 +36,7 @@ def decompose_job(job: Dict[str, Any]) -> Tuple[tier_contracts.PlanDAG, Dict[str
     # Guard: explicit error when task_graph present but malformed
     if task_graph is not None and not isinstance(task_graph, (list, tuple)):
         raise TypeError("task_graph must be a list of task nodes")
-    nodes: List[tier_contracts.PlanNode] = []
+    nodes: List[PlanNode] = []
     node_tools: Dict[str, List[str]] = {}
 
     if not task_graph:
@@ -58,7 +62,7 @@ def decompose_job(job: Dict[str, Any]) -> Tuple[tier_contracts.PlanDAG, Dict[str
     return dag, node_tools
 
 
-def topological_sort(dag: tier_contracts.PlanDAG) -> List[tier_contracts.PlanNode]:
+def topological_sort(dag: PlanDAG) -> List[PlanNode]:
     """Return PlanNodes in topologically-sorted order. Raises ValueError on cycle."""
     nodes = {n.node_id: n for n in dag.nodes}
     indeg: Dict[str, int] = {nid: 0 for nid in nodes}
@@ -71,7 +75,7 @@ def topological_sort(dag: tier_contracts.PlanDAG) -> List[tier_contracts.PlanNod
                 adj[dep].append(n.node_id)
 
     queue = [nid for nid, d in indeg.items() if d == 0]
-    order: List[tier_contracts.PlanNode] = []
+    order: List[PlanNode] = []
 
     while queue:
         cur = queue.pop(0)
@@ -87,7 +91,7 @@ def topological_sort(dag: tier_contracts.PlanDAG) -> List[tier_contracts.PlanNod
     return order
 
 
-def _estimate_tokens_for_node(node: tier_contracts.PlanNode) -> int:
+def _estimate_tokens_for_node(node: PlanNode) -> int:
     """Token estimate improved with length, priority, tool-costs, and dependency awareness.
 
     Parameters are intentionally deterministic so tests remain stable. The
@@ -137,8 +141,8 @@ def _estimate_tokens_for_node(node: tier_contracts.PlanNode) -> int:
 
 
 def group_nodes_into_slices(
-    dag: tier_contracts.PlanDAG, node_tools: Dict[str, List[str]], max_tokens_per_slice: int = 1024
-) -> List[List[tier_contracts.PlanNode]]:
+    dag: PlanDAG, node_tools: Dict[str, List[str]], max_tokens_per_slice: int = 1024
+) -> List[List[PlanNode]]:
     """Group topologically-ordered PlanNodes into buckets not exceeding token budget.
 
     Returns list of node lists representing each slice's assignment.
@@ -150,8 +154,8 @@ def group_nodes_into_slices(
         # attach node_tools map and dependents map for richer estimates
         setattr(n, "_node_tools", node_tools)
         setattr(n, "_dependents_map", dependents_map)
-    groups: List[List[tier_contracts.PlanNode]] = []
-    cur: List[tier_contracts.PlanNode] = []
+    groups: List[List[PlanNode]] = []
+    cur: List[PlanNode] = []
     cur_cost = 0
 
     for n in ordered:
@@ -176,7 +180,7 @@ def group_nodes_into_slices(
     return groups
 
 
-def _count_dependents(dag: tier_contracts.PlanDAG) -> Dict[str, int]:
+def _count_dependents(dag: PlanDAG) -> Dict[str, int]:
     """Return a map node_id -> count of downstream dependents (transitive).
 
     This is a simple BFS per node; DAGs are expected to be small so O(N^2)
@@ -206,17 +210,17 @@ def _count_dependents(dag: tier_contracts.PlanDAG) -> Dict[str, int]:
 
 
 def assign_task_slices(
-    dag: tier_contracts.PlanDAG,
+    dag: PlanDAG,
     node_tools: Dict[str, List[str]],
     allowed_tools: List[str],
     max_tokens_per_slice: int | None = None,
     model_class_map: Dict[str, str] | None = None,
-) -> List[tier_contracts.TaskSlice]:
+) -> List[TaskSlice]:
     """Map PlanNodes to TaskSlices. If `max_tokens_per_slice` is set, group nodes.
 
     Filtering of allowed adapters is applied per-node and per-slice.
     """
-    slices: List[tier_contracts.TaskSlice] = []
+    slices: List[TaskSlice] = []
     allowed_set = set(allowed_tools or [])
 
     if max_tokens_per_slice:
@@ -251,6 +255,8 @@ def assign_task_slices(
                 context_budget_tokens=max_tokens_per_slice,
                 tier=3,
                 model_class=slice_model,
+                depends_on=sorted({dep for n in group for dep in (n.depends_on or []) if dep not in {g.node_id for g in group}}),
+                parent_node_id=getattr(group[0], "parent_node_id", "") or group[0].node_id,
             )
             slices.append(ts)
         return slices
@@ -267,6 +273,8 @@ def assign_task_slices(
             context_budget_tokens=1024,
             tier=3,
             model_class=(model_class_map.get(n.node_id) if model_class_map else "llm"),
+            depends_on=list(n.depends_on or []),
+            parent_node_id=getattr(n, "parent_node_id", "") or n.node_id,
         )
         slices.append(ts)
     return slices
