@@ -1,6 +1,20 @@
 ﻿schema_version: 1.0.0
 last_updated: 2026-06-29
 artifacts:
+- path: docs/5-standards/manifest-regen-policy.md
+  type: doc
+  section: 5
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-06-29
+  sha256: 08ef014c4c1f11188c088bc04cd1d55bf2f1768cef8a8559cda5cce67f8f1aa9
+- path: model-packs/coding-agent/domain-lib/reference/manifest-regen-rules-v1.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-06-29
+  sha256: a8792d14d042f53c628090cfa29d2992b45be0d96f4f6ace714265fe91631650
 - path: docs/roadmap/slices/12-tier-2-decomposer.md
   type: doc
   section: 0

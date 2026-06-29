@@ -52,6 +52,27 @@ Changes to the orchestration loop or the System Logs are high-risk and require h
 
 ---
 
+## 📋 MANIFEST.yaml — Mandatory Regen Rule
+
+**Every PR that adds, renames, or edits a tracked `.md` or `.yaml` file must
+regenerate `docs/MANIFEST.yaml` using the repo script — never by hand.**
+
+```powershell
+# Step 1 — if adding a new file, first append its entry with sha256: pending
+# Step 2 — always run this (the ONLY sanctioned way to set hashes):
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\manifest-regenerate.ps1
+
+# Step 3 — verify before committing:
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\integrity-check.ps1
+```
+
+**Never** use `certutil`, raw `hashlib`, or hardcoded hex strings — the integrity
+checker normalizes CRLF → LF before hashing, so any OS-level hash will mismatch
+and break CI. See [`docs/5-standards/manifest-regen-policy.md`](docs/5-standards/manifest-regen-policy.md)
+for the full policy and the failure modes this prevents.
+
+---
+
 ## 🧪 Testing and Regression (Mandatory)
 
 We do not merge code based on "vibes" or isolated live LLM testing. You must prove your changes mathematically using our deterministic test suite.
