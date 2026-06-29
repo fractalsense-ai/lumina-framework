@@ -1768,7 +1768,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: 6343dc363118905ab017b0301f529e36e60729dadf9a943bf6268f2dbfdd0368
+   sha256: 6343dc363118905ab017b0301f529e36e60729dadf9a943bf6268f2dbfdd0368
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
@@ -1822,3 +1822,9 @@ artifacts:
   status: active
   last_updated: 2026-06-28
   sha256: 3bdca73c8c01464de1b729b9ae854895284bfb9f8444cd5222dd11e451e00d9f
+ - path: docs/roadmap/slices/10-tool-call-policy-enforcement.md
+   type: doc
+   doc_version: 0.1.0
+   status: active
+   last_updated: 2026-06-28
+   sha256: 5217c5c229a85b54cfbc750d5c74cdab7147b83658de04fa0a8d24b50d9304c8
