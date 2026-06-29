@@ -96,6 +96,7 @@ def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
         }
         trace.append(step)
 
-    seq_trace = sequential_thinking_schema.SequentialThinkingTrace(steps=trace)
+    # Use classmethod for construction to be robust across versions
+    seq_trace = sequential_thinking_schema.SequentialThinkingTrace.from_steps(trace)
 
     return {"tier": 3, "dispatched": True, "allowed_tools": allowed, "denied_tools": denied, "scratchpad": seq_trace.to_dict()}

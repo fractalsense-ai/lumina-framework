@@ -1641,7 +1641,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 0c7acd267845820338a9ca432022594f4080f76c71782ceb30e99b5ddecf6589
+  sha256: 6287a887047cf77680b3a45080c3f6e0dca53634c08c26fe7b5b33717d6be911
 - path: model-packs/coding-agent/modules/core/tool-adapters/read-file-adapter-v1.yaml
   type: config
   doc_version: 0.1.0
@@ -1828,3 +1828,9 @@ artifacts:
   status: active
   last_updated: 2026-06-28
   sha256: 5217c5c229a85b54cfbc750d5c74cdab7147b83658de04fa0a8d24b50d9304c8
+ - path: docs/roadmap/slices/11-three-tier-execution-interface.md
+   type: doc
+   doc_version: 0.5.0
+   status: active
+   last_updated: 2026-06-28
+   sha256: 68bd3de49b9577d5beb8cd826e31754f83d8e4eeed6764cdebe705c4f91406f5
