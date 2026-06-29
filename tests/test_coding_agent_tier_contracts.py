@@ -16,11 +16,17 @@ def load_module(path: str, name: str):
     return mod
 
 
-tc = load_module(str(ROOT / "model-packs" / "coding-agent" / "domain-lib" / "tier_contracts.py"), "tc")
-td = load_module(str(ROOT / "model-packs" / "coding-agent" / "controllers" / "tier_dispatcher.py"), "td")
-
-tier_contracts = tc
-tier_dispatcher = td
+# Support two execution contexts: when the repo is installed as a package
+# tests can import `model_packs...`; in CI or local dev the test may load
+# modules directly from files. Try package import first, then fallback.
+try:
+    from model_packs.coding_agent.domain_lib import tier_contracts as tier_contracts
+    from model_packs.coding_agent.controllers import tier_dispatcher as tier_dispatcher
+except Exception:
+    tc = load_module(str(ROOT / "model-packs" / "coding-agent" / "domain-lib" / "tier_contracts.py"), "tc")
+    td = load_module(str(ROOT / "model-packs" / "coding-agent" / "controllers" / "tier_dispatcher.py"), "td")
+    tier_contracts = tc
+    tier_dispatcher = td
 
 
 def test_task_slice_from_dict_and_to_dict():
