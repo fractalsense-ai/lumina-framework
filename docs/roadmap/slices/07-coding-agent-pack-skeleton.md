@@ -6,9 +6,9 @@ last_updated: 2026-06-28
 # Slice 7: Coding Agent Pack Skeleton
 
 **Version:** 1.0.0
-**Status:** Active
+**Status:** Delivered
 **Last updated:** 2026-06-28
-**PR:** Adds the initial `model-packs/coding-agent/` skeleton.
+**PRs:** #62 (skeleton), #63 (manifest fix)
 
 ---
 

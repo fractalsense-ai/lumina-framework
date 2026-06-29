@@ -1768,7 +1768,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: a8cfa214aa21f3ae37477dba37b060adba6fbc647c16a6d1610b571e75d8de14
+  sha256: ea8cbaedc33cc75a8189af6a74424e677b0a9758610141622147960c70f55b0b
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
@@ -1809,4 +1809,16 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-28
-  sha256: a9c4ba94f5f1206a59a9108f37a60d4a1c7ba336f37b3763d2f387f119a968fa
+  sha256: 8eabd7b56db607a7bc850a4b6c8863188319bbbc229ba4a695aabce3181efa0e
+- path: docs/roadmap/slices/08-job-intake-micro-context.md
+  type: doc
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: ffdf2dc22747ea453c79b340264a4674c0a0730832b5c61621d703fd8cf49561
+- path: docs/roadmap/slices/09-context-staging-and-job-interpretation.md
+  type: doc
+  doc_version: 0.1.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 3bdca73c8c01464de1b729b9ae854895284bfb9f8444cd5222dd11e451e00d9f
