@@ -1822,8 +1822,8 @@ artifacts:
   status: active
   last_updated: 2026-06-28
   sha256: 3bdca73c8c01464de1b729b9ae854895284bfb9f8444cd5222dd11e451e00d9f
-- path: docs/roadmap/slices/10-tool-call-policy-enforcement.md
-  type: doc
+ - path: docs/roadmap/slices/10-tool-call-policy-enforcement.md
+   type: doc
    doc_version: 0.1.0
    status: active
    last_updated: 2026-06-28
