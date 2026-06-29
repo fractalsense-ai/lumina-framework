@@ -1828,9 +1828,9 @@ artifacts:
   status: active
   last_updated: 2026-06-28
   sha256: 5217c5c229a85b54cfbc750d5c74cdab7147b83658de04fa0a8d24b50d9304c8
- - path: docs/roadmap/slices/11-three-tier-execution-interface.md
-   type: doc
-   doc_version: 0.5.0
-   status: active
-   last_updated: 2026-06-28
-   sha256: 68bd3de49b9577d5beb8cd826e31754f83d8e4eeed6764cdebe705c4f91406f5
+- path: docs/roadmap/slices/11-three-tier-execution-interface.md
+  type: doc
+  doc_version: 0.5.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: 68bd3de49b9577d5beb8cd826e31754f83d8e4eeed6764cdebe705c4f91406f5
