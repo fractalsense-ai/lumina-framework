@@ -127,6 +127,22 @@ def domain_step(
         "escalation_eligible": False,
         "reason": task_spec.get("task_id", "coding_agent_step"),
     }
+    # If the evidence contains a task_slice, dispatch to the execution tier
+    if evidence and evidence.get("task_slice"):
+        try:
+            from model_packs.coding_agent.controllers import tier_dispatcher as _td
+        except Exception:
+            return {"action": "dispatch_failed", "reason": "dispatcher_missing"}
+
+        # execution_tier expected from micro_context if present
+        execution_tier = None
+        micro = evidence.get("micro_context") or {}
+        execution_tier = micro.get("execution_tier") if isinstance(micro, dict) else None
+        if execution_tier is None:
+            execution_tier = 3
+
+        dispatch_result = _td.dispatch_to_tier(int(execution_tier), evidence.get("task_slice"))
+        return {"action": "dispatched", "dispatch_result": dispatch_result}
 
 
 def _strip_markdown_fences(raw: str) -> str:

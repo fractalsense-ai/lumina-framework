@@ -1,5 +1,5 @@
 ﻿schema_version: 1.0.0
-last_updated: 2026-06-28
+last_updated: 2026-06-29
 artifacts:
 - path: docs/1-commands/README.md
   type: doc
@@ -1599,7 +1599,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 79ec681f5cb1bdcc0786bd531c740ac6df87c19a378e9611a4e79a3894324c2c
+  sha256: 0476126cd3f7010a4a480e5e800d5b355dc04085050243cef994f8926d3ae554
 - path: model-packs/coding-agent/cfg/runtime-config.yaml
   type: config
   doc_version: 0.1.0
@@ -1641,7 +1641,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 342a8794d1187b65b68630d1b2fa78200830506784fb7fc6ddaaed56ad455086
+  sha256: 6287a887047cf77680b3a45080c3f6e0dca53634c08c26fe7b5b33717d6be911
 - path: model-packs/coding-agent/modules/core/tool-adapters/read-file-adapter-v1.yaml
   type: config
   doc_version: 0.1.0
@@ -1828,3 +1828,9 @@ artifacts:
   status: active
   last_updated: 2026-06-28
   sha256: 5217c5c229a85b54cfbc750d5c74cdab7147b83658de04fa0a8d24b50d9304c8
+- path: docs/roadmap/slices/11-three-tier-execution-interface.md
+  type: doc
+  doc_version: 0.5.0
+  status: active
+  last_updated: 2026-06-28
+  sha256: a080a741dc7d25042889d223aae44a4474e511d526170075c1c16c71ce1ae784

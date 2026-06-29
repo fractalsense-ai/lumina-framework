@@ -19,6 +19,7 @@ def build_micro_context(validated_job: dict[str, Any], extras: dict[str, Any] | 
     """
     priority = (validated_job or {}).get("priority") or "normal"
     tier_map = {"high": "critical", "normal": "ok", "low": "minor"}
+    exec_map = {"high": 1, "normal": 2, "low": 3}
     tier = tier_map.get(priority, "ok")
 
     files = list(validated_job.get("files") or [])
@@ -26,6 +27,7 @@ def build_micro_context(validated_job: dict[str, Any], extras: dict[str, Any] | 
     return {
         "job_id": (validated_job.get("title")[:64] if validated_job.get("title") else None),
         "tier": tier,
+        "execution_tier": exec_map.get(priority, 3),
         "scope_valid": bool(validated_job.get("title") and validated_job.get("description")),
         "files": files,
         "created_at": datetime.utcnow().isoformat() + "Z",

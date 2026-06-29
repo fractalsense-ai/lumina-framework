@@ -7,15 +7,26 @@ small and JSON-only to simplify parsing.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from typing import Any, Iterable
 
 
 @dataclass(frozen=True)
 class SequentialThinkingTrace:
-    steps: tuple[str, ...]
-    conclusion: str
-    confidence: float
+    steps: tuple[Any, ...]
+    conclusion: str = ""
+    confidence: float = 0.0
 
     def validate(self) -> None:
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("confidence must be between 0.0 and 1.0")
+
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        # Ensure steps are JSON-friendly lists (tests expect lists, not tuples)
+        d["steps"] = list(self.steps)
+        return d
+
+    @classmethod
+    def from_steps(cls, steps: Iterable[Any], conclusion: str = "", confidence: float = 0.0) -> "SequentialThinkingTrace":
+        return cls(steps=tuple(steps), conclusion=conclusion, confidence=float(confidence))

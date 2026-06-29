@@ -43,6 +43,7 @@ def pre_interpret(input_text: str, context: dict[str, Any] | None = None) -> dic
         try:
             import importlib.util
             from pathlib import Path
+            import sys
 
             base = Path(__file__).resolve().parents[1] / "domain-lib"
             job_intake_path = str(base / "job_intake.py")
@@ -60,7 +61,16 @@ def pre_interpret(input_text: str, context: dict[str, Any] | None = None) -> dic
             job_validation = {"valid": vres.valid, "errors": vres.errors, "normalized": vres.normalized}
             micro_context = mc_mod.build_micro_context(vres.normalized)
         except Exception:
-            job_validation = {"valid": False, "errors": ["validation-failed"], "normalized": {}}
+            # Fallback to package import when file-based loading fails (CI/pkg installs)
+            try:
+                import model_packs.coding_agent.domain_lib.job_intake as job_mod
+                import model_packs.coding_agent.domain_lib.micro_context as mc_mod
+
+                vres = job_mod.validate_job(job_payload)
+                job_validation = {"valid": vres.valid, "errors": vres.errors, "normalized": vres.normalized}
+                micro_context = mc_mod.build_micro_context(vres.normalized)
+            except Exception:
+                job_validation = {"valid": False, "errors": ["validation-failed"], "normalized": {}}
 
     return {
         "authority_boundary_hint": any(term in text for term in BOUNDARY_TERMS),
