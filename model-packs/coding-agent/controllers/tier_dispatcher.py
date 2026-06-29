@@ -1,9 +1,37 @@
 from __future__ import annotations
 
 from typing import Dict, Any, List
-from . import tool_adapters
-from ..domain_lib import tier_contracts
-from ..domain_lib import sequential_thinking_schema
+
+# Robust imports: allow module to be loaded as a standalone file during tests
+try:
+    from . import tool_adapters
+    from ..domain_lib import tier_contracts, sequential_thinking_schema
+except Exception:
+    import importlib.util
+    import pathlib
+    import sys
+
+    base = pathlib.Path(__file__).parent
+    # load tool_adapters
+    ta_path = base / "tool_adapters.py"
+    spec = importlib.util.spec_from_file_location("coding_agent_tool_adapters", str(ta_path))
+    tool_adapters = importlib.util.module_from_spec(spec)
+    sys.modules["coding_agent_tool_adapters"] = tool_adapters
+    spec.loader.exec_module(tool_adapters)
+
+    # load tier_contracts
+    tc_path = base.parent / "domain-lib" / "tier_contracts.py"
+    spec = importlib.util.spec_from_file_location("coding_agent_tier_contracts", str(tc_path))
+    tier_contracts = importlib.util.module_from_spec(spec)
+    sys.modules["coding_agent_tier_contracts"] = tier_contracts
+    spec.loader.exec_module(tier_contracts)
+
+    # load sequential_thinking_schema
+    st_path = base.parent / "domain-lib" / "sequential_thinking_schema.py"
+    spec = importlib.util.spec_from_file_location("coding_agent_sequential_thinking_schema", str(st_path))
+    sequential_thinking_schema = importlib.util.module_from_spec(spec)
+    sys.modules["coding_agent_sequential_thinking_schema"] = sequential_thinking_schema
+    spec.loader.exec_module(sequential_thinking_schema)
 
 
 def _resolve_tool_registry() -> Dict[str, Any]:

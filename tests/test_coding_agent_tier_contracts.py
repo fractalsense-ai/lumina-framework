@@ -1,7 +1,26 @@
 from __future__ import annotations
 
-from model_packs.coding_agent.domain_lib import tier_contracts
-from model_packs.coding_agent.controllers import tier_dispatcher
+import importlib.util
+import sys
+import pathlib
+
+
+ROOT = pathlib.Path(__file__).parent.parent
+
+
+def load_module(path: str, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+tc = load_module(str(ROOT / "model-packs" / "coding-agent" / "domain-lib" / "tier_contracts.py"), "tc")
+td = load_module(str(ROOT / "model-packs" / "coding-agent" / "controllers" / "tier_dispatcher.py"), "td")
+
+tier_contracts = tc
+tier_dispatcher = td
 
 
 def test_task_slice_from_dict_and_to_dict():

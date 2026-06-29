@@ -27,3 +27,11 @@
 - Replaced `controllers/tool_adapters.py::run_tests_tool()` with a safe subprocess-backed runner guarded by an explicit command allowlist
 - Wired policy check in `controllers/runtime_adapters.py::domain_step()` to reject unauthorized tool calls
 - Added `tests/test_coding_agent_tool_policies.py` covering policy logic and safe test runner behavior
+
+## 0.5.0 — 2026-06-28
+
+- Slice 11 (start): Three-tier execution contracts and Tier-3 dispatcher
+- Added `domain-lib/tier_contracts.py`: `PlanDAG`, `PlanNode`, and `TaskSlice` dataclasses
+- Added `controllers/tier_dispatcher.py`: initial Tier-3 dispatcher calling existing adapters and emitting `SequentialThinkingTrace`
+- Wired dispatcher into `controllers/runtime_adapters.py` to handle `task_slice` evidence
+- Added `tests/test_coding_agent_tier_contracts.py` covering basic Tier-3 dispatch path

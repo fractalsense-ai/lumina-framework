@@ -1599,7 +1599,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 79ec681f5cb1bdcc0786bd531c740ac6df87c19a378e9611a4e79a3894324c2c
+  sha256: 0476126cd3f7010a4a480e5e800d5b355dc04085050243cef994f8926d3ae554
 - path: model-packs/coding-agent/cfg/runtime-config.yaml
   type: config
   doc_version: 0.1.0
@@ -1641,7 +1641,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 342a8794d1187b65b68630d1b2fa78200830506784fb7fc6ddaaed56ad455086
+  sha256: 0c7acd267845820338a9ca432022594f4080f76c71782ceb30e99b5ddecf6589
 - path: model-packs/coding-agent/modules/core/tool-adapters/read-file-adapter-v1.yaml
   type: config
   doc_version: 0.1.0
