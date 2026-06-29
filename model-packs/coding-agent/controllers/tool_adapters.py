@@ -36,11 +36,48 @@ def write_file_tool(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def run_tests_tool(payload: Dict[str, Any]) -> Dict[str, Any]:
-    # Slice 7: do not execute arbitrary commands. Simulate test run.
+    # Safe test runner: allow a short explicit command allowlist and run via subprocess
+    import subprocess
+    import shlex
+    import os
+
     commands = payload.get("commands", [])
-    # Simple heuristic: if 'pytest' in commands, respond with True
-    tests_passed = any("pytest" in c for c in commands)
-    return {"tests_passed": bool(tests_passed), "output": "simulated"}
+    working_dir = payload.get("working_dir") or os.getcwd()
+
+    # Basic validation: commands must be a non-empty list
+    if not isinstance(commands, list) or not commands:
+        return {"tests_passed": False, "output": "invalid_commands"}
+
+    # Allow only certain first tokens to avoid arbitrary shell execution
+    allowed_first = {"pytest", "python", "python3"}
+    first_tok = shlex.split(commands[0])[0] if isinstance(commands[0], str) and commands[0].strip() else ""
+    if first_tok not in allowed_first:
+        return {"tests_passed": False, "output": "unauthorized_command"}
+
+    # Validate working_dir via a safe path check from change_request if available
+    try:
+        import importlib.util, pathlib
+
+        policy_path = pathlib.Path(__file__).parent.parent / "domain-lib" / "change_request.py"
+        spec = importlib.util.spec_from_file_location("change_request", str(policy_path))
+        cr = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cr)
+        if not cr.validate_allowed_path(working_dir, ["."]):
+            # Fallback to repository cwd instead of failing the call
+            working_dir = os.getcwd()
+    except Exception:
+        # If validator not available, continue but restrict to cwd
+        working_dir = os.getcwd()
+
+    try:
+        # Execute the provided command list sequentially; prefer running a single command
+        proc = subprocess.run(commands, cwd=working_dir, capture_output=True, text=True, timeout=120)
+        output = (proc.stdout or "") + "\n" + (proc.stderr or "")
+        return {"tests_passed": proc.returncode == 0, "output": output[:4000], "return_code": proc.returncode}
+    except subprocess.TimeoutExpired:
+        return {"tests_passed": False, "output": "timeout", "return_code": -1}
+    except FileNotFoundError:
+        return {"tests_passed": False, "output": "command_not_found", "return_code": -1}
 
 
 def stage_patch_tool(payload: Dict[str, Any]) -> Dict[str, Any]:
