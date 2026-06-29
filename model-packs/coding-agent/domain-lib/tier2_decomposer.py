@@ -154,10 +154,16 @@ def assign_task_slices(
                     if t in allowed_set and t not in union_allowed:
                         union_allowed.append(t)
 
+            # mark oversized nodes in the description so callers can surface warnings
+            oversized = any(_estimate_tokens_for_node(n) > max_tokens_per_slice for n in group)
+            desc = "; ".join([n.description for n in group])
+            if oversized:
+                desc = desc + " [OVERSIZED]"
+
             ts = tier_contracts.TaskSlice(
                 slice_id=f"slice-{idx}",
                 node_id=group[0].node_id,
-                task_description="; ".join([n.description for n in group]),
+                task_description=desc,
                 allowed_tools=union_allowed,
                 context_budget_tokens=max_tokens_per_slice,
                 tier=3,

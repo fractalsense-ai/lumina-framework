@@ -53,3 +53,45 @@ def test_decompose_job_type_errors():
     except TypeError:
         raised = True
     assert raised
+
+
+def test_priority_reduces_estimated_cost():
+    dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
+    from model_packs.coding_agent.domain_lib import tier_contracts
+
+    n_low = tier_contracts.PlanNode(node_id="L", description="short desc", depends_on=[])
+    n_low.tier_hint = 1
+    n_high = tier_contracts.PlanNode(node_id="H", description="short desc", depends_on=[])
+    n_high.tier_hint = 4
+
+    c_low = dec._estimate_tokens_for_node(n_low)
+    c_high = dec._estimate_tokens_for_node(n_high)
+    assert c_high <= c_low
+
+
+def test_missing_allowed_tools_results_empty_allowed():
+    dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
+    from model_packs.coding_agent.domain_lib import tier_contracts
+
+    nodes = [tier_contracts.PlanNode(node_id="A", description="d", depends_on=[])]
+    dag = tier_contracts.PlanDAG(nodes=nodes, created_at="now")
+    node_tools = {"A": ["adapter/ca/read-file/v1"]}
+
+    slices = dec.assign_task_slices(dag, node_tools, allowed_tools=[])
+    assert len(slices) == 1
+    assert slices[0].allowed_tools == []
+
+
+def test_oversized_node_marked_in_description():
+    dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
+    from model_packs.coding_agent.domain_lib import tier_contracts
+
+    # make a very long description to exceed budget
+    long_desc = "x" * 5000
+    nodes = [tier_contracts.PlanNode(node_id="BIG", description=long_desc, depends_on=[])]
+    dag = tier_contracts.PlanDAG(nodes=nodes, created_at="now")
+    node_tools = {"BIG": ["adapter/ca/read-file/v1"]}
+
+    slices = dec.assign_task_slices(dag, node_tools, allowed_tools=["adapter/ca/read-file/v1"], max_tokens_per_slice=200)
+    assert len(slices) == 1
+    assert "OVERSIZED" in slices[0].task_description
