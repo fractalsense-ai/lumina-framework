@@ -210,6 +210,7 @@ def assign_task_slices(
     node_tools: Dict[str, List[str]],
     allowed_tools: List[str],
     max_tokens_per_slice: int | None = None,
+    model_class_map: Dict[str, str] | None = None,
 ) -> List[tier_contracts.TaskSlice]:
     """Map PlanNodes to TaskSlices. If `max_tokens_per_slice` is set, group nodes.
 
@@ -234,6 +235,14 @@ def assign_task_slices(
             if oversized:
                 desc = desc + " [OVERSIZED]"
 
+            # determine model class for this slice: if any node requests 'slm', prefer that
+            model_classes = {model_class_map.get(n.node_id, "llm") if model_class_map else "llm" for n in group}
+            if "slm" in model_classes:
+                slice_model = "slm"
+            else:
+                # default to the first model in the set (stable ordering)
+                slice_model = sorted(list(model_classes))[0]
+
             ts = tier_contracts.TaskSlice(
                 slice_id=f"slice-{idx}",
                 node_id=group[0].node_id,
@@ -241,6 +250,7 @@ def assign_task_slices(
                 allowed_tools=union_allowed,
                 context_budget_tokens=max_tokens_per_slice,
                 tier=3,
+                model_class=slice_model,
             )
             slices.append(ts)
         return slices
@@ -256,6 +266,7 @@ def assign_task_slices(
             allowed_tools=filtered,
             context_budget_tokens=1024,
             tier=3,
+            model_class=(model_class_map.get(n.node_id) if model_class_map else "llm"),
         )
         slices.append(ts)
     return slices

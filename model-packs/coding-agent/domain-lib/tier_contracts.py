@@ -11,6 +11,10 @@ class PlanNode:
     description: str
     depends_on: List[str]
     tier_hint: int = 2
+    # Action type indicates what kind of action this node requires.
+    # Examples: "code", "document", "review". Defaults to "code" for
+    # backward compatibility with existing nodes.
+    action_type: str = "code"
 
 
 @dataclass
@@ -35,6 +39,9 @@ class TaskSlice:
     allowed_tools: List[str]
     context_budget_tokens: int = 1024
     tier: int = 3
+    # Model class to execute this slice. Examples: "llm", "slm". Default
+    # remains "llm" to preserve current behavior.
+    model_class: str = "llm"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -48,4 +55,5 @@ class TaskSlice:
             allowed_tools=list(data.get("allowed_tools") or []),
             context_budget_tokens=int(data.get("context_budget_tokens", 1024)),
             tier=int(data.get("tier", 3)),
+            model_class=str(data.get("model_class", "llm")),
         )
