@@ -22,7 +22,10 @@ class SequentialThinkingTrace:
             raise ValueError("confidence must be between 0.0 and 1.0")
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        d = asdict(self)
+        # Ensure steps are JSON-friendly lists (tests expect lists, not tuples)
+        d["steps"] = list(self.steps)
+        return d
 
     @classmethod
     def from_steps(cls, steps: Iterable[Any], conclusion: str = "", confidence: float = 0.0) -> "SequentialThinkingTrace":
