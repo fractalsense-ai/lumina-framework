@@ -2,6 +2,7 @@
 title: "Slice 13 — Tier-1 Architect & SLM Routing"
 pack: model-packs/coding-agent/pack.yaml
 version: 0.8.0
+last_updated: 2026-06-29
 sha256: pending
 ---
 

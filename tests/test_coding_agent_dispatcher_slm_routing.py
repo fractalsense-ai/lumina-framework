@@ -25,7 +25,7 @@ def _make_task_slice(model_class: str):
     }
 
 
-def test_slm_routing_when_available():
+def test_slm_routing_when_available(monkeypatch):
     # create fake lumina.core.slm
     slm_mod = types.SimpleNamespace()
     slm_mod.slm_available = lambda: True
@@ -36,9 +36,10 @@ def test_slm_routing_when_available():
     core.slm = slm_mod
     lumina.core = core
 
-    sys.modules["lumina"] = lumina
-    sys.modules["lumina.core"] = core
-    sys.modules["lumina.core.slm"] = slm_mod
+    # Use monkeypatch so fake modules are reverted after this test.
+    monkeypatch.setitem(sys.modules, "lumina", lumina)
+    monkeypatch.setitem(sys.modules, "lumina.core", core)
+    monkeypatch.setitem(sys.modules, "lumina.core.slm", slm_mod)
 
     res = dispatcher.dispatch_to_tier(3, _make_task_slice("slm"))
     assert res.get("dispatched") is True
@@ -46,11 +47,20 @@ def test_slm_routing_when_available():
     assert res.get("slm_output") == "SLM_OK"
 
 
-def test_slm_fallback_when_unavailable():
-    # Ensure no slm is available
-    sys.modules.pop("lumina.core.slm", None)
-    sys.modules.pop("lumina.core", None)
-    sys.modules.pop("lumina", None)
+def test_slm_fallback_when_unavailable(monkeypatch):
+    # Inject a fake SLM that reports unavailable, so dispatcher falls through
+    # without polluting module state for other tests.
+    slm_mod = types.SimpleNamespace()
+    slm_mod.slm_available = lambda: False
+
+    lumina = types.ModuleType("lumina")
+    core = types.ModuleType("lumina.core")
+    core.slm = slm_mod
+    lumina.core = core
+
+    monkeypatch.setitem(sys.modules, "lumina", lumina)
+    monkeypatch.setitem(sys.modules, "lumina.core", core)
+    monkeypatch.setitem(sys.modules, "lumina.core.slm", slm_mod)
 
     res = dispatcher.dispatch_to_tier(3, _make_task_slice("slm"))
     # When SLM is not available, dispatcher should fallthrough and not return slm_output

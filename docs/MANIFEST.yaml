@@ -22,6 +22,13 @@ artifacts:
   status: planned
   last_updated: 2026-06-29
   sha256: 9cb840df9e26ad4d938a7bb9ec480b7ebe2beeb5ba52180a8a9130e724d027a0
+- path: docs/roadmap/slices/13-tier-1-architect.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-29
+  sha256: 8a5536032d1c2e8d34951bcf25b5a08a3c07837c927a22514784fba56039e294
 - path: docs/1-commands/README.md
   type: doc
   section: 1
