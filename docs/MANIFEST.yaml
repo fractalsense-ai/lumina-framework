@@ -1,5 +1,5 @@
 ﻿schema_version: 1.0.0
-last_updated: 2026-06-28
+last_updated: 2026-06-29
 artifacts:
 - path: docs/1-commands/README.md
   type: doc
@@ -1833,4 +1833,4 @@ artifacts:
   doc_version: 0.5.0
   status: active
   last_updated: 2026-06-28
-  sha256: 68bd3de49b9577d5beb8cd826e31754f83d8e4eeed6764cdebe705c4f91406f5
+  sha256: a080a741dc7d25042889d223aae44a4474e511d526170075c1c16c71ce1ae784
