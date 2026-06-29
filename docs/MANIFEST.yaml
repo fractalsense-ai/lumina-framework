@@ -1768,7 +1768,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-   sha256: 6343dc363118905ab017b0301f529e36e60729dadf9a943bf6268f2dbfdd0368
+  sha256: 6343dc363118905ab017b0301f529e36e60729dadf9a943bf6268f2dbfdd0368
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
