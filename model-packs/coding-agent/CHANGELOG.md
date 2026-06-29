@@ -14,3 +14,8 @@
 - Added initial Slice 7 skeleton for the coding-agent model pack.
 - Added System Pack-only ingress invariants and deterministic adapter stubs.
 - Added prompt and turn interpretation contracts for bounded artifact generation.
+
+## 0.3.0 — 2026-06-28
+
+- Design for Slice 9: `context_staging.py`, `job_interpreter.py`, `change_request.py` (planned). 
+- Added tests for hermes abstractions: `tests/test_coding_agent_hermes_abstractions.py` (planned execution in Slice 9).
