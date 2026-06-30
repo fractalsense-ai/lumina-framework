@@ -4,6 +4,7 @@ import importlib.util
 import pathlib
 import sys
 import types
+import time
 
 
 BASE = pathlib.Path(__file__).parent.parent / "model-packs" / "coding-agent"
@@ -77,12 +78,13 @@ def _plan_dict(nodes):
     }
 
 
-def _slice(node_id: str, depends_on=None):
+def _slice(node_id: str, depends_on=None, context_budget_tokens: int = 8):
     return {
         "slice_id": f"{node_id}-slice",
         "node_id": node_id,
         "task_description": f"Execute node {node_id}",
         "allowed_tools": [],
+        "context_budget_tokens": context_budget_tokens,
         "tier": 3,
         "model_class": "slm",
         "depends_on": list(depends_on or []),
@@ -152,7 +154,8 @@ def test_orchestration_loop_respects_slice_budget(monkeypatch):
 
     result = orchestration_loop.execute_dag_until(plan, {}, slices, budget)
 
-    assert result.halt_reason == "budget_exhausted"
+    assert result.halt_reason == "slice_limit_reached"
+    assert result.halt_reason_compat == "budget_exhausted"
     assert result.executed_slice_ids == ["A-slice"]
     assert result.completed_node_ids == ["A"]
 
@@ -176,7 +179,8 @@ def test_runtime_domain_step_orchestrates_and_resumes(monkeypatch):
     assert out_1.get("action") == "orchestrated"
     first_result = out_1.get("dispatch_result") or {}
     assert first_result.get("executed_slice_ids") == ["A-slice"]
-    assert first_result.get("halt_reason") == "budget_exhausted"
+    assert first_result.get("halt_reason") == "slice_limit_reached"
+    assert first_result.get("halt_reason_compat") == "budget_exhausted"
     assert "execution_state_store" in state_1
 
     state_2, out_2 = runtime.domain_step(state_1, {"task_id": "plan-17"}, evidence, params)
@@ -185,3 +189,66 @@ def test_runtime_domain_step_orchestrates_and_resumes(monkeypatch):
     second_result = out_2.get("dispatch_result") or {}
     assert second_result.get("executed_slice_ids") == ["B-slice"]
     assert second_result.get("halt_reason") == "all_completed"
+
+
+def test_orchestration_loop_blocks_preflight_when_token_budget_too_small(monkeypatch):
+    _install_lumina_slm(monkeypatch, lambda system, user, model=None, max_tokens=None: "SLM_OK")
+
+    plan = _plan_dict([("A", "root", [])])
+    slices = [_slice("A", context_budget_tokens=40)]
+    budget = turn_budget.TurnBudget(max_tokens=16, max_slices_per_turn=5)
+
+    result = orchestration_loop.execute_dag_until(plan, {}, slices, budget)
+
+    assert result.executed_slice_ids == []
+    assert result.halt_reason == "token_budget_exhausted"
+    assert result.halt_reason_compat == "budget_exhausted"
+
+
+def test_orchestration_loop_records_estimated_tokens_when_usage_missing(monkeypatch):
+    _install_lumina_slm(monkeypatch, lambda system, user, model=None, max_tokens=None: "SLM_OK")
+
+    plan = _plan_dict([("A", "root", []), ("B", "next", ["A"])])
+    slices = [_slice("A", context_budget_tokens=9), _slice("B", ["A"], context_budget_tokens=11)]
+    budget = turn_budget.TurnBudget(max_tokens=30, max_slices_per_turn=5)
+
+    result = orchestration_loop.execute_dag_until(plan, {}, slices, budget)
+
+    assert result.halt_reason == "all_completed"
+    assert result.budget.get("consumed_tokens") == 20
+
+
+def test_orchestration_loop_halts_when_time_budget_exhausted(monkeypatch):
+    _install_lumina_slm(monkeypatch, lambda system, user, model=None, max_tokens=None: "SLM_OK")
+
+    plan = _plan_dict([("A", "root", [])])
+    slices = [_slice("A", context_budget_tokens=5)]
+    budget = turn_budget.TurnBudget(
+        max_slices_per_turn=5,
+        max_time_seconds=1.0,
+        started_at_epoch=time.time() - 10.0,
+    )
+
+    result = orchestration_loop.execute_dag_until(plan, {}, slices, budget)
+
+    assert result.executed_slice_ids == []
+    assert result.halt_reason == "time_budget_exhausted"
+    assert result.halt_reason_compat == "budget_exhausted"
+
+
+def test_orchestration_loop_evidence_timeline_carries_tier3_payload(monkeypatch):
+    _install_lumina_slm(monkeypatch, lambda system, user, model=None, max_tokens=None: "SLM_OK")
+
+    plan = _plan_dict([("A", "root", [])])
+    slices = [_slice("A", context_budget_tokens=5)]
+    budget = turn_budget.TurnBudget(max_slices_per_turn=5)
+
+    result = orchestration_loop.execute_dag_until(plan, {}, slices, budget)
+
+    assert result.evidence_timeline
+    evidence = result.evidence_timeline[0].get("tier3_evidence") or {}
+    assert evidence.get("attempt_count") == 0
+    assert "error_class" in evidence
+    assert "error_message" in evidence
+    assert "allowed_tools" in evidence
+    assert "denied_tools" in evidence

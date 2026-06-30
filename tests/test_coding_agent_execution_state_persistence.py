@@ -135,3 +135,70 @@ def test_runtime_tier3_checkpoint_persists_and_recovers(monkeypatch):
     latest_context = checkpoints_second[-1]["execution_context"]
     assert "A" in latest_context.get("completed_node_ids", [])
     assert latest_context.get("retry_counts", {}).get("A") is None
+
+
+def test_runtime_orchestration_fails_when_execution_state_store_invalid(monkeypatch):
+    runtime = _load("coding_agent_runtime_slice18", CONTROLLERS / "runtime_adapters.py")
+
+    slm_mod = types.SimpleNamespace()
+    slm_mod.slm_available = lambda: True
+    slm_mod.call_slm = lambda system, user, model=None, max_tokens=None: "SLM_OK"
+
+    lumina = types.ModuleType("lumina")
+    core = types.ModuleType("lumina.core")
+    system_log = types.ModuleType("lumina.system_log")
+    event_payload = types.ModuleType("lumina.system_log.event_payload")
+    log_bus = types.ModuleType("lumina.system_log.log_bus")
+
+    class _LogLevel:
+        AUDIT = "AUDIT"
+
+    def _create_event(**kwargs):
+        return kwargs
+
+    def _emit(event):
+        return None
+
+    event_payload.LogLevel = _LogLevel
+    event_payload.create_event = _create_event
+    log_bus.emit = _emit
+
+    core.slm = slm_mod
+    lumina.core = core
+    lumina.system_log = system_log
+
+    monkeypatch.setitem(sys.modules, "lumina", lumina)
+    monkeypatch.setitem(sys.modules, "lumina.core", core)
+    monkeypatch.setitem(sys.modules, "lumina.core.slm", slm_mod)
+    monkeypatch.setitem(sys.modules, "lumina.system_log", system_log)
+    monkeypatch.setitem(sys.modules, "lumina.system_log.event_payload", event_payload)
+    monkeypatch.setitem(sys.modules, "lumina.system_log.log_bus", log_bus)
+
+    evidence = {
+        "job_scope_valid": True,
+        "use_orchestration_loop": True,
+        "plan": {
+            "plan_id": "plan-18",
+            "nodes": [{"node_id": "A", "description": "Do A", "depends_on": [], "tier_hint": 3}],
+            "created_at": "now",
+        },
+        "task_slices": [
+            {
+                "slice_id": "A-slice",
+                "node_id": "A",
+                "task_description": "Do A",
+                "allowed_tools": [],
+                "context_budget_tokens": 5,
+                "tier": 3,
+                "model_class": "slm",
+                "depends_on": [],
+            }
+        ],
+    }
+
+    state = {"turn_count": 0, "execution_state_store": {"retention_limit": "bad"}}
+    next_state, out = runtime.domain_step(state, {"task_id": "plan-18"}, evidence, {"max_slices_per_turn": 1})
+
+    assert next_state.get("turn_count") == 1
+    assert out.get("action") == "orchestration_failed"
+    assert out.get("reason") == "execution_state_store_unavailable"

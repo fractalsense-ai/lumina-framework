@@ -203,15 +203,21 @@ def domain_step(
         try:
             _store, _contracts = _load_execution_modules()
             _loop, _turn_budget = _load_orchestration_modules()
-            state_store = _store.ExecutionStateStore.from_dict(new_state.get("execution_state_store") or {})
-        except Exception:
-            state_store = None
-            _contracts = None
-            _loop = None
-            _turn_budget = None
+        except Exception as exc:
+            return new_state, {
+                "action": "orchestration_failed",
+                "reason": "orchestration_modules_missing",
+                "detail": str(exc),
+            }
 
-        if _contracts is None or _loop is None or _turn_budget is None:
-            return new_state, {"action": "orchestration_failed", "reason": "orchestration_modules_missing"}
+        try:
+            state_store = _store.ExecutionStateStore.from_dict(new_state.get("execution_state_store") or {})
+        except Exception as exc:
+            return new_state, {
+                "action": "orchestration_failed",
+                "reason": "execution_state_store_unavailable",
+                "detail": str(exc),
+            }
 
         plan_payload = evidence.get("plan") if isinstance(evidence.get("plan"), dict) else None
         slices_payload = evidence.get("task_slices") if isinstance(evidence.get("task_slices"), list) else []
@@ -226,11 +232,14 @@ def domain_step(
             return new_state, {"action": "orchestration_failed", "reason": "plan_or_slices_missing"}
 
         plan_id = str(plan_payload.get("plan_id") or task_spec.get("task_id") or "default")
-        latest = state_store.load_latest_checkpoint(plan_id) if state_store is not None else None
+        latest = state_store.load_latest_checkpoint(plan_id)
+        explicit_context_payload = evidence.get("execution_context") if isinstance(evidence.get("execution_context"), dict) else None
+        if explicit_context_payload is None and isinstance(task_slice_payload.get("execution_context"), dict):
+            explicit_context_payload = dict(task_slice_payload.get("execution_context") or {})
         if latest is not None:
             restored_context = _contracts.ExecutionContext.from_dict(latest.execution_context)
         else:
-            restored_context = _contracts.ExecutionContext.from_dict(evidence.get("execution_context") or {})
+            restored_context = _contracts.ExecutionContext.from_dict(explicit_context_payload or {})
 
         budget = _turn_budget.TurnBudget.from_params(params)
         orchestration = _loop.execute_dag_until(
@@ -243,8 +252,14 @@ def domain_step(
         )
 
         orchestration_result = orchestration.to_dict() if hasattr(orchestration, "to_dict") else dict(orchestration or {})
-        if state_store is not None:
-            new_state["execution_state_store"] = state_store.to_dict()
+        if orchestration_result.get("halt_reason") == "checkpoint_persist_failed":
+            return new_state, {
+                "action": "orchestration_failed",
+                "reason": "checkpoint_persist_failed",
+                "dispatch_result": orchestration_result,
+            }
+
+        new_state["execution_state_store"] = state_store.to_dict()
 
         return new_state, {"action": "orchestrated", "dispatch_result": orchestration_result}
 
