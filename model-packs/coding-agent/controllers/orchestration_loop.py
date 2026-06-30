@@ -77,6 +77,33 @@ def _extract_token_usage(dispatch_result: Dict[str, Any]) -> int:
                 return max(0, int(total))
             except Exception:
                 return 0
+        prompt_tokens = usage.get("prompt_tokens")
+        completion_tokens = usage.get("completion_tokens")
+        try:
+            return max(0, int(prompt_tokens or 0) + int(completion_tokens or 0))
+        except Exception:
+            return 0
+    try:
+        return max(0, int(dispatch_result.get("tokens_used", 0))) if isinstance(dispatch_result, dict) else 0
+    except Exception:
+        return 0
+
+
+def _slice_token_estimate(task_slice: Any) -> int:
+    try:
+        value = getattr(task_slice, "context_budget_tokens", 0)
+    except Exception:
+        value = 0
+    try:
+        return max(0, int(value or 0))
+    except Exception:
+        return 0
+
+
+def _compat_halt_reason(halt_reason: str) -> str:
+    if halt_reason in {"slice_limit_reached", "token_budget_exhausted", "time_budget_exhausted"}:
+        return "budget_exhausted"
+    return str(halt_reason)
     return 0
 
 
@@ -118,9 +145,13 @@ def execute_dag_until(
     executed_slice_ids: List[str] = []
     evidence_timeline: List[Dict[str, Any]] = []
     failed_node_id: str | None = None
-    halt_reason = "budget_exhausted"
+    halt_reason: str | None = None
 
-    while budget.can_execute_slice():
+    while True:
+        if not budget.can_execute_slice():
+            halt_reason = turn_budget.budget_exhaustion_reason(budget)
+            break
+
         ready = tier3_ready_scheduler.next_ready_slices(dag, slices, context)
         if not ready:
             all_nodes = {node.node_id for node in dag.nodes}
@@ -135,6 +166,11 @@ def execute_dag_until(
             break
 
         current = ready[0]
+        estimated_slice_tokens = _slice_token_estimate(current)
+        if not budget.can_execute_slice(next_slice_tokens=estimated_slice_tokens):
+            halt_reason = turn_budget.budget_exhaustion_reason(budget, next_slice_tokens=estimated_slice_tokens)
+            break
+
         payload = current.to_dict()
         payload["plan"] = dag.to_dict()
         payload["execution_context"] = context.to_dict()
@@ -148,25 +184,43 @@ def execute_dag_until(
 
         executed_slice_ids.append(str(current.slice_id))
         tier3_evidence = dispatch_result.get("tier3_evidence") if isinstance(dispatch_result, dict) else None
+        if not isinstance(tier3_evidence, dict):
+            tier3_evidence = {}
         evidence_timeline.append(
             {
                 "slice_id": str(current.slice_id),
                 "node_id": str(current.node_id),
                 "reason": str(dispatch_result.get("reason", "")) if isinstance(dispatch_result, dict) else "",
                 "dispatched": bool(dispatch_result.get("dispatched", False)) if isinstance(dispatch_result, dict) else False,
-                "status": str((tier3_evidence or {}).get("status", "")) if isinstance(tier3_evidence, dict) else "",
+                "status": str(tier3_evidence.get("status", "")),
+                "tier3_evidence": dict(tier3_evidence),
             }
         )
 
         if checkpoint_store is not None:
             try:
                 checkpoint_store.save_checkpoint(str(plan_id or "default"), context.to_dict(), source="orchestration_loop")
-            except Exception:
-                pass
+            except Exception as exc:
+                halt_reason = "checkpoint_persist_failed"
+                evidence_timeline.append(
+                    {
+                        "slice_id": str(current.slice_id),
+                        "node_id": str(current.node_id),
+                        "reason": "checkpoint_persist_failed",
+                        "dispatched": False,
+                        "status": "failed",
+                        "tier3_evidence": {
+                            "error_class": "checkpoint_persist_failed",
+                            "error_message": str(exc),
+                        },
+                    }
+                )
+                break
 
-        budget.record_slice(_extract_token_usage(dispatch_result if isinstance(dispatch_result, dict) else {}))
+        token_usage = _extract_token_usage(dispatch_result if isinstance(dispatch_result, dict) else {})
+        budget.record_slice(token_usage if token_usage > 0 else estimated_slice_tokens)
 
-        status = str((tier3_evidence or {}).get("status", "")) if isinstance(tier3_evidence, dict) else ""
+        status = str(tier3_evidence.get("status", ""))
         if status == "failed" or (
             isinstance(dispatch_result, dict)
             and dispatch_result.get("reason") == "tier3_execution_failed"
@@ -181,27 +235,22 @@ def execute_dag_until(
         ):
             halt_reason = "retry_scheduled"
             break
-    else:
-        all_nodes = {node.node_id for node in dag.nodes}
-        completed = set(context.completed_node_ids or [])
-        if all_nodes and all_nodes.issubset(completed):
-            halt_reason = "all_completed"
-        else:
-            halt_reason = turn_budget.budget_exhaustion_reason(budget)
 
-    if not budget.can_execute_slice() and halt_reason not in {"all_completed", "permanent_failure", "retry_scheduled", "no_ready_slices"}:
-        all_nodes = {node.node_id for node in dag.nodes}
-        completed = set(context.completed_node_ids or [])
-        if all_nodes and all_nodes.issubset(completed):
+    all_nodes = {node.node_id for node in dag.nodes}
+    completed = set(context.completed_node_ids or [])
+    if all_nodes and all_nodes.issubset(completed):
+        if halt_reason in {None, "no_ready_slices", "slice_limit_reached", "token_budget_exhausted", "time_budget_exhausted", "budget_available"}:
             halt_reason = "all_completed"
-        else:
-            halt_reason = turn_budget.budget_exhaustion_reason(budget)
+
+    if halt_reason is None:
+        halt_reason = turn_budget.budget_exhaustion_reason(budget)
 
     return orchestration_result.OrchestrationResult(
         executed_slice_ids=executed_slice_ids,
         completed_node_ids=list(context.completed_node_ids or []),
         failed_node_id=failed_node_id,
-        halt_reason=halt_reason,
+        halt_reason=str(halt_reason),
+        halt_reason_compat=_compat_halt_reason(str(halt_reason)),
         evidence_timeline=evidence_timeline,
         execution_context=context.to_dict(),
         budget=budget.to_dict(),

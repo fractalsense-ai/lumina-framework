@@ -10,6 +10,7 @@ class OrchestrationResult:
     completed_node_ids: List[str] = field(default_factory=list)
     failed_node_id: str | None = None
     halt_reason: str = "budget_exhausted"
+    halt_reason_compat: str = "budget_exhausted"
     evidence_timeline: List[Dict[str, Any]] = field(default_factory=list)
     execution_context: Dict[str, Any] = field(default_factory=dict)
     budget: Dict[str, Any] = field(default_factory=dict)
@@ -20,6 +21,7 @@ class OrchestrationResult:
             "completed_node_ids": [str(value) for value in list(self.completed_node_ids or [])],
             "failed_node_id": None if self.failed_node_id is None else str(self.failed_node_id),
             "halt_reason": str(self.halt_reason),
+            "halt_reason_compat": str(self.halt_reason_compat),
             "evidence_timeline": [dict(value or {}) for value in list(self.evidence_timeline or [])],
             "execution_context": dict(self.execution_context or {}),
             "budget": dict(self.budget or {}),
@@ -34,6 +36,7 @@ class OrchestrationResult:
             completed_node_ids=[str(value) for value in list(payload.get("completed_node_ids") or [])],
             failed_node_id=None if failed_node in (None, "") else str(failed_node),
             halt_reason=str(payload.get("halt_reason", "budget_exhausted")),
+            halt_reason_compat=str(payload.get("halt_reason_compat", payload.get("halt_reason", "budget_exhausted"))),
             evidence_timeline=[dict(value or {}) for value in list(payload.get("evidence_timeline") or [])],
             execution_context=dict(payload.get("execution_context") or {}),
             budget=dict(payload.get("budget") or {}),

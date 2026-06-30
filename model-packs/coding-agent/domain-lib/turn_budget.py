@@ -58,10 +58,13 @@ class TurnBudget:
         elapsed = max(0.0, now - float(self.started_at_epoch))
         return max(0.0, float(self.max_time_seconds) - elapsed)
 
-    def can_execute_slice(self, now_epoch: float | None = None) -> bool:
+    def can_execute_slice(self, now_epoch: float | None = None, next_slice_tokens: int = 0) -> bool:
         if self.executed_slices >= self.max_slices_per_turn:
             return False
         if self.max_tokens > 0 and self.consumed_tokens >= self.max_tokens:
+            return False
+        next_tokens = max(0, int(next_slice_tokens or 0))
+        if self.max_tokens > 0 and next_tokens > 0 and (self.consumed_tokens + next_tokens) > self.max_tokens:
             return False
         remaining = self.time_remaining(now_epoch)
         if remaining is not None and remaining <= 0:
@@ -73,12 +76,23 @@ class TurnBudget:
         self.consumed_tokens = int(self.consumed_tokens) + max(0, int(token_count or 0))
 
 
-def budget_exhaustion_reason(turn_budget: TurnBudget, now_epoch: float | None = None) -> str:
+def budget_exhaustion_reason(
+    turn_budget: TurnBudget,
+    now_epoch: float | None = None,
+    next_slice_tokens: int = 0,
+) -> str:
     if turn_budget.executed_slices >= turn_budget.max_slices_per_turn:
-        return "budget_exhausted"
+        return "slice_limit_reached"
+    projected_tokens = max(0, int(next_slice_tokens or 0))
+    if (
+        turn_budget.max_tokens > 0
+        and projected_tokens > 0
+        and (turn_budget.consumed_tokens + projected_tokens) > turn_budget.max_tokens
+    ):
+        return "token_budget_exhausted"
     if turn_budget.max_tokens > 0 and turn_budget.consumed_tokens >= turn_budget.max_tokens:
-        return "budget_exhausted"
+        return "token_budget_exhausted"
     remaining = turn_budget.time_remaining(now_epoch)
     if remaining is not None and remaining <= 0:
-        return "budget_exhausted"
+        return "time_budget_exhausted"
     return "budget_available"
