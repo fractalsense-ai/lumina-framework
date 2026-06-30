@@ -43,6 +43,13 @@ artifacts:
   status: planned
   last_updated: 2026-06-29
   sha256: 88c058c2267f99f9f6f427e6217aecd8dc59aa60bc4d0739771c6328d04ce2f1
+- path: docs/roadmap/slices/16-execution-state-persistence.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-30
+  sha256: 84d5316b61a12bd8228b7750625177969e4bfdf704fd434ca8b74926bd111866
 - path: docs/1-commands/README.md
   type: doc
   section: 1
