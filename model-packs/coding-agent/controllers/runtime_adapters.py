@@ -32,6 +32,44 @@ def build_initial_state(profile: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _load_execution_modules():
+    try:
+        from model_packs.coding_agent.domain_lib import execution_state_store as _store
+        from model_packs.coding_agent.domain_lib import tier_contracts as _contracts
+        return _store, _contracts
+    except Exception:
+        import importlib.util
+        import pathlib
+        import sys
+
+        base = pathlib.Path(__file__).parent.parent
+
+        store_path = base / "domain-lib" / "execution_state_store.py"
+        spec = importlib.util.spec_from_file_location("coding_agent_execution_state_store", str(store_path))
+        _store = importlib.util.module_from_spec(spec)
+        sys.modules["coding_agent_execution_state_store"] = _store
+        spec.loader.exec_module(_store)
+
+        contracts_path = base / "domain-lib" / "tier_contracts.py"
+        spec = importlib.util.spec_from_file_location("coding_agent_tier_contracts_runtime", str(contracts_path))
+        _contracts = importlib.util.module_from_spec(spec)
+        sys.modules["coding_agent_tier_contracts_runtime"] = _contracts
+        spec.loader.exec_module(_contracts)
+
+        return _store, _contracts
+
+
+def _resolve_plan_id(task_slice: dict[str, Any], task_spec: dict[str, Any]) -> str:
+    if not isinstance(task_slice, dict):
+        return str(task_spec.get("task_id") or "default")
+    if task_slice.get("plan_id"):
+        return str(task_slice.get("plan_id"))
+    plan = task_slice.get("plan") if isinstance(task_slice.get("plan"), dict) else {}
+    if plan.get("plan_id"):
+        return str(plan.get("plan_id"))
+    return str(task_spec.get("task_id") or "default")
+
+
 def domain_step(
     state: dict[str, Any],
     task_spec: dict[str, Any],
@@ -139,6 +177,13 @@ def domain_step(
             except Exception:
                 return new_state, {"action": "dispatch_failed", "reason": "dispatcher_missing"}
 
+        try:
+            _store, _contracts = _load_execution_modules()
+            state_store = _store.ExecutionStateStore.from_dict(new_state.get("execution_state_store") or {})
+        except Exception:
+            state_store = None
+            _contracts = None
+
         # execution_tier expected from micro_context if present
         execution_tier = None
         micro = evidence.get("micro_context") or {}
@@ -146,7 +191,33 @@ def domain_step(
         if execution_tier is None:
             execution_tier = 3
 
-        dispatch_result = _td.dispatch_to_tier(int(execution_tier), evidence.get("task_slice"))
+        task_slice_payload = dict(evidence.get("task_slice") or {})
+
+        if int(execution_tier) == 3 and state_store is not None and _contracts is not None:
+            plan_id = _resolve_plan_id(task_slice_payload, task_spec)
+            latest = state_store.load_latest_checkpoint(plan_id)
+            if latest is not None:
+                restored_context = _contracts.ExecutionContext.from_dict(latest.execution_context)
+            else:
+                restored_context = _contracts.ExecutionContext.from_dict(task_slice_payload.get("execution_context") or {})
+
+            dispatch_result = _td.dispatch_to_tier_with_state(
+                3,
+                task_slice_payload,
+                execution_context=restored_context.to_dict(),
+            )
+
+            persisted_context = dispatch_result.get("execution_context") if isinstance(dispatch_result, dict) else None
+            if isinstance(persisted_context, dict):
+                source = "tier3_dispatch"
+                tier3_evidence = dispatch_result.get("tier3_evidence")
+                if isinstance(tier3_evidence, dict) and tier3_evidence.get("status"):
+                    source = f"tier3_{tier3_evidence.get('status')}"
+                state_store.save_checkpoint(plan_id, persisted_context, source=source)
+                new_state["execution_state_store"] = state_store.to_dict()
+        else:
+            dispatch_result = _td.dispatch_to_tier(int(execution_tier), task_slice_payload)
+
         return new_state, {"action": "dispatched", "dispatch_result": dispatch_result}
 
     # Tier-2 planning: if micro-context prefers tier 2 and a job payload exists, decompose

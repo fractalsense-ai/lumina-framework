@@ -44,6 +44,63 @@ def _resolve_tool_registry() -> Dict[str, Any]:
     }
 
 
+def _update_execution_context_for_result(
+    execution_context: Any,
+    task_slice: Dict[str, Any],
+    dispatch_result: Dict[str, Any],
+) -> Any:
+    node_id = str(task_slice.get("node_id", ""))
+    if not node_id:
+        return execution_context
+
+    evidence = dispatch_result.get("tier3_evidence") if isinstance(dispatch_result, dict) else None
+    status = str((evidence or {}).get("status", "")) if isinstance(evidence, dict) else ""
+    retryable = bool(dispatch_result.get("retryable", False)) if isinstance(dispatch_result, dict) else False
+
+    completed = list(execution_context.completed_node_ids or [])
+    failed = list(execution_context.failed_node_ids or [])
+    retries = dict(execution_context.retry_counts or {})
+
+    if status == "success":
+        if node_id not in completed:
+            completed.append(node_id)
+        if node_id in failed:
+            failed = [value for value in failed if value != node_id]
+        retries.pop(node_id, None)
+    elif status == "retry_scheduled" or retryable:
+        retries[node_id] = int(retries.get(node_id, 0)) + 1
+    elif status == "failed":
+        if node_id not in failed:
+            failed.append(node_id)
+
+    execution_context.completed_node_ids = completed
+    execution_context.failed_node_ids = failed
+    execution_context.retry_counts = {str(key): int(value) for key, value in retries.items()}
+    return execution_context
+
+
+def dispatch_to_tier_with_state(
+    tier: int,
+    task_slice: Dict[str, Any],
+    execution_context: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    raw = dict(task_slice or {})
+    payload_context = execution_context if isinstance(execution_context, dict) else {}
+    if not raw.get("execution_context"):
+        raw["execution_context"] = payload_context
+
+    result = dispatch_to_tier(tier, raw)
+
+    try:
+        current_context = tier_contracts.ExecutionContext.from_dict(raw.get("execution_context") or {})
+        updated = _update_execution_context_for_result(current_context, raw, result)
+        result["execution_context"] = updated.to_dict()
+    except Exception:
+        result["execution_context"] = payload_context
+
+    return result
+
+
 def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
     registry = _resolve_tool_registry()
 
