@@ -59,6 +59,33 @@ def _load_execution_modules():
         return _store, _contracts
 
 
+def _load_orchestration_modules():
+    try:
+        from model_packs.coding_agent.controllers import orchestration_loop as _loop
+        from model_packs.coding_agent.domain_lib import turn_budget as _turn_budget
+        return _loop, _turn_budget
+    except Exception:
+        import importlib.util
+        import pathlib
+        import sys
+
+        base = pathlib.Path(__file__).parent.parent
+
+        loop_path = base / "controllers" / "orchestration_loop.py"
+        spec = importlib.util.spec_from_file_location("coding_agent_orchestration_loop", str(loop_path))
+        _loop = importlib.util.module_from_spec(spec)
+        sys.modules["coding_agent_orchestration_loop"] = _loop
+        spec.loader.exec_module(_loop)
+
+        budget_path = base / "domain-lib" / "turn_budget.py"
+        spec = importlib.util.spec_from_file_location("coding_agent_turn_budget_runtime", str(budget_path))
+        _turn_budget = importlib.util.module_from_spec(spec)
+        sys.modules["coding_agent_turn_budget_runtime"] = _turn_budget
+        spec.loader.exec_module(_turn_budget)
+
+        return _loop, _turn_budget
+
+
 def _resolve_plan_id(task_slice: dict[str, Any], task_spec: dict[str, Any]) -> str:
     if not isinstance(task_slice, dict):
         return str(task_spec.get("task_id") or "default")
@@ -68,6 +95,19 @@ def _resolve_plan_id(task_slice: dict[str, Any], task_spec: dict[str, Any]) -> s
     if plan.get("plan_id"):
         return str(plan.get("plan_id"))
     return str(task_spec.get("task_id") or "default")
+
+
+def _should_use_orchestration_loop(evidence: dict[str, Any]) -> bool:
+    if not isinstance(evidence, dict):
+        return False
+    if bool(evidence.get("use_orchestration_loop")):
+        return True
+    micro = evidence.get("micro_context") if isinstance(evidence.get("micro_context"), dict) else {}
+    if bool(micro.get("use_orchestration_loop")):
+        return True
+    has_plan = isinstance(evidence.get("plan"), dict)
+    has_task_slices = isinstance(evidence.get("task_slices"), list) and bool(evidence.get("task_slices"))
+    return bool(has_plan and has_task_slices)
 
 
 def domain_step(
@@ -157,6 +197,56 @@ def domain_step(
             "escalation_eligible": False,
             "reason": "validated_patch",
         }
+
+    # Prioritise orchestration loop when requested with plan + task_slices.
+    if _should_use_orchestration_loop(evidence):
+        try:
+            _store, _contracts = _load_execution_modules()
+            _loop, _turn_budget = _load_orchestration_modules()
+            state_store = _store.ExecutionStateStore.from_dict(new_state.get("execution_state_store") or {})
+        except Exception:
+            state_store = None
+            _contracts = None
+            _loop = None
+            _turn_budget = None
+
+        if _contracts is None or _loop is None or _turn_budget is None:
+            return new_state, {"action": "orchestration_failed", "reason": "orchestration_modules_missing"}
+
+        plan_payload = evidence.get("plan") if isinstance(evidence.get("plan"), dict) else None
+        slices_payload = evidence.get("task_slices") if isinstance(evidence.get("task_slices"), list) else []
+
+        task_slice_payload = dict(evidence.get("task_slice") or {})
+        if plan_payload is None and isinstance(task_slice_payload.get("plan"), dict):
+            plan_payload = dict(task_slice_payload.get("plan") or {})
+        if not slices_payload and task_slice_payload:
+            slices_payload = [task_slice_payload]
+
+        if not isinstance(plan_payload, dict) or not slices_payload:
+            return new_state, {"action": "orchestration_failed", "reason": "plan_or_slices_missing"}
+
+        plan_id = str(plan_payload.get("plan_id") or task_spec.get("task_id") or "default")
+        latest = state_store.load_latest_checkpoint(plan_id) if state_store is not None else None
+        if latest is not None:
+            restored_context = _contracts.ExecutionContext.from_dict(latest.execution_context)
+        else:
+            restored_context = _contracts.ExecutionContext.from_dict(evidence.get("execution_context") or {})
+
+        budget = _turn_budget.TurnBudget.from_params(params)
+        orchestration = _loop.execute_dag_until(
+            plan_payload,
+            restored_context.to_dict(),
+            slices_payload,
+            budget,
+            checkpoint_store=state_store,
+            plan_id=plan_id,
+        )
+
+        orchestration_result = orchestration.to_dict() if hasattr(orchestration, "to_dict") else dict(orchestration or {})
+        if state_store is not None:
+            new_state["execution_state_store"] = state_store.to_dict()
+
+        return new_state, {"action": "orchestrated", "dispatch_result": orchestration_result}
 
     # Prioritise execution-phase dispatch when a `task_slice` is present
     if evidence and evidence.get("task_slice"):
