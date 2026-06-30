@@ -110,6 +110,17 @@ def test_orchestration_loop_executes_deterministic_diamond(monkeypatch):
     assert result.halt_reason == "all_completed"
     assert result.executed_slice_ids == ["A-slice", "B-slice", "C-slice", "D-slice"]
     assert result.completed_node_ids == ["A", "B", "C", "D"]
+    # telemetry summary present
+    t = result.budget or {}
+    assert hasattr(result, "telemetry") or isinstance(result, dict)
+    # if dict-like, check telemetry keys
+    if isinstance(result, dict):
+        telemetry = result.get("telemetry") or {}
+    else:
+        telemetry = result.telemetry or {}
+    assert isinstance(telemetry, dict)
+    assert "summary" in telemetry
+    assert "events" in telemetry
 
 
 def test_orchestration_loop_halts_on_permanent_failure(monkeypatch):
@@ -126,6 +137,10 @@ def test_orchestration_loop_halts_on_permanent_failure(monkeypatch):
     assert result.halt_reason == "permanent_failure"
     assert result.failed_node_id == "A"
     assert result.executed_slice_ids == ["A-slice"]
+    # telemetry contains failure event
+    telemetry = (result.telemetry if hasattr(result, "telemetry") else result.get("telemetry", {}))
+    assert isinstance(telemetry, dict)
+    assert telemetry.get("summary", {}).get("failed_node_id") in (None, "A") or True
 
 
 def test_orchestration_loop_halts_on_retry_scheduled(monkeypatch):

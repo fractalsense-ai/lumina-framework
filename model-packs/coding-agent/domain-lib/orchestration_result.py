@@ -14,6 +14,7 @@ class OrchestrationResult:
     evidence_timeline: List[Dict[str, Any]] = field(default_factory=list)
     execution_context: Dict[str, Any] = field(default_factory=dict)
     budget: Dict[str, Any] = field(default_factory=dict)
+    telemetry: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -22,6 +23,7 @@ class OrchestrationResult:
             "failed_node_id": None if self.failed_node_id is None else str(self.failed_node_id),
             "halt_reason": str(self.halt_reason),
             "halt_reason_compat": str(self.halt_reason_compat),
+            "telemetry": dict(self.telemetry or {}),
             "evidence_timeline": [dict(value or {}) for value in list(self.evidence_timeline or [])],
             "execution_context": dict(self.execution_context or {}),
             "budget": dict(self.budget or {}),
@@ -38,6 +40,7 @@ class OrchestrationResult:
             halt_reason=str(payload.get("halt_reason", "budget_exhausted")),
             halt_reason_compat=str(payload.get("halt_reason_compat", payload.get("halt_reason", "budget_exhausted"))),
             evidence_timeline=[dict(value or {}) for value in list(payload.get("evidence_timeline") or [])],
+            telemetry=dict(payload.get("telemetry") or {}),
             execution_context=dict(payload.get("execution_context") or {}),
             budget=dict(payload.get("budget") or {}),
         )

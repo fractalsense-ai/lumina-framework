@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 try:
     from . import tier_dispatcher
     from ..domain_lib import orchestration_result, tier3_ready_scheduler, tier_contracts, turn_budget
+    from ..domain_lib import orchestration_telemetry
 except Exception:
     import importlib.util
     import pathlib
@@ -44,6 +45,11 @@ except Exception:
     turn_budget = importlib.util.module_from_spec(spec)
     sys.modules["coding_agent_turn_budget"] = turn_budget
     spec.loader.exec_module(turn_budget)
+    ot_path = domain / "orchestration_telemetry.py"
+    spec = importlib.util.spec_from_file_location("coding_agent_orchestration_telemetry", str(ot_path))
+    orchestration_telemetry = importlib.util.module_from_spec(spec)
+    sys.modules["coding_agent_orchestration_telemetry"] = orchestration_telemetry
+    spec.loader.exec_module(orchestration_telemetry)
 
 
 def _to_plan_dag(plan_dag: Dict[str, Any] | Any) -> Any:
@@ -146,6 +152,21 @@ def execute_dag_until(
     evidence_timeline: List[Dict[str, Any]] = []
     failed_node_id: str | None = None
     halt_reason: str | None = None
+    telemetry_events: List[Dict[str, Any]] = []
+
+    # Emit start telemetry
+    try:
+        start_event = orchestration_telemetry.TelemetryEvent(
+            event_type="orchestration_start",
+            payload={
+                "plan_id": str(plan_id or "default"),
+                "ready_count": len(tier3_ready_scheduler.next_ready_slices(dag, slices, context)),
+                "budget": budget.to_dict(),
+            },
+        )
+        telemetry_events.append(start_event.to_dict())
+    except Exception:
+        pass
 
     while True:
         if not budget.can_execute_slice():
@@ -196,6 +217,22 @@ def execute_dag_until(
                 "tier3_evidence": dict(tier3_evidence),
             }
         )
+        # per-slice telemetry
+        try:
+            slice_event = orchestration_telemetry.TelemetryEvent(
+                event_type="slice_executed",
+                payload={
+                    "slice_id": str(current.slice_id),
+                    "node_id": str(current.node_id),
+                    "status": str(tier3_evidence.get("status", "")),
+                    "attempt_count": int(tier3_evidence.get("attempt_count", 0) or 0),
+                    "tokens": int(_extract_token_usage(dispatch_result) or 0),
+                    "reason": str(dispatch_result.get("reason", "")) if isinstance(dispatch_result, dict) else "",
+                },
+            )
+            telemetry_events.append(slice_event.to_dict())
+        except Exception:
+            pass
 
         if checkpoint_store is not None:
             try:
@@ -245,6 +282,36 @@ def execute_dag_until(
     if halt_reason is None:
         halt_reason = turn_budget.budget_exhaustion_reason(budget)
 
+    # emit halt telemetry and summary
+    try:
+        halt_event = orchestration_telemetry.TelemetryEvent(
+            event_type="orchestration_halt",
+            payload={
+                "plan_id": str(plan_id or "default"),
+                "halt_reason": str(halt_reason),
+                "halt_reason_compat": _compat_halt_reason(str(halt_reason)),
+                "executed": executed_slice_ids,
+                "completed_nodes": list(context.completed_node_ids or []),
+                "failed_node_id": failed_node_id,
+            },
+        )
+        telemetry_events.append(halt_event.to_dict())
+    except Exception:
+        pass
+
+    try:
+        summary = orchestration_telemetry.OrchestrationTurnSummary(
+            plan_id=str(plan_id or "default"),
+            executed_slices=executed_slice_ids,
+            halt_reason=str(halt_reason),
+            halt_reason_compat=_compat_halt_reason(str(halt_reason)),
+            budget_snapshot=budget.to_dict(),
+            evidence_summary=evidence_timeline,
+        )
+        telemetry_summary = summary.to_dict()
+    except Exception:
+        telemetry_summary = {}
+
     return orchestration_result.OrchestrationResult(
         executed_slice_ids=executed_slice_ids,
         completed_node_ids=list(context.completed_node_ids or []),
@@ -254,4 +321,5 @@ def execute_dag_until(
         evidence_timeline=evidence_timeline,
         execution_context=context.to_dict(),
         budget=budget.to_dict(),
+        telemetry={"events": telemetry_events, "summary": telemetry_summary},
     )

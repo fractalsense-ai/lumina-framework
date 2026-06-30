@@ -64,6 +64,13 @@ artifacts:
   status: planned
   last_updated: 2026-06-30
   sha256: 4a43a503daeff3f36350fb06cc4b6ea5aa2397e1644aa3d0f00647dd3fbad569
+- path: docs/roadmap/slices/19-execution-telemetry-and-trace-export.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-30
+  sha256: 7432f7ab331843fee55fb67bd877d4becd35161836d807ac7a34357b60263d62
 - path: docs/1-commands/README.md
   type: doc
   section: 1
