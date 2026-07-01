@@ -12,6 +12,8 @@ class OrchestrationResult:
     halt_reason: str = "budget_exhausted"
     halt_reason_compat: str = "budget_exhausted"
     evidence_timeline: List[Dict[str, Any]] = field(default_factory=list)
+    evidence_commit: Dict[str, Any] | None = None
+    teardown_result: Dict[str, Any] | None = None
     execution_context: Dict[str, Any] = field(default_factory=dict)
     budget: Dict[str, Any] = field(default_factory=dict)
     telemetry: Dict[str, Any] = field(default_factory=dict)
@@ -25,6 +27,8 @@ class OrchestrationResult:
             "halt_reason_compat": str(self.halt_reason_compat),
             "telemetry": dict(self.telemetry or {}),
             "evidence_timeline": [dict(value or {}) for value in list(self.evidence_timeline or [])],
+            "evidence_commit": dict(self.evidence_commit or {}),
+            "teardown_result": dict(self.teardown_result or {}),
             "execution_context": dict(self.execution_context or {}),
             "budget": dict(self.budget or {}),
         }
