@@ -1,6 +1,21 @@
 from __future__ import annotations
 
-from model_packs.coding_agent.domain_lib import evidence_harvest, teardown_coordinator
+import importlib.util
+import pathlib
+
+base = pathlib.Path(__file__).resolve().parents[1]
+eh_path = base / "model-packs" / "coding-agent" / "domain-lib" / "evidence_harvest.py"
+spec = importlib.util.spec_from_file_location("coding_agent_evidence_harvest", str(eh_path))
+evidence_harvest = importlib.util.module_from_spec(spec)
+import sys
+sys.modules[spec.name] = evidence_harvest
+spec.loader.exec_module(evidence_harvest)
+
+td_path = base / "model-packs" / "coding-agent" / "domain-lib" / "teardown_coordinator.py"
+spec = importlib.util.spec_from_file_location("coding_agent_teardown_coordinator", str(td_path))
+teardown_coordinator = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = teardown_coordinator
+spec.loader.exec_module(teardown_coordinator)
 
 
 def test_build_evidence_from_orchestration_minimal():

@@ -8,6 +8,8 @@ BASE = Path(__file__).resolve().parents[1] / "model-packs" / "coding-agent" / "d
 def _load(name: str, path: Path):
     spec = importlib.util.spec_from_file_location(name, str(path))
     mod = importlib.util.module_from_spec(spec)
+    import sys
+    sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)  # type: ignore
     return mod
 
@@ -54,8 +56,10 @@ def test_topological_sort_linear_chain():
 
 
 def test_topological_sort_cycle_raises():
-    from model_packs.coding_agent.domain_lib import tier_contracts
-    from model_packs.coding_agent.domain_lib.tier2_decomposer import topological_sort
+    # Load canonical tier_contracts and decomposer modules directly from model-packs
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
+    decomposer = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
+    topological_sort = decomposer.topological_sort
 
     n1 = tier_contracts.PlanNode(node_id="A", description="", depends_on=["B"])
     n2 = tier_contracts.PlanNode(node_id="B", description="", depends_on=["A"])
@@ -71,7 +75,7 @@ def test_topological_sort_cycle_raises():
 
 def test_assign_task_slices_filters_tools():
     decomposer = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     n = tier_contracts.PlanNode(node_id="X", description="x", depends_on=[])
     dag = tier_contracts.PlanDAG(nodes=[n], created_at="now")
@@ -83,7 +87,7 @@ def test_assign_task_slices_filters_tools():
 
 def test_validate_dag_duplicate_node_ids():
     validator = _load("dag_validator", BASE / "dag_validator.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     n1 = tier_contracts.PlanNode(node_id="A", description="", depends_on=[])
     n2 = tier_contracts.PlanNode(node_id="A", description="dup", depends_on=[])
@@ -94,7 +98,7 @@ def test_validate_dag_duplicate_node_ids():
 
 def test_validate_dag_dangling_depends_on():
     validator = _load("dag_validator", BASE / "dag_validator.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     n1 = tier_contracts.PlanNode(node_id="A", description="", depends_on=["MISSING"])
     dag = tier_contracts.PlanDAG(nodes=[n1], created_at="now")
