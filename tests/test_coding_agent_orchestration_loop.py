@@ -140,7 +140,13 @@ def test_orchestration_loop_halts_on_permanent_failure(monkeypatch):
     # telemetry contains failure event
     telemetry = (result.telemetry if hasattr(result, "telemetry") else result.get("telemetry", {}))
     assert isinstance(telemetry, dict)
-    assert telemetry.get("summary", {}).get("failed_node_id") in (None, "A") or True
+    halt_events = [
+        event
+        for event in (telemetry.get("events") or [])
+        if event.get("event_type") == "orchestration_halt"
+    ]
+    assert halt_events
+    assert halt_events[0].get("payload", {}).get("failed_node_id") == "A"
 
 
 def test_orchestration_loop_halts_on_retry_scheduled(monkeypatch):
