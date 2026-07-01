@@ -1,5 +1,5 @@
 ﻿schema_version: 1.0.0
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
@@ -1852,7 +1852,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: 4d2fca6c3ee051f86e344fc4ae5aecea63a459cb54c6ee9c0d01f221cf1cd85a
+  sha256: 19a5b7d07060c31b8c582b6c636fe6fd312e4e0ca2cda7d28ac3c3fca75570f7
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0

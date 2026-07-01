@@ -47,6 +47,7 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [19](slices/19-execution-telemetry-and-trace-export.md) | Execution Telemetry and Trace Export | Delivered |
 | [20](slices/20-tiered-model-and-api-key-routing.md) | Tiered Model and API Key Routing | Delivered |
 | [21](slices/21-framework-boundary-reconciliation.md) | Framework Boundary Reconciliation | Planned |
+| [22](slices/22-system-pack-activation-gate.md) | System Pack Approval / Activation Gate | Proposed |
 
 ---
 
