@@ -14,9 +14,9 @@ Summary
 This slice adds deterministic, in-pack telemetry for orchestration runs enabling reliable debugging and basic audit traces without introducing external telemetry sinks.
 
 Key points
-- Adds `OrchestrationTelemetryEvent` and `OrchestrationTurnSummary` contracts.
+- Adds `TelemetryEvent` and `OrchestrationTurnSummary` contracts.
 - Emits start/per-slice/halt telemetry events from the orchestration loop.
-- Includes telemetry summary in orchestration dispatch results under `dispatch_result.telemetry`.
+- Includes telemetry summary in orchestration results under `result.telemetry` (via `OrchestrationResult.telemetry`).
 - Adds deterministic tests and docs; updates `docs/MANIFEST.yaml`.
 
 Notes
