@@ -378,6 +378,44 @@ def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
                 }
         # else: fallthrough to adapter execution path
 
+    # Resolve provider routing and enforce local policy (e.g., cloud-disable)
+    try:
+        from ..domain_lib import provider_routing
+    except Exception:
+        import importlib.util, pathlib, sys
+
+        base = pathlib.Path(__file__).parent
+        pr_path = base.parent / "domain-lib" / "provider_routing.py"
+        spec = importlib.util.spec_from_file_location("coding_agent_provider_routing", str(pr_path))
+        provider_routing = importlib.util.module_from_spec(spec)
+        sys.modules["coding_agent_provider_routing"] = provider_routing
+        spec.loader.exec_module(provider_routing)
+
+    provider_info = provider_routing.resolve_provider_for_slice(ts.to_dict())
+    # If provider is disallowed by local policy, fail closed with evidence
+    if not provider_routing.is_provider_allowed(provider_info.get("provider"), ts.to_dict()):
+        evidence = tier3_evidence.Tier3ExecutionEvidence(
+            slice_id=ts.slice_id,
+            node_id=ts.node_id,
+            model_class=model_class,
+            status="failed",
+            ready=True,
+            retryable=False,
+            attempt_count=attempt_count,
+            error_class="provider_disabled",
+            error_message=f"provider {provider_info.get('provider')} is disabled by local policy",
+            completed_node_ids=list(execution_context.completed_node_ids or []),
+            denied_tools=[],
+            allowed_tools=list(ts.allowed_tools or []),
+        )
+        return {
+            "tier": 3,
+            "dispatched": False,
+            "reason": "provider_disabled",
+            "provider": provider_info,
+            "tier3_evidence": evidence.to_dict(),
+        }
+
     denied = []
     allowed = []
     trace: List[Dict[str, Any]] = []
@@ -408,6 +446,7 @@ def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
             "dispatched": False,
             "allowed_tools": allowed,
             "denied_tools": denied,
+            "provider": provider_info,
             "tier3_evidence": evidence.to_dict(),
         }
 
@@ -482,6 +521,7 @@ def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
             "reason": "retry_scheduled" if retryable else "tier3_execution_failed",
             "retryable": retryable,
             "retry_after_seconds": backoff if retryable else 0.0,
+            "provider": provider_info,
             "tier3_evidence": evidence.to_dict(),
         }
 
@@ -504,5 +544,6 @@ def dispatch_to_tier(tier: int, task_slice: Dict[str, Any]) -> Dict[str, Any]:
         "allowed_tools": allowed,
         "denied_tools": denied,
         "scratchpad": seq_trace.to_dict(),
+        "provider": provider_info,
         "tier3_evidence": evidence.to_dict(),
     }

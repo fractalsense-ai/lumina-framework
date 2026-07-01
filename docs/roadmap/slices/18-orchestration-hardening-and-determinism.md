@@ -21,5 +21,10 @@ Key points
 - Hardens runtime orchestration to return explicit failures when execution-state infrastructure is unavailable.
 - Adds regression tests for budget preflight, token accounting fallback, time-budget halts, evidence completeness, and invalid state-store handling.
 
+Boundary compliance
+- Hardening improves deterministic evidence and failure reporting inside scoped Coding Agent execution.
+- Persistence and halt failures are surfaced as reviewable results; they do not grant activation, registration, deployment, or credential authority.
+- Approval, evidence harvest, and teardown remain future System Pack-governed lifecycle work.
+
 Notes
 - After adding or editing this file run `scripts/manifest-regenerate.ps1` to update `docs/MANIFEST.yaml`.

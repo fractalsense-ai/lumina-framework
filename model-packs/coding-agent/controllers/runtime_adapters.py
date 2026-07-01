@@ -306,6 +306,36 @@ def domain_step(
             else:
                 restored_context = _contracts.ExecutionContext.from_dict(task_slice_payload.get("execution_context") or {})
 
+            # Pre-flight provider / API-key check to avoid making live calls without creds
+            try:
+                from model_packs.coding_agent.domain_lib import provider_routing as _pr
+            except Exception:
+                try:
+                    import importlib.util, pathlib, sys
+
+                    pr_path = pathlib.Path(__file__).parent.parent / "domain-lib" / "provider_routing.py"
+                    spec = importlib.util.spec_from_file_location("coding_agent_provider_routing_runtime", str(pr_path))
+                    _pr = importlib.util.module_from_spec(spec)
+                    sys.modules["coding_agent_provider_routing_runtime"] = _pr
+                    spec.loader.exec_module(_pr)
+                except Exception:
+                    _pr = None
+
+            if _pr is not None:
+                try:
+                    prov = _pr.resolve_provider_for_slice(task_slice_payload)
+                    if prov.get("requires_api_key"):
+                        env_name = prov.get("api_key_env")
+                        if env_name and not (env_name in __import__("os").environ):
+                            return new_state, {
+                                "action": "dispatch_failed",
+                                "reason": "missing_api_key",
+                                "provider": prov,
+                            }
+                except Exception:
+                    # Fail safe: continue and let downstream dispatcher handle policy
+                    prov = None
+
             dispatch_result = _td.dispatch_to_tier_with_state(
                 3,
                 task_slice_payload,

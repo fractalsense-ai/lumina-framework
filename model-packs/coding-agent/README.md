@@ -4,6 +4,15 @@ The Coding Agent pack is the initial Slice 7 skeleton for Lumina's bounded artif
 
 This pack is intentionally local and non-operational. It does not call live models, contact forge providers, access credentials, or deploy artifacts. All executable work must enter through the System Pack authority gate.
 
+## Boundary Guarantees
+
+- Runtime ingress is System Pack mediated. Direct imports or helper calls in tests are validation seams, not product/runtime ingress.
+- The pack manufactures and stages reviewable artifacts; it does not activate, register, deploy, or promote them.
+- Mechanical validation and passing tests are evidence for review, not governance approval.
+- Production credentials, user/developer JWTs, deployment credentials, and ledger-signing authority must not enter Coding Agent prompts, state, checkpoints, telemetry, or generated artifacts.
+- Provider routing uses environment-variable indirection for key names and keeps local/offline execution as the safe default unless policy explicitly permits cloud use.
+- Approval, registration, activation, evidence harvest, and teardown remain System Pack-governed lifecycle responsibilities.
+
 ## Contents
 
 - `pack.yaml` declares the HMVC layer map and entry points.

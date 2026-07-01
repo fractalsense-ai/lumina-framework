@@ -19,5 +19,10 @@ Key points
 - Retention default: keep last 10 checkpoints per plan.
 - Runtime restores latest checkpoint before Tier-3 dispatch and saves updated checkpoint after dispatch.
 
+Boundary compliance
+- Checkpoints are execution-progress evidence only; they do not grant activation, registration, deployment, or credential authority.
+- Runtime resume remains within a System Pack-scoped Coding Agent job.
+- Direct test calls into persistence helpers are validation seams, not runtime ingress.
+
 Notes
 - After adding or editing this file run `scripts/manifest-regenerate.ps1` to update `docs/MANIFEST.yaml`.

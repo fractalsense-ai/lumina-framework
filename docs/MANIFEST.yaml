@@ -28,42 +28,63 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-29
-  sha256: 8a5536032d1c2e8d34951bcf25b5a08a3c07837c927a22514784fba56039e294
+  sha256: 8ac3c592fd609d9d42d43bccc4314cf9673e2356ece44bf9506614608aa32880
 - path: docs/roadmap/slices/14-dag-correct-compute-orchestration.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-29
-  sha256: 30b5abd06617db949bebb5478f4b28d2c12c5f65aa7e91191689ab5259bc4a45
+  sha256: c440b78b19b0b79e938148f9f2f2a148ff35b531e724598f27739f8a4a4ae06b
 - path: docs/roadmap/slices/15-tier3-execution-gating.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-29
-  sha256: 88c058c2267f99f9f6f427e6217aecd8dc59aa60bc4d0739771c6328d04ce2f1
+  sha256: e638c42ae911995a8720d23ef78a0734c1d5e35e7e239a8d5425390091d069c3
 - path: docs/roadmap/slices/16-execution-state-persistence.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: 84d5316b61a12bd8228b7750625177969e4bfdf704fd434ca8b74926bd111866
+  sha256: 57fbf6981c7ae5e944ec25ac7470dffac156926451a48ce9a7222cd9647f1a41
 - path: docs/roadmap/slices/17-multi-slice-orchestration-loop.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: ec092c525366f0794e929569e0bf60fe744c8ec5d93314a0ec1cb136d7bb786d
+  sha256: 6e5a83af07a584c33c4c3d05edec5e18506443045bd030a6cf2e7f2523e83f3d
 - path: docs/roadmap/slices/18-orchestration-hardening-and-determinism.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: 4a43a503daeff3f36350fb06cc4b6ea5aa2397e1644aa3d0f00647dd3fbad569
+  sha256: 0f9bc53c6133ecb1cdb61d23384dda62a53cd732b75ef489acdcf2ccf9a0b7c1
+- path: docs/roadmap/slices/19-execution-telemetry-and-trace-export.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-30
+  sha256: 597802ff92bff44df542e37e190262f97e5f22a96dcc08ea48e8e37eac10b2ec
+- path: docs/roadmap/slices/20-tiered-model-and-api-key-routing.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-30
+  sha256: 59fc48dc0375b8efdcfb1ac43be177a92b5fd3e6008a31def1ca1f7df181cbf0
+- path: docs/roadmap/slices/21-framework-boundary-reconciliation.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-06-30
+  sha256: 3d2552a59258ea91368765c8c8b05bf1491ac180b511285d3e53067372285b2e
 - path: docs/1-commands/README.md
   type: doc
   section: 1
@@ -1831,7 +1852,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: 7f55e900a3a0a1be747b306f3fbc2f26d44073d028a73fbc2850606b1495dc87
+  sha256: 4d2fca6c3ee051f86e344fc4ae5aecea63a459cb54c6ee9c0d01f221cf1cd85a
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
