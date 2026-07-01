@@ -6,9 +6,13 @@ performed by System Pack adapters; this is intentionally conservative.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Any, Dict, List
-from datetime import datetime
+from datetime import datetime, UTC
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 @dataclass
@@ -17,7 +21,7 @@ class TeardownResult:
     slice_id: str
     removed: List[str]
     failed: List[Dict[str, Any]]
-    started_at: str = datetime.utcnow().isoformat() + "Z"
+    started_at: str = field(default_factory=_utc_now_iso)
     completed_at: str | None = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -36,5 +40,5 @@ def execute_teardown(plan_id: str, slice_context: Dict[str, Any]) -> TeardownRes
         except Exception as exc:
             failed.append({"path": str(p), "error": str(exc)})
 
-    res = TeardownResult(plan_id=plan_id, slice_id=slice_context.get("slice_id", ""), removed=removed, failed=failed, completed_at=datetime.utcnow().isoformat() + "Z")
+    res = TeardownResult(plan_id=plan_id, slice_id=slice_context.get("slice_id", ""), removed=removed, failed=failed, completed_at=_utc_now_iso())
     return res

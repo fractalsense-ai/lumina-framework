@@ -230,18 +230,20 @@ def execute_dag_until(
                 "tier3_evidence": dict(tier3_evidence),
             }
         )
-        # Trigger minimal evidence harvest and teardown when a slice reports a registered/tests_passed status
+        # Trigger minimal evidence harvest and teardown on successful/registered completion statuses.
         try:
             status = str(tier3_evidence.get("status", ""))
-            if status in ("registered", "tests_passed", "committed"):
+            if status in ("success", "registered", "tests_passed", "committed"):
                 slice_ctx = {
                     "slice_id": str(current.slice_id),
                     "node_id": str(current.node_id),
-                    "artifacts": dispatch_result.get("artifacts") if isinstance(dispatch_result, dict) else {},
+                    "artifacts": dispatch_result.get("artifacts") if isinstance(dispatch_result, dict) else [],
                     "tests": dispatch_result.get("tests") if isinstance(dispatch_result, dict) else {},
                     "checksums": dispatch_result.get("checksums") if isinstance(dispatch_result, dict) else {},
                     "temp_paths": dispatch_result.get("temp_paths") if isinstance(dispatch_result, dict) else [],
                 }
+                if not isinstance(slice_ctx["artifacts"], list):
+                    slice_ctx["artifacts"] = []
                 try:
                     evidence_commit_obj = evidence_harvest.build_evidence_from_orchestration(plan_id, slice_ctx)
                 except Exception:

@@ -6,9 +6,13 @@ minimal and serialization-friendly.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Any, Dict, List
-from datetime import datetime
+from datetime import datetime, UTC
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 @dataclass
@@ -19,7 +23,7 @@ class EvidencePacket:
     artifacts: List[Dict[str, Any]]
     test_summary: Dict[str, Any]
     checksums: Dict[str, str]
-    collected_at: str = datetime.utcnow().isoformat() + "Z"
+    collected_at: str = field(default_factory=_utc_now_iso)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
