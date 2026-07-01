@@ -1,13 +1,13 @@
 ---
-version: 1.0.0
-last_updated: 2026-06-28
+version: 1.1.0
+last_updated: 2026-06-30
 ---
 
 # Lumina Framework Roadmap
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Status:** Active
-**Last updated:** 2026-06-28
+**Last updated:** 2026-06-30
 
 ---
 
@@ -37,7 +37,26 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [09](slices/09-context-staging-and-job-interpretation.md) | Context Staging and Job Interpretation | Delivered |
 | [10](slices/10-tool-call-policy-enforcement.md) | Tool-Call Policy Enforcement & Real Test Runner | Delivered |
 | [11](slices/11-three-tier-execution-interface.md) | Three-tier Execution Interface | Delivered |
-| [12](slices/12-tier-2-decomposer.md) | Tier-2 Decomposer & DAG Planner | Planned |
+| [12](slices/12-tier-2-decomposer.md) | Tier-2 Decomposer & DAG Planner | Delivered |
+| [13](slices/13-tier-1-architect.md) | Tier-1 Architect & SLM Routing | Delivered |
+| [14](slices/14-dag-correct-compute-orchestration.md) | DAG-Correct Compute Orchestration | Delivered |
+| [15](slices/15-tier3-execution-gating.md) | Tier-3 Execution Gating and Retry Policy | Delivered |
+| [16](slices/16-execution-state-persistence.md) | Execution State Persistence & Checkpoint Recovery | Delivered |
+| [17](slices/17-multi-slice-orchestration-loop.md) | Multi-Slice Orchestration Loop | Delivered |
+| [18](slices/18-orchestration-hardening-and-determinism.md) | Orchestration Hardening and Determinism | Delivered |
+| [19](slices/19-execution-telemetry-and-trace-export.md) | Execution Telemetry and Trace Export | Delivered |
+| [20](slices/20-tiered-model-and-api-key-routing.md) | Tiered Model and API Key Routing | Delivered |
+| [21](slices/21-framework-boundary-reconciliation.md) | Framework Boundary Reconciliation | Planned |
+
+---
+
+## Alignment Note
+
+Slice 1 preserved the initial follow-up roadmap as the planning record at that
+time. This index is the active discoverability surface for the implementation
+sequence that actually followed. When the two differ, use this index for current
+slice ordering and use Slice 1 for the authoritative framework-boundary
+invariants it established.
 
 ---
 

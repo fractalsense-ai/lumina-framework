@@ -19,5 +19,10 @@ Key points
 - Adds loop controller `execute_dag_until(...)` with deterministic ordering and halt semantics.
 - Integrates runtime path to restore persisted execution context, orchestrate multiple slices, and persist checkpoints after each executed slice.
 
+Boundary compliance
+- The orchestration loop schedules scoped `TaskSlice` execution only; it does not create user ingress or authorize new work.
+- `OrchestrationResult` is execution evidence returned for review, not activation or registration approval.
+- Tests may call orchestration helpers directly as validation seams while runtime ingress remains System Pack mediated.
+
 Notes
 - After adding or editing this file run `scripts/manifest-regenerate.ps1` to update `docs/MANIFEST.yaml`.

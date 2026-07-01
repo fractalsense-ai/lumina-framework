@@ -19,6 +19,11 @@ Key points
 - Surface selected provider metadata on dispatch results under `dispatch_result.provider`.
 - Add unit tests for routing and policy enforcement; document the slice and regenerate `docs/MANIFEST.yaml`.
 
+Boundary compliance
+- Provider routing uses environment-variable indirection for key names and does not persist raw secrets in state.
+- Offline/local provider routing remains the default fallback to preserve safe test and local execution.
+- Cloud/provider selection does not grant activation, registration, deployment, or System Pack authority.
+
 Notes
 - This slice is intentionally conservative: when cloud providers are disabled or a required API key is missing, execution fails closed rather than attempting a network call.
 - Future slices may add per-pack deny lists and provider-specific configuration.

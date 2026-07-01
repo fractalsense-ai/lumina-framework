@@ -19,5 +19,10 @@ Key points
 - Includes telemetry summary in orchestration results under `result.telemetry` (via `OrchestrationResult.telemetry`).
 - Adds deterministic tests and docs; updates `docs/MANIFEST.yaml`.
 
+Boundary compliance
+- Telemetry remains in-pack and export-shaped; this slice intentionally avoids external telemetry sinks.
+- Telemetry is audit/debug evidence, not activation, registration, deployment, or governance approval.
+- Any later external sink must remain System Pack-governed and credential-safe.
+
 Notes
 - This slice intentionally avoids integrating external sinks; it provides an export contract that downstream tooling can consume.
