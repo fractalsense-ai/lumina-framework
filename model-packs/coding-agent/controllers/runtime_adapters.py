@@ -192,7 +192,15 @@ def domain_step(
         new_state["scoped_jobs_completed"] = int(new_state.get("scoped_jobs_completed", 0)) + 1
         # If the caller requested immediate activation, require System Pack approval.
         try:
-            from model_packs.coding_agent.domain_lib import activation_gate as _ag
+            import importlib.util
+            import pathlib
+            import sys
+
+            ag_path = pathlib.Path(__file__).parent.parent / "domain-lib" / "activation_gate.py"
+            spec = importlib.util.spec_from_file_location("coding_agent_activation_gate", str(ag_path))
+            _ag = importlib.util.module_from_spec(spec)
+            sys.modules["coding_agent_activation_gate"] = _ag
+            spec.loader.exec_module(_ag)
         except Exception:
             _ag = None
 

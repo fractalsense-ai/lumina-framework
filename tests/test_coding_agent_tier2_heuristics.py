@@ -7,13 +7,15 @@ BASE = Path(__file__).resolve().parents[1] / "model-packs" / "coding-agent" / "d
 def _load(name: str, path: Path):
     spec = importlib.util.spec_from_file_location(name, str(path))
     mod = importlib.util.module_from_spec(spec)
+    import sys
+    sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)  # type: ignore
     return mod
 
 
 def test_grouping_respects_token_budget():
     dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     nodes = [
         tier_contracts.PlanNode(node_id=f"N{i}", description=("x" * (i * 10)), depends_on=[]) for i in range(1, 8)
@@ -31,7 +33,7 @@ def test_grouping_respects_token_budget():
 
 def test_assign_task_slices_groups_into_slices():
     dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     nodes = [
         tier_contracts.PlanNode(node_id=f"N{i}", description=("y" * (i * 20)), depends_on=[]) for i in range(1, 6)
@@ -57,7 +59,7 @@ def test_decompose_job_type_errors():
 
 def test_priority_reduces_estimated_cost():
     dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     n_low = tier_contracts.PlanNode(node_id="L", description="short desc", depends_on=[])
     n_low.tier_hint = 1
@@ -71,7 +73,7 @@ def test_priority_reduces_estimated_cost():
 
 def test_missing_allowed_tools_results_empty_allowed():
     dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     nodes = [tier_contracts.PlanNode(node_id="A", description="d", depends_on=[])]
     dag = tier_contracts.PlanDAG(nodes=nodes, created_at="now")
@@ -84,7 +86,7 @@ def test_missing_allowed_tools_results_empty_allowed():
 
 def test_oversized_node_marked_in_description():
     dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     # make a very long description to exceed budget
     long_desc = "x" * 5000
@@ -99,7 +101,7 @@ def test_oversized_node_marked_in_description():
 
 def test_dependency_aware_cost_reduction():
     dec = _load("tier2_decomposer", BASE / "tier2_decomposer.py")
-    from model_packs.coding_agent.domain_lib import tier_contracts
+    tier_contracts = _load("tier_contracts", BASE / "tier_contracts.py")
 
     # A is a root with many dependents; B is a leaf
     A = tier_contracts.PlanNode(node_id="A", description="root", depends_on=[])

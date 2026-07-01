@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 try:
     from . import tier_dispatcher
     from ..domain_lib import orchestration_result, tier3_ready_scheduler, tier_contracts, turn_budget
-    from ..domain_lib import orchestration_telemetry
+    from ..domain_lib import orchestration_telemetry, evidence_harvest, teardown_coordinator
 except Exception:
     import importlib.util
     import pathlib
@@ -50,6 +50,17 @@ except Exception:
     orchestration_telemetry = importlib.util.module_from_spec(spec)
     sys.modules["coding_agent_orchestration_telemetry"] = orchestration_telemetry
     spec.loader.exec_module(orchestration_telemetry)
+    eh_path = domain / "evidence_harvest.py"
+    spec = importlib.util.spec_from_file_location("coding_agent_evidence_harvest", str(eh_path))
+    evidence_harvest = importlib.util.module_from_spec(spec)
+    sys.modules["coding_agent_evidence_harvest"] = evidence_harvest
+    spec.loader.exec_module(evidence_harvest)
+
+    td_path = domain / "teardown_coordinator.py"
+    spec = importlib.util.spec_from_file_location("coding_agent_teardown_coordinator", str(td_path))
+    teardown_coordinator = importlib.util.module_from_spec(spec)
+    sys.modules["coding_agent_teardown_coordinator"] = teardown_coordinator
+    spec.loader.exec_module(teardown_coordinator)
 
 
 def _to_plan_dag(plan_dag: Dict[str, Any] | Any) -> Any:
@@ -150,6 +161,8 @@ def execute_dag_until(
 
     executed_slice_ids: List[str] = []
     evidence_timeline: List[Dict[str, Any]] = []
+    evidence_commit_obj = None
+    teardown_result_obj = None
     failed_node_id: str | None = None
     halt_reason: str | None = None
     telemetry_events: List[Dict[str, Any]] = []
@@ -217,6 +230,30 @@ def execute_dag_until(
                 "tier3_evidence": dict(tier3_evidence),
             }
         )
+        # Trigger minimal evidence harvest and teardown on successful/registered completion statuses.
+        try:
+            status = str(tier3_evidence.get("status", ""))
+            if status in ("success", "registered", "tests_passed", "committed"):
+                slice_ctx = {
+                    "slice_id": str(current.slice_id),
+                    "node_id": str(current.node_id),
+                    "artifacts": dispatch_result.get("artifacts") if isinstance(dispatch_result, dict) else [],
+                    "tests": dispatch_result.get("tests") if isinstance(dispatch_result, dict) else {},
+                    "checksums": dispatch_result.get("checksums") if isinstance(dispatch_result, dict) else {},
+                    "temp_paths": dispatch_result.get("temp_paths") if isinstance(dispatch_result, dict) else [],
+                }
+                if not isinstance(slice_ctx["artifacts"], list):
+                    slice_ctx["artifacts"] = []
+                try:
+                    evidence_commit_obj = evidence_harvest.build_evidence_from_orchestration(plan_id, slice_ctx)
+                except Exception:
+                    evidence_commit_obj = None
+                try:
+                    teardown_result_obj = teardown_coordinator.execute_teardown(plan_id, slice_ctx)
+                except Exception:
+                    teardown_result_obj = None
+        except Exception:
+            pass
         # per-slice telemetry
         try:
             slice_event = orchestration_telemetry.TelemetryEvent(
@@ -322,4 +359,6 @@ def execute_dag_until(
         execution_context=context.to_dict(),
         budget=budget.to_dict(),
         telemetry={"events": telemetry_events, "summary": telemetry_summary},
+        evidence_commit=(evidence_commit_obj.to_dict() if hasattr(evidence_commit_obj, "to_dict") else None) if evidence_commit_obj is not None else None,
+        teardown_result=(teardown_result_obj.to_dict() if hasattr(teardown_result_obj, "to_dict") else None) if teardown_result_obj is not None else None,
     )
