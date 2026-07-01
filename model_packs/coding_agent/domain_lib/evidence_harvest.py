@@ -1,33 +1,20 @@
-"""Evidence harvest contract for Coding Agent.
+"""Compatibility shim — load canonical implementation from model-packs.
 
-This module defines an `EvidencePacket` used to persist test/artifact
-evidence after a plan/slice reaches the `Registered` state. The module is
-minimal and serialization-friendly.
+This file is a small shim so `import model_packs.coding_agent.domain_lib.*`
+works in test runs while the authoritative implementation lives under
+`model-packs/coding-agent/domain-lib/` (the repository canonical layout).
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
-from typing import Any, Dict, List
-from datetime import datetime
+import importlib.util
+import sys
+from pathlib import Path
 
+_HERE = Path(__file__).resolve()
+_REPO_ROOT = _HERE.parents[3]
+_CANONICAL = _REPO_ROOT / "model-packs" / "coding-agent" / "domain-lib" / "evidence_harvest.py"
 
-@dataclass
-class EvidencePacket:
-    plan_id: str
-    slice_id: str
-    node_id: str
-    artifacts: List[Dict[str, Any]]
-    test_summary: Dict[str, Any]
-    checksums: Dict[str, str]
-    collected_at: str = datetime.utcnow().isoformat() + "Z"
-
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-
-def build_evidence_from_orchestration(plan_id: str, slice_result: Dict[str, Any]) -> EvidencePacket:
-    node_id = slice_result.get("node_id") or slice_result.get("slice_id") or ""
-    artifacts = slice_result.get("artifacts") or []
-    test_summary = slice_result.get("tests") or {}
-    checksums = slice_result.get("checksums") or {}
-    return EvidencePacket(plan_id=plan_id, slice_id=slice_result.get("slice_id", ""), node_id=node_id, artifacts=artifacts, test_summary=test_summary, checksums=checksums)
+spec = importlib.util.spec_from_file_location("coding_agent_evidence_harvest", str(_CANONICAL))
+module = importlib.util.module_from_spec(spec)
+sys.modules[__name__] = module
+spec.loader.exec_module(module)
