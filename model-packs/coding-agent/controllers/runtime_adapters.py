@@ -190,12 +190,36 @@ def domain_step(
     if patch_generated and tests_passed is True:
         new_state["pending_validation"] = False
         new_state["scoped_jobs_completed"] = int(new_state.get("scoped_jobs_completed", 0)) + 1
+        # If the caller requested immediate activation, require System Pack approval.
+        try:
+            from model_packs.coding_agent.domain_lib import activation_gate as _ag
+        except Exception:
+            _ag = None
+
+        if isinstance(evidence, dict) and evidence.get("activation_request"):
+            approved = False
+            if _ag is not None:
+                try:
+                    approved = _ag.validate_activation(evidence)
+                except Exception:
+                    approved = False
+
+            if not approved:
+                return new_state, {
+                    "tier": "ok",
+                    "action": "awaiting_system_approval",
+                    "frustration": False,
+                    "escalation_eligible": True,
+                    "reason": "activation_requires_system_approval",
+                }
+
         return new_state, {
             "tier": "ok",
             "action": "stage_patch_for_review",
             "frustration": False,
             "escalation_eligible": False,
             "reason": "validated_patch",
+            "approved": True if isinstance(evidence, dict) and evidence.get("activation_request") and _ag is not None and _ag.validate_activation(evidence) else False,
         }
 
     # Prioritise orchestration loop when requested with plan + task_slices.

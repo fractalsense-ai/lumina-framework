@@ -1,5 +1,5 @@
 ﻿schema_version: 1.0.0
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
@@ -85,6 +85,13 @@ artifacts:
   status: planned
   last_updated: 2026-06-30
   sha256: 3d2552a59258ea91368765c8c8b05bf1491ac180b511285d3e53067372285b2e
+- path: docs/roadmap/slices/22-system-pack-activation-gate.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: proposed
+  last_updated: 2026-07-01
+  sha256: 1e9c85b1b71359e067762eff89d12e59eb14294ad1010017991726d7b1219a14
 - path: docs/1-commands/README.md
   type: doc
   section: 1
@@ -1852,7 +1859,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: 4d2fca6c3ee051f86e344fc4ae5aecea63a459cb54c6ee9c0d01f221cf1cd85a
+  sha256: 19a5b7d07060c31b8c582b6c636fe6fd312e4e0ca2cda7d28ac3c3fca75570f7
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
