@@ -70,14 +70,14 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: pending
+  sha256: d618bfa01126ba7a2fdd7f94783352861a83020d517de2fcb1a5ad11725eb4a1
 - path: docs/roadmap/slices/20-tiered-model-and-api-key-routing.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: pending
+  sha256: 06bdab55964f7fdd819ff6cda28bcf2b68484d5449d2746f604e771e21d530ed
 - path: docs/1-commands/README.md
   type: doc
   section: 1
