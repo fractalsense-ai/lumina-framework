@@ -85,20 +85,27 @@ artifacts:
   status: planned
   last_updated: 2026-06-30
   sha256: 3d2552a59258ea91368765c8c8b05bf1491ac180b511285d3e53067372285b2e
- - path: docs/roadmap/slices/23-evidence-harvest-and-teardown.md
-   type: doc
-   section: 0
-   doc_version: 1.0.0
-   status: proposed
-   last_updated: 2026-07-01
-   sha256: 28db68b1cf482ae5170b00f4bfae2eabf5c87a10f48dcaa6ad1781b9072a2747
- - path: docs/roadmap/slices/24-system-led-evidence-commit-and-teardown-confirmation.md
-   type: doc
-   section: 0
-   doc_version: 1.0.0
-   status: proposed
-   last_updated: 2026-07-07
-   sha256: pending
+- path: docs/roadmap/slices/22-system-pack-activation-gate.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: proposed
+  last_updated: 2026-07-01
+  sha256: 1e9c85b1b71359e067762eff89d12e59eb14294ad1010017991726d7b1219a14
+- path: docs/roadmap/slices/23-evidence-harvest-and-teardown.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: proposed
+  last_updated: 2026-07-01
+  sha256: 28db68b1cf482ae5170b00f4bfae2eabf5c87a10f48dcaa6ad1781b9072a2747
+- path: docs/roadmap/slices/24-system-led-evidence-commit-and-teardown-confirmation.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: proposed
+  last_updated: 2026-07-07
+  sha256: 007de360b543ee181b56e776ea80404399f48ef4696bc11ab88ed4981357f216
 - path: docs/1-commands/README.md
   type: doc
   section: 1
