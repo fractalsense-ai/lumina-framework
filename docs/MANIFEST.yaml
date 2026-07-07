@@ -99,6 +99,13 @@ artifacts:
   status: proposed
   last_updated: 2026-07-01
   sha256: 28db68b1cf482ae5170b00f4bfae2eabf5c87a10f48dcaa6ad1781b9072a2747
+ - path: docs/roadmap/slices/24-system-led-evidence-commit-and-teardown-confirmation.md
+   type: doc
+   section: 0
+   doc_version: 1.0.0
+   status: proposed
+   last_updated: 2026-07-07
+   sha256: 007de360b543ee181b56e776ea80404399f48ef4696bc11ab88ed4981357f216
 - path: docs/1-commands/README.md
   type: doc
   section: 1
