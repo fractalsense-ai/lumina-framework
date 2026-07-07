@@ -1,5 +1,5 @@
 ﻿schema_version: 1.0.0
-last_updated: 2026-07-01
+last_updated: 2026-07-07
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
