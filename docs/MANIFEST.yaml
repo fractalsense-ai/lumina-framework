@@ -106,6 +106,62 @@ artifacts:
   status: delivered
   last_updated: 2026-07-07
   sha256: 9af25640eb15e2ed52e3210ed12bc79e9f88a6efa630d96c7765d59a3095b4e8
+- path: docs/roadmap/slices/25-b2b-workstream-boundary-and-task-graph.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 3f789fd940de17239fca4471073fe4100e293217de745cd4debef59dc3a23908
+- path: docs/roadmap/slices/26-tenant-site-actor-memory-contracts.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 6e3e10dadccae8b0e35ec99d3769dafaa89c92c3420100798d3910cb8068c1ac
+- path: docs/roadmap/slices/27-institutional-vector-memory-layer.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: d7448762c2f1b6fd036c0c6ae2b038b506efdf734bc56530b818756b76648612
+- path: docs/roadmap/slices/28-semantic-thread-routing-and-forking.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 5bb3dca25408d17a6dd704a8a4e618da9dd3c49280d7233b21b41f72aabc9f2a
+- path: docs/roadmap/slices/29-decision-precedent-confidence-and-escalation.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 6a304e2d0d4a0705c62552cd29535969fbb613f582b726a839e25fc27764e5df
+- path: docs/roadmap/slices/30-erpnext-adapter-foundation-and-fixtures.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 6c56436d9d0a2cdbcab08bd919ba7ce44b325779228215c0dd236f6fbe867ef6
+- path: docs/roadmap/slices/31-business-ops-pack-bootstrap.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 37c0d82d5fcf1baf1fc9a5cde72d9ed2db3120a5fa0381dc665c115c6b8a91f0
+- path: docs/roadmap/slices/32-auto-repair-mvp-and-single-box-deployment.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 79b8765877e708b41cf8fdab003e821e6551961ff403a13ac9dd656402336f27
 - path: docs/1-commands/README.md
   type: doc
   section: 1
@@ -1873,7 +1929,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: 0f07628f486f76c47028449c3a1a107dfe268fcc89dd5af8758c5772073807ba
+  sha256: bc6610499e4a2533a8bf51a55435485af6aa414d60dde438a0961163801c14ff
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
