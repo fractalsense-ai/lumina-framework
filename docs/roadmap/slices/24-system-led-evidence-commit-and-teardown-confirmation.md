@@ -29,6 +29,7 @@ Implemented:
 
 Notes:
 - Lifecycle markers emitted by this slice:
-  `HarvestingEvidence -> EvidenceCommitted -> TearingDown -> TeardownConfirmed`
+  `EvidenceCommitted -> TearingDown -> TeardownConfirmed`
   with failure markers `TeardownFailed -> CleanupEscalated`.
+- `HarvestingEvidence` is tracked in transaction metadata before commit.
 - Orchestration envelopes remain additive and backward compatible.

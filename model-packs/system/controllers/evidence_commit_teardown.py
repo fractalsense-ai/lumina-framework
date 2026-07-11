@@ -11,7 +11,7 @@ from lumina.system_log.admin_operations import build_commitment_record
 try:
     from . import state_transaction_adapter
     from . import system_log_validator
-except Exception:
+except ImportError:
     import importlib.util
     import sys
 
@@ -19,12 +19,16 @@ except Exception:
 
     _sta_path = _base / "state_transaction_adapter.py"
     _spec = importlib.util.spec_from_file_location("system_state_transaction_adapter_slice24", str(_sta_path))
+    if _spec is None or _spec.loader is None:
+        raise ImportError(f"Unable to load state_transaction_adapter from {_sta_path}")
     state_transaction_adapter = importlib.util.module_from_spec(_spec)
     sys.modules[_spec.name] = state_transaction_adapter
     _spec.loader.exec_module(state_transaction_adapter)
 
     _slv_path = _base / "system_log_validator.py"
     _spec = importlib.util.spec_from_file_location("system_log_validator_slice24", str(_slv_path))
+    if _spec is None or _spec.loader is None:
+        raise ImportError(f"Unable to load system_log_validator from {_slv_path}")
     system_log_validator = importlib.util.module_from_spec(_spec)
     sys.modules[_spec.name] = system_log_validator
     _spec.loader.exec_module(system_log_validator)
@@ -131,7 +135,8 @@ def commit_evidence_and_confirm_teardown(payload: dict[str, Any]) -> dict[str, A
     lifecycle: list[str] = []
     records: list[dict[str, Any]] = []
 
-    if str(transaction.get("state") or "") == TransactionState.PROPOSED.value:
+    state = str(transaction.get("state") or "")
+    if state == TransactionState.PROPOSED.value:
         transaction, err = _advance_transaction(
             transaction,
             TransactionState.VALIDATED.value,
@@ -141,45 +146,50 @@ def commit_evidence_and_confirm_teardown(payload: dict[str, Any]) -> dict[str, A
         if err is not None:
             return {"status": "error", "error": err.get("error", "Failed to validate transaction"), "details": err}
 
-    if str(transaction.get("state") or "") != TransactionState.VALIDATED.value:
+        state = str(transaction.get("state") or "")
+
+    if state not in (TransactionState.VALIDATED.value, TransactionState.COMMITTED.value):
         return {
             "status": "error",
-            "error": "Transaction must be PROPOSED or VALIDATED for evidence commit",
-            "current_state": str(transaction.get("state") or ""),
+            "error": "Transaction must be PROPOSED, VALIDATED, or COMMITTED for evidence commit",
+            "current_state": state,
         }
 
     evidence_hash = _canonical_sha256(evidence_commit)
-    transaction, err = _advance_transaction(
-        transaction,
-        TransactionState.COMMITTED.value,
-        actor_id,
-        {"lifecycle_state": "EvidenceCommitted", "evidence_hash": evidence_hash},
-    )
-    if err is not None:
-        return {"status": "error", "error": err.get("error", "Failed to commit transaction"), "details": err}
-    lifecycle.append("EvidenceCommitted")
+    if state == TransactionState.VALIDATED.value:
+        transaction, err = _advance_transaction(
+            transaction,
+            TransactionState.COMMITTED.value,
+            actor_id,
+            {"lifecycle_state": "EvidenceCommitted", "evidence_hash": evidence_hash},
+        )
+        if err is not None:
+            return {"status": "error", "error": err.get("error", "Failed to commit transaction"), "details": err}
+
+        subject_id = str(evidence_commit.get("node_id") or evidence_commit.get("slice_id") or evidence_commit.get("plan_id") or "unknown")
+        evidence_record = _append_commitment(
+            ledger_path=ledger_path,
+            actor_id=actor_id,
+            actor_role=actor_role,
+            commitment_type="evidence_commit",
+            subject_id=subject_id,
+            summary=f"Committed evidence for {subject_id}",
+            metadata={
+                "plan_id": evidence_commit.get("plan_id"),
+                "slice_id": evidence_commit.get("slice_id"),
+                "node_id": evidence_commit.get("node_id"),
+                "artifacts": list(evidence_commit.get("artifacts") or []),
+                "checksums": dict(evidence_commit.get("checksums") or {}),
+                "test_summary": dict(evidence_commit.get("test_summary") or {}),
+                "collected_at": evidence_commit.get("collected_at"),
+            },
+            subject_hash=evidence_hash,
+            domain_id=str(domain_id) if domain_id is not None else None,
+        )
+        records.append(evidence_record)
 
     subject_id = str(evidence_commit.get("node_id") or evidence_commit.get("slice_id") or evidence_commit.get("plan_id") or "unknown")
-    evidence_record = _append_commitment(
-        ledger_path=ledger_path,
-        actor_id=actor_id,
-        actor_role=actor_role,
-        commitment_type="evidence_commit",
-        subject_id=subject_id,
-        summary=f"Committed evidence for {subject_id}",
-        metadata={
-            "plan_id": evidence_commit.get("plan_id"),
-            "slice_id": evidence_commit.get("slice_id"),
-            "node_id": evidence_commit.get("node_id"),
-            "artifacts": list(evidence_commit.get("artifacts") or []),
-            "checksums": dict(evidence_commit.get("checksums") or {}),
-            "test_summary": dict(evidence_commit.get("test_summary") or {}),
-            "collected_at": evidence_commit.get("collected_at"),
-        },
-        subject_hash=evidence_hash,
-        domain_id=str(domain_id) if domain_id is not None else None,
-    )
-    records.append(evidence_record)
+    lifecycle.append("EvidenceCommitted")
 
     lifecycle.append("TearingDown")
     failed_paths = list(teardown_result.get("failed") or [])

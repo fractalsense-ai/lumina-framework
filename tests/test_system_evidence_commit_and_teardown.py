@@ -7,10 +7,11 @@ import sys
 
 def _load_module(name: str, path: pathlib.Path):
     spec = importlib.util.spec_from_file_location(name, str(path))
+    assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)
-    return module
+    return sys.modules[name]
 
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
@@ -102,6 +103,31 @@ def test_commit_and_confirm_teardown_is_idempotent_for_finalized(tmp_path):
 
     records = system_log_validator.load_ledger(ledger)
     assert len(records) == 2
+
+
+def test_commit_and_confirm_teardown_resumes_from_committed_without_duplicate_evidence(tmp_path):
+    ledger = tmp_path / "system-log-ledger.jsonl"
+    payload = _payload()
+    payload["ledger_path"] = str(ledger)
+
+    base = evidence_commit_teardown.commit_evidence_and_confirm_teardown(payload)
+    committed_tx = dict(base["transaction"])
+    committed_tx["state"] = "COMMITTED"
+
+    result = evidence_commit_teardown.commit_evidence_and_confirm_teardown(
+        {
+            **payload,
+            "transaction": committed_tx,
+        }
+    )
+
+    assert result["status"] == "ok"
+    assert result["transaction"]["state"] == "FINALIZED"
+    assert result["lifecycle"] == ["EvidenceCommitted", "TearingDown", "TeardownConfirmed"]
+
+    records = system_log_validator.load_ledger(ledger)
+    assert len(records) == 3
+    assert records[-1]["commitment_type"] == "teardown_confirmation"
 
 
 def test_commit_and_confirm_teardown_rejects_invalid_payload():
