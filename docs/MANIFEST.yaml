@@ -1,4 +1,4 @@
-﻿schema_version: 1.0.0
+schema_version: 1.0.0
 last_updated: 2026-07-11
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
@@ -19,91 +19,91 @@ artifacts:
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-29
-  sha256: 9cb840df9e26ad4d938a7bb9ec480b7ebe2beeb5ba52180a8a9130e724d027a0
+  sha256: c15fcaa6acb5f271a80ef894bb330b3ece2ad585595a9f0f94d4b957d0c1947b
 - path: docs/roadmap/slices/13-tier-1-architect.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-29
-  sha256: 8ac3c592fd609d9d42d43bccc4314cf9673e2356ece44bf9506614608aa32880
+  sha256: 3d832a581494c7f7dd0c50dd7a60dbb2bdb245f5a73b0ee616d7d77c24571366
 - path: docs/roadmap/slices/14-dag-correct-compute-orchestration.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-29
-  sha256: c440b78b19b0b79e938148f9f2f2a148ff35b531e724598f27739f8a4a4ae06b
+  sha256: e7ef7ab0c75dffe8b4de79b34d589d60f02e686e853a647e5d74a714224b2d3a
 - path: docs/roadmap/slices/15-tier3-execution-gating.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-29
-  sha256: e638c42ae911995a8720d23ef78a0734c1d5e35e7e239a8d5425390091d069c3
+  sha256: 97cb19ebb47786433c74f48a68fe99f76e9bdc8a91f63d19edc83a04d39206ef
 - path: docs/roadmap/slices/16-execution-state-persistence.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-30
-  sha256: ad72334dc155ab4e5f21bcc34f49f25f976e60b810034bbb4b556df0e332ad90
+  sha256: 7bcdf1b42d1c763eef19cf0f7646a5b8997a7604191c821bbf1cd462b49f1bec
 - path: docs/roadmap/slices/17-multi-slice-orchestration-loop.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-30
-  sha256: 0637748bafb7858b8154412bab57b6af7d5d864bb0c56e7a1de6456f87a69494
+  sha256: 8a57b216af276c30b1ffefc06161b6d0a7659fe6f3992e8710c828ebebcb476d
 - path: docs/roadmap/slices/18-orchestration-hardening-and-determinism.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-30
-  sha256: c43562f7cbe2699157bec988ab384acf54f97fe509718de5f1049dbb4caa9070
+  sha256: 55a2fad3f20684f1d6efd8229c9042fb1402e861a825f901d9c1fce8399a2df5
 - path: docs/roadmap/slices/19-execution-telemetry-and-trace-export.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-30
-  sha256: d4a20d9a1179daf3847ae71f36a8c1e4a31f10129d4fef70c51707ec3c9e7402
+  sha256: d1b741e37f7df061bf1f82fb61db9aebe16b6d1225ba8621e8d6509005907417
 - path: docs/roadmap/slices/20-tiered-model-and-api-key-routing.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-30
-  sha256: 5ad4bd08472e6f642be9190177e52b9ff196ff0a8f16d77780555d0388a52daa
+  sha256: f38943c47a3a407da4b9c22e73b526600ca80f1b0f0ffdde84cced43be539b6a
 - path: docs/roadmap/slices/21-framework-boundary-reconciliation.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
+  status: delivered
   last_updated: 2026-06-30
-  sha256: 84edeebc4fdd4c67ac1a014ed27c1c51e0e3f23a36db90c004ad72f5aed59627
+  sha256: 218193c32388ae40193540c23312e60d5b44b3f518c5c7b48921760e9fa89b1b
 - path: docs/roadmap/slices/22-system-pack-activation-gate.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: proposed
+  status: delivered
   last_updated: 2026-07-01
   sha256: c921ab9b80a7eb559060115c4d14309b86aefd0288244a95113f70c7e49253a6
 - path: docs/roadmap/slices/23-evidence-harvest-and-teardown.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: proposed
+  status: delivered
   last_updated: 2026-07-01
   sha256: 9c837a6563ecc369c8c68631ef8078b924489d0f89e83c23292e0079cc80c733
 - path: docs/roadmap/slices/24-system-led-evidence-commit-and-teardown-confirmation.md
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: proposed
+  status: delivered
   last_updated: 2026-07-07
   sha256: 9af25640eb15e2ed52e3210ed12bc79e9f88a6efa630d96c7765d59a3095b4e8
 - path: docs/1-commands/README.md
