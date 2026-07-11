@@ -1746,7 +1746,7 @@ artifacts:
   doc_version: 0.1.0
   status: active
   last_updated: 2026-06-28
-  sha256: 6287a887047cf77680b3a45080c3f6e0dca53634c08c26fe7b5b33717d6be911
+  sha256: 73ed3639c10b5083bb23af2f7287381c04bf5c8e9a60153a153e402164a06107
 - path: model-packs/coding-agent/modules/core/tool-adapters/read-file-adapter-v1.yaml
   type: config
   doc_version: 0.1.0

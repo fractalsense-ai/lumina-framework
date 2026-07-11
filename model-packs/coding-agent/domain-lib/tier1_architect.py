@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List
 
 # Robust imports: allow module to be loaded as a standalone file during tests
@@ -109,5 +109,5 @@ def architect_global_plan(job: Dict[str, Any], system_state_refs: List[str] | No
         system_state_refs=list(system_state_refs or (job or {}).get("system_state_refs") or []),
         tier_assignments=tier_assignments,
         validation_errors=validation_errors,
-        created_at=datetime.utcnow().isoformat() + "Z",
+        created_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     )

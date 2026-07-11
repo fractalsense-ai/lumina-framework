@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List
 
 
@@ -20,7 +20,7 @@ class Tier3ExecutionEvidence:
     completed_node_ids: List[str] = field(default_factory=list)
     denied_tools: List[str] = field(default_factory=list)
     allowed_tools: List[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat().replace("+00:00", "Z"))
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -42,5 +42,5 @@ class Tier3ExecutionEvidence:
             completed_node_ids=[str(x) for x in list(payload.get("completed_node_ids") or [])],
             denied_tools=[str(x) for x in list(payload.get("denied_tools") or [])],
             allowed_tools=[str(x) for x in list(payload.get("allowed_tools") or [])],
-            created_at=str(payload.get("created_at", datetime.utcnow().isoformat() + "Z")),
+            created_at=str(payload.get("created_at", datetime.now(UTC).isoformat().replace("+00:00", "Z"))),
         )

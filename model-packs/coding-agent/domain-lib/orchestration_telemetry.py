@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, asdict, field
 from typing import Any, Dict, List
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 @dataclass
 class TelemetryEvent:
     event_type: str
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat().replace("+00:00", "Z"))
     payload: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -19,7 +19,7 @@ class TelemetryEvent:
         payload = data or {}
         return cls(
             event_type=str(payload.get("event_type", "")),
-            timestamp=str(payload.get("timestamp", datetime.utcnow().isoformat() + "Z")),
+            timestamp=str(payload.get("timestamp", datetime.now(UTC).isoformat().replace("+00:00", "Z"))),
             payload=dict(payload.get("payload") or {}),
         )
 
