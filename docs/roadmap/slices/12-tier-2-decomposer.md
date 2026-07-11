@@ -1,7 +1,7 @@
 ---
 title: "Slice 12 — Tier-2 Decomposer & DAG Planner"
 version: 0.6.0
-status: Planned
+status: delivered
 last_updated: 2026-06-29
 ---
 

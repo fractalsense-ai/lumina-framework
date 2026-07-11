@@ -5,7 +5,6 @@ pack: model-packs/coding-agent/pack.yaml
 status: delivered
 version: 0.1.0
 last_updated: 2026-06-30
-sha256: pending
 ---
 
 Summary

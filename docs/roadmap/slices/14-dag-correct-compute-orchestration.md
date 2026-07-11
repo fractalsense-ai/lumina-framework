@@ -5,7 +5,6 @@ pack: model-packs/coding-agent/pack.yaml
 status: delivered
 version: 0.9.0
 last_updated: 2026-06-29
-sha256: pending
 ---
 
 Slice 14 makes DAG correctness the efficiency gate for the coding-agent compute tiers.

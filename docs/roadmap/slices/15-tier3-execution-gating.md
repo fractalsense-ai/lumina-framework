@@ -5,7 +5,6 @@ pack: model-packs/coding-agent/pack.yaml
 status: delivered
 version: 0.9.0
 last_updated: 2026-06-29
-sha256: pending
 ---
 
 Slice 15 enforces runtime-safe execution at Tier 3 by validating readiness
