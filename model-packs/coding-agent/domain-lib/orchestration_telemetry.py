@@ -17,9 +17,10 @@ class TelemetryEvent:
     @classmethod
     def from_dict(cls, data: Dict[str, Any] | None) -> "TelemetryEvent":
         payload = data or {}
+        timestamp = payload.get("timestamp") or datetime.now(UTC).isoformat().replace("+00:00", "Z")
         return cls(
             event_type=str(payload.get("event_type", "")),
-            timestamp=str(payload.get("timestamp", datetime.now(UTC).isoformat().replace("+00:00", "Z"))),
+            timestamp=str(timestamp),
             payload=dict(payload.get("payload") or {}),
         )
 

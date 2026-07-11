@@ -28,6 +28,7 @@ class Tier3ExecutionEvidence:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Tier3ExecutionEvidence":
         payload = data or {}
+        created_at = payload.get("created_at") or datetime.now(UTC).isoformat().replace("+00:00", "Z")
         return cls(
             slice_id=str(payload.get("slice_id", "")),
             node_id=str(payload.get("node_id", "")),
@@ -42,5 +43,5 @@ class Tier3ExecutionEvidence:
             completed_node_ids=[str(x) for x in list(payload.get("completed_node_ids") or [])],
             denied_tools=[str(x) for x in list(payload.get("denied_tools") or [])],
             allowed_tools=[str(x) for x in list(payload.get("allowed_tools") or [])],
-            created_at=str(payload.get("created_at", datetime.now(UTC).isoformat().replace("+00:00", "Z"))),
+            created_at=str(created_at),
         )
