@@ -180,6 +180,10 @@ adapters:
       module_path: model-packs/system/controllers/tool_adapters.py
       callable: verify_no_disclosure
 
+    commit_evidence_and_confirm_teardown:
+      module_path: model-packs/system/controllers/evidence_commit_teardown.py
+      callable: commit_evidence_and_confirm_teardown
+
 # ── Resource Monitor Daemon ───────────────────────────────────
 daemon:
   enabled: true
