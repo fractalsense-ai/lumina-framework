@@ -1,13 +1,13 @@
 ---
-version: 1.1.0
-last_updated: 2026-06-30
+version: 1.2.0
+last_updated: 2026-07-11
 ---
 
 # Lumina Framework Roadmap
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 **Status:** Active
-**Last updated:** 2026-06-30
+**Last updated:** 2026-07-11
 
 ---
 
@@ -46,8 +46,10 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [18](slices/18-orchestration-hardening-and-determinism.md) | Orchestration Hardening and Determinism | Delivered |
 | [19](slices/19-execution-telemetry-and-trace-export.md) | Execution Telemetry and Trace Export | Delivered |
 | [20](slices/20-tiered-model-and-api-key-routing.md) | Tiered Model and API Key Routing | Delivered |
-| [21](slices/21-framework-boundary-reconciliation.md) | Framework Boundary Reconciliation | Planned |
-| [22](slices/22-system-pack-activation-gate.md) | System Pack Approval / Activation Gate | Proposed |
+| [21](slices/21-framework-boundary-reconciliation.md) | Framework Boundary Reconciliation | Delivered |
+| [22](slices/22-system-pack-activation-gate.md) | System Pack Approval / Activation Gate | Delivered |
+| [23](slices/23-evidence-harvest-and-teardown.md) | Evidence Harvest and Teardown | Delivered |
+| [24](slices/24-system-led-evidence-commit-and-teardown-confirmation.md) | System-Led Evidence Commit and Teardown Confirmation | Delivered |
 
 ---
 

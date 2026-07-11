@@ -2,7 +2,7 @@
 title: "Slice 20 — Tiered Model and API Key Routing"
 slice: 20
 pack: model-packs/coding-agent/pack.yaml
-status: planned
+status: delivered
 version: 0.1.0
 last_updated: 2026-06-30
 sha256: pending

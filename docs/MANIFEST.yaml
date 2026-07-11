@@ -49,63 +49,63 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: 57fbf6981c7ae5e944ec25ac7470dffac156926451a48ce9a7222cd9647f1a41
+  sha256: ad72334dc155ab4e5f21bcc34f49f25f976e60b810034bbb4b556df0e332ad90
 - path: docs/roadmap/slices/17-multi-slice-orchestration-loop.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: 6e5a83af07a584c33c4c3d05edec5e18506443045bd030a6cf2e7f2523e83f3d
+  sha256: 0637748bafb7858b8154412bab57b6af7d5d864bb0c56e7a1de6456f87a69494
 - path: docs/roadmap/slices/18-orchestration-hardening-and-determinism.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: 0f9bc53c6133ecb1cdb61d23384dda62a53cd732b75ef489acdcf2ccf9a0b7c1
+  sha256: c43562f7cbe2699157bec988ab384acf54f97fe509718de5f1049dbb4caa9070
 - path: docs/roadmap/slices/19-execution-telemetry-and-trace-export.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: 597802ff92bff44df542e37e190262f97e5f22a96dcc08ea48e8e37eac10b2ec
+  sha256: d4a20d9a1179daf3847ae71f36a8c1e4a31f10129d4fef70c51707ec3c9e7402
 - path: docs/roadmap/slices/20-tiered-model-and-api-key-routing.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: 59fc48dc0375b8efdcfb1ac43be177a92b5fd3e6008a31def1ca1f7df181cbf0
+  sha256: 5ad4bd08472e6f642be9190177e52b9ff196ff0a8f16d77780555d0388a52daa
 - path: docs/roadmap/slices/21-framework-boundary-reconciliation.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-06-30
-  sha256: 3d2552a59258ea91368765c8c8b05bf1491ac180b511285d3e53067372285b2e
+  sha256: 84edeebc4fdd4c67ac1a014ed27c1c51e0e3f23a36db90c004ad72f5aed59627
 - path: docs/roadmap/slices/22-system-pack-activation-gate.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: proposed
   last_updated: 2026-07-01
-  sha256: 1e9c85b1b71359e067762eff89d12e59eb14294ad1010017991726d7b1219a14
+  sha256: c921ab9b80a7eb559060115c4d14309b86aefd0288244a95113f70c7e49253a6
 - path: docs/roadmap/slices/23-evidence-harvest-and-teardown.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: proposed
   last_updated: 2026-07-01
-  sha256: 28db68b1cf482ae5170b00f4bfae2eabf5c87a10f48dcaa6ad1781b9072a2747
+  sha256: 9c837a6563ecc369c8c68631ef8078b924489d0f89e83c23292e0079cc80c733
 - path: docs/roadmap/slices/24-system-led-evidence-commit-and-teardown-confirmation.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: proposed
   last_updated: 2026-07-07
-  sha256: 982ff274470e4d58d6e0f81413e941c7c116f9bf3244ace91f57c239bfb63819
+  sha256: 9af25640eb15e2ed52e3210ed12bc79e9f88a6efa630d96c7765d59a3095b4e8
 - path: docs/1-commands/README.md
   type: doc
   section: 1
@@ -1873,7 +1873,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: 19a5b7d07060c31b8c582b6c636fe6fd312e4e0ca2cda7d28ac3c3fca75570f7
+  sha256: 0f07628f486f76c47028449c3a1a107dfe268fcc89dd5af8758c5772073807ba
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0

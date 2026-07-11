@@ -1,5 +1,7 @@
 ---
 title: "Slice 24 — System-Led Evidence Commit and Teardown Confirmation"
+slice: 24
+status: delivered
 version: 0.1.0
 last_updated: 2026-07-07
 ---

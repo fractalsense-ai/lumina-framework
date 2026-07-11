@@ -1,5 +1,21 @@
 # Coding Agent Pack Changelog
 
+## 0.8.0 — 2026-07-11
+
+- Slices 13-24 implementation reconciliation and closure update.
+- Slice 13: Tier-1 architect planning and model-class routing delivered.
+- Slice 14: DAG-correct orchestration delivered.
+- Slice 15: Tier-3 execution gating and retry policy delivered.
+- Slice 16: execution checkpoint persistence and deterministic resume delivered.
+- Slice 17: multi-slice orchestration loop delivered.
+- Slice 18: orchestration hardening and deterministic halt semantics delivered.
+- Slice 19: in-pack telemetry and trace export contracts delivered.
+- Slice 20: tiered provider routing and API-key policy enforcement delivered.
+- Slice 21: boundary reconciliation docs and compliance notes delivered.
+- Slice 22: System Pack approval/activation gate integration delivered.
+- Slice 23: evidence harvest and teardown envelope emission delivered.
+- Slice 24: System-led evidence commit and teardown confirmation delivered.
+
 ## 0.7.0 — 2026-06-29
 
 - Phase 3: Tier-2 decomposer heuristics and robustness
