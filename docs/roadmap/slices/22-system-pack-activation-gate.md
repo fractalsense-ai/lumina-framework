@@ -1,7 +1,7 @@
 ---
 title: Slice 22 — System Pack Approval / Activation Gate
 slice: 22
-status: proposed
+status: delivered
 version: 1.0.0
 last_updated: 2026-07-01
 ---

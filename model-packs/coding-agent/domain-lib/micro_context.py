@@ -7,7 +7,7 @@ consumes the `tier` field for routing decisions.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 
@@ -30,6 +30,6 @@ def build_micro_context(validated_job: dict[str, Any], extras: dict[str, Any] | 
         "execution_tier": exec_map.get(priority, 3),
         "scope_valid": bool(validated_job.get("title") and validated_job.get("description")),
         "files": files,
-        "created_at": datetime.utcnow().isoformat() + "Z",
+        "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "extras": extras or {},
     }

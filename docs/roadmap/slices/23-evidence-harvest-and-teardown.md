@@ -1,5 +1,7 @@
 ---
 title: "Slice 23 — Evidence Harvest & Teardown"
+slice: 23
+status: delivered
 version: 0.1.0
 last_updated: 2026-07-01
 ---

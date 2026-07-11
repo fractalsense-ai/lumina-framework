@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, asdict, field
 from typing import List, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 @dataclass
@@ -31,7 +31,7 @@ class PlanDAG:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PlanDAG":
         nodes = [PlanNode(**n) for n in data.get("nodes", [])]
-        return cls(nodes=nodes, created_at=data.get("created_at") or datetime.utcnow().isoformat() + "Z")
+        return cls(nodes=nodes, created_at=data.get("created_at") or datetime.now(UTC).isoformat().replace("+00:00", "Z"))
 
 
 @dataclass
@@ -42,7 +42,7 @@ class ArchitectPlan:
     system_state_refs: List[str] = field(default_factory=list)
     tier_assignments: Dict[str, int] = field(default_factory=dict)
     validation_errors: List[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat().replace("+00:00", "Z"))
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -64,7 +64,7 @@ class ArchitectPlan:
             system_state_refs=list(data.get("system_state_refs") or []),
             tier_assignments={str(k): int(v) for k, v in dict(data.get("tier_assignments") or {}).items()},
             validation_errors=list(data.get("validation_errors") or []),
-            created_at=data.get("created_at") or datetime.utcnow().isoformat() + "Z",
+            created_at=data.get("created_at") or datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         )
 
 

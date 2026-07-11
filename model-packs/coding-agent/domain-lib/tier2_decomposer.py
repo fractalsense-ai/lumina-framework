@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Dict, Any, List, Tuple
-from datetime import datetime
+from datetime import datetime, UTC
 
 # Robust imports: allow module to be loaded as a standalone file during tests
 try:
@@ -58,7 +58,7 @@ def decompose_job(job: Dict[str, Any]) -> Tuple[PlanDAG, Dict[str, List[str]]]:
             allowed = item.get("allowed_tools") if isinstance(item, dict) else list(getattr(item, "allowed_tools", ()))
             node_tools[pn.node_id] = list(allowed or [])
 
-    dag = tier_contracts.PlanDAG(nodes=nodes, created_at=datetime.utcnow().isoformat() + "Z")
+    dag = tier_contracts.PlanDAG(nodes=nodes, created_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"))
     return dag, node_tools
 
 
