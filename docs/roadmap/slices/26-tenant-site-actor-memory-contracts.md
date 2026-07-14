@@ -17,19 +17,19 @@ Introduce explicit identity and scoping contracts for institutional memory so re
   - `site_id`,
   - `actor_id`,
   - `device_id` (optional),
-  - ERP document references.
+  - external system record references.
 - Define memory record contract families:
   - institutional memory record,
   - decision precedent record,
   - thread summary record,
-  - ERP event mirror record.
+  - business-system event mirror record.
 - Specify how these contracts align with existing profile/session/log persistence abstractions.
 
 ## Out of Scope
 
 - Database migration implementation.
 - Runtime retrieval changes.
-- ERP adapter implementation.
+- Connector implementation.
 
 ## Required Changes
 
@@ -40,7 +40,7 @@ Introduce explicit identity and scoping contracts for institutional memory so re
 
 - New memory scoping contract: all institutional memory artifacts must be filterable by organization and site.
 - New actor linkage contract: memory artifacts should optionally link to actor and device sources.
-- New ERP reference contract: memory records may carry stable ERP doctype/document keys without embedding credentials.
+- New external-system reference contract: memory records may carry `connector_instance_id`, `provider`, `external_record_type`, and `external_record_id` without embedding credentials.
 
 ## Files Likely Touched
 
@@ -54,6 +54,7 @@ Introduce explicit identity and scoping contracts for institutional memory so re
 - Contracts support strict organization/site scoping for retrieval.
 - Contracts are compatible with local-first storage and deterministic replay tests.
 - Contracts prohibit credential-bearing fields.
+- Contracts avoid provider-specific canonical field requirements (provider specifics only in optional namespaced metadata).
 - Contracts do not require raw transcript persistence for institutional memory continuity.
 
 ## Tests

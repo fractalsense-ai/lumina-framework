@@ -1,5 +1,5 @@
 schema_version: 1.0.0
-last_updated: 2026-07-11
+last_updated: 2026-07-13
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
@@ -112,21 +112,21 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 3f789fd940de17239fca4471073fe4100e293217de745cd4debef59dc3a23908
+  sha256: d1269972f25d580c3615c71bb084b56cf34b992eee8386cbfab9a6002c4c9a04
 - path: docs/roadmap/slices/26-tenant-site-actor-memory-contracts.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 6e3e10dadccae8b0e35ec99d3769dafaa89c92c3420100798d3910cb8068c1ac
+  sha256: 84995e10af9d3880d5022e24f372747acd3887d0fc4ca6cf34285630f35cc5a2
 - path: docs/roadmap/slices/27-institutional-vector-memory-layer.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: d7448762c2f1b6fd036c0c6ae2b038b506efdf734bc56530b818756b76648612
+  sha256: a06cd3055f704efb331ad3e4fe5aadb2c18b87e0fd8cae54a0500f0234ca37ae
 - path: docs/roadmap/slices/28-semantic-thread-routing-and-forking.md
   type: doc
   section: 0
@@ -140,28 +140,56 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 6a304e2d0d4a0705c62552cd29535969fbb613f582b726a839e25fc27764e5df
+  sha256: 9739b4e1557efc2a5a730b4b24e4595ca5bb65b909036caae93daebc81092587
 - path: docs/roadmap/slices/30-erpnext-adapter-foundation-and-fixtures.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 6c56436d9d0a2cdbcab08bd919ba7ce44b325779228215c0dd236f6fbe867ef6
+  sha256: 2b19417ac8180907cc10626e4d997dbc88ed1891c488dddbc0d003d765ba9d28
 - path: docs/roadmap/slices/31-business-ops-pack-bootstrap.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 37c0d82d5fcf1baf1fc9a5cde72d9ed2db3120a5fa0381dc665c115c6b8a91f0
+  sha256: f862ee779eafc1b9bb627587bdab047a054c654e1422cff7d6200c076fba72f7
 - path: docs/roadmap/slices/32-auto-repair-mvp-and-single-box-deployment.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 79b8765877e708b41cf8fdab003e821e6551961ff403a13ac9dd656402336f27
+  sha256: 7cb164648f8f488f743793643529f56b777bf90fd6d85eb5bc090354eea35258
+- path: docs/roadmap/slices/33-erpnext-reference-connector-and-fixtures.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: b65e7f13cd6a455028340b151f4b999ad4a416aba6a4a3e7f6d114ba82064657
+- path: docs/roadmap/slices/34-secondary-provider-connector-and-conformance-harness.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 9445a7b931a92de6c9335ff3c369abc7d324911b42e364a96721a83e7587571b
+- path: docs/roadmap/slices/35-auto-repair-mvp-over-connector-abstractions.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 351237b1729ebab358f0714aa985d88e8ab73bc4548dba02bfbb2414fbf96ae8
+- path: docs/roadmap/slices/36-single-box-deployment-and-operational-hardening.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 0e53f2d78c40586c69919e5d3be45fe831e41490721797f68c44b7d549eecf56
 - path: docs/1-commands/README.md
   type: doc
   section: 1
@@ -1929,7 +1957,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: bc6610499e4a2533a8bf51a55435485af6aa414d60dde438a0961163801c14ff
+  sha256: ef5c4cb711e07afa08f0460fc7044c37fe664a1d185107357404aaa1ea274bbe
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0

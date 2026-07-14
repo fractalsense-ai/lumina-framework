@@ -55,9 +55,13 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [27](slices/27-institutional-vector-memory-layer.md) | Institutional Vector Memory Layer | Planned |
 | [28](slices/28-semantic-thread-routing-and-forking.md) | Semantic Thread Routing and Context Forking | Planned |
 | [29](slices/29-decision-precedent-confidence-and-escalation.md) | Decision Precedent, Confidence, and Escalation | Planned |
-| [30](slices/30-erpnext-adapter-foundation-and-fixtures.md) | ERPNext Adapter Foundation and Deterministic Fixtures | Planned |
-| [31](slices/31-business-ops-pack-bootstrap.md) | Business Ops Pack Bootstrap | Planned |
-| [32](slices/32-auto-repair-mvp-and-single-box-deployment.md) | Auto Repair MVP and Single-Box Deployment Topology | Planned |
+| [30](slices/30-erpnext-adapter-foundation-and-fixtures.md) | Canonical Business-System Contracts and Capability Taxonomy | Planned |
+| [31](slices/31-business-ops-pack-bootstrap.md) | Connector Registry and Capability Routing | Planned |
+| [32](slices/32-auto-repair-mvp-and-single-box-deployment.md) | Business Ops Pack Bootstrap | Planned |
+| [33](slices/33-erpnext-reference-connector-and-fixtures.md) | ERPNext Reference Connector and Deterministic Fixtures | Planned |
+| [34](slices/34-secondary-provider-connector-and-conformance-harness.md) | Secondary Provider Connector and Conformance Harness | Planned |
+| [35](slices/35-auto-repair-mvp-over-connector-abstractions.md) | Auto Repair MVP Over Connector Abstractions | Planned |
+| [36](slices/36-single-box-deployment-and-operational-hardening.md) | Single-Box Deployment and Operational Hardening | Planned |
 
 ---
 
