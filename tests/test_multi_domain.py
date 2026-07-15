@@ -39,7 +39,15 @@ def multi_domain_module(monkeypatch: pytest.MonkeyPatch):
     mod = _load_api_module("lumina_api_server_multidomain_test")
     mod.PERSISTENCE = NullPersistenceAdapter()
     mod.BOOTSTRAP_MODE = False
-    mod.PERSISTENCE.load_subject_profile = _load_yaml
+
+    def _load_scoped_profile(path):
+        profile = _load_yaml(path)
+        if isinstance(profile, dict):
+            profile["organization_id"] = "test-org"
+            profile["site_id"] = "test-site"
+        return profile
+
+    mod.PERSISTENCE.load_subject_profile = _load_scoped_profile
 
     # Force a fresh multi-domain DomainRegistry so the test is not affected
     # by whichever DomainRegistry was cached in lumina.api.config on first import.
