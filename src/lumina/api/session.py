@@ -222,14 +222,11 @@ def _build_domain_context(
 
     profile = _cfg.PERSISTENCE.load_subject_profile(str(subject_profile_path))
     profile = dict(profile)
-    profile.setdefault(
-        "organization_id",
-        (user or {}).get("organization_id") or "<ORGANIZATION_ID>",
-    )
-    profile.setdefault(
-        "site_id",
-        (user or {}).get("site_id") or "<SITE_ID>",
-    )
+    if user is not None:
+        if user.get("organization_id") and "organization_id" not in profile:
+            profile["organization_id"] = user["organization_id"]
+        if user.get("site_id") and "site_id" not in profile:
+            profile["site_id"] = user["site_id"]
     _module_map = runtime.get("module_map") or {}
     _resolved_module_key: str | None = None
     _profile_domain_id = profile.get("domain_id") or profile.get("subject_domain_id")

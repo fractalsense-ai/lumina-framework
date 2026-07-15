@@ -147,6 +147,45 @@ def test_write_commitment_record_requires_organization_and_site(tmp_path: Path) 
         )
 
 
+@pytest.mark.unit
+def test_write_commitment_record_rejects_placeholder_scope_and_invalid_device(tmp_path: Path) -> None:
+    writer = _make_writer(
+        tmp_path,
+        profile={
+            "subject_id": "student-a",
+            "organization_id": "<ORGANIZATION_ID>",
+            "site_id": "site-nyc",
+            "device_id": "   ",
+        },
+    )
+    with pytest.raises(ValueError, match="CommitmentRecord requires scope fields"):
+        writer.write_commitment_record(
+            {"id": "education", "version": "1.0"},
+            {
+                "subject_id": "education",
+                "subject_version": "1.0",
+                "subject_hash": "hashval",
+            },
+        )
+
+    writer = _make_writer(
+        tmp_path,
+        profile={
+            "subject_id": "student-a",
+            "organization_id": "org-001",
+            "site_id": "site-nyc",
+            "device_id": 42,
+        },
+    )
+    appended = []
+    writer._log_append_callback = lambda sid, rec: appended.append(rec)
+    writer.write_commitment_record(
+        {"id": "education", "version": "1.0"},
+        {"subject_id": "education", "subject_version": "1.0", "subject_hash": "hashval"},
+    )
+    assert "device_id" not in appended[0]
+
+
 # ── write_trace_event ─────────────────────────────────────────────────────────
 
 

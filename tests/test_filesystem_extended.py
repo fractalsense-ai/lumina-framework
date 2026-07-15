@@ -557,6 +557,29 @@ def test_query_escalations_filter_org_and_site(adapter: FilesystemPersistenceAda
     assert filtered[0]["record_id"] == "es-scope-1"
 
 
+@pytest.mark.unit
+def test_query_escalations_does_not_truncate_before_status_filter(
+    adapter: FilesystemPersistenceAdapter,
+) -> None:
+    sid = "s-esc-many"
+    for index in range(101):
+        adapter.append_log_record(
+            sid,
+            {
+                "record_type": "EscalationRecord",
+                "record_id": f"es-many-{index}",
+                "prev_record_hash": "genesis",
+                "session_id": sid,
+                "status": "resolved" if index < 100 else "pending",
+                "timestamp_utc": f"2024-01-01T00:{index // 60:02d}:{index % 60:02d}Z",
+            },
+        )
+
+    pending = adapter.query_escalations(status="pending")
+    assert len(pending) == 1
+    assert pending[0]["record_id"] == "es-many-100"
+
+
 # ── query_commitments ─────────────────────────────────────────────────────────
 
 

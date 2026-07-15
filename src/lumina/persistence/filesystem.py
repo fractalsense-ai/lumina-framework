@@ -610,6 +610,7 @@ class FilesystemPersistenceAdapter(PersistenceAdapter):
             record_type="EscalationRecord",
             organization_id=organization_id,
             site_id=site_id,
+            limit=10000,
         )
         # Deduplicate by record_id, keeping the latest version (append-only log)
         seen: dict[str, dict[str, Any]] = {}

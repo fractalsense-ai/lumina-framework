@@ -132,7 +132,11 @@ class SystemLogWriter:
         missing: list[str] = []
         for key in ("organization_id", "site_id"):
             value = self._profile.get(key)
-            if isinstance(value, str) and value.strip():
+            if (
+                isinstance(value, str)
+                and value.strip()
+                and not (value.strip().startswith("<") and value.strip().endswith(">"))
+            ):
                 scoped[key] = value
             else:
                 missing.append(key)
@@ -142,8 +146,9 @@ class SystemLogWriter:
                 f"{record_type} requires scope fields: {', '.join(missing)}"
             )
 
-        if "device_id" in self._profile:
-            scoped["device_id"] = self._profile.get("device_id")
+        device_id = self._profile.get("device_id")
+        if isinstance(device_id, str) and device_id.strip():
+            scoped["device_id"] = device_id
         return scoped
 
     # ── Record writers ────────────────────────────────────────

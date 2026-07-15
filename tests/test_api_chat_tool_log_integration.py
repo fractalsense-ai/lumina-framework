@@ -36,7 +36,15 @@ def api_module(monkeypatch: pytest.MonkeyPatch):
     mod = _load_api_module()
     mod.PERSISTENCE = NullPersistenceAdapter()
     mod.BOOTSTRAP_MODE = False
-    mod.PERSISTENCE.load_subject_profile = _load_yaml
+
+    def _load_scoped_profile(path):
+        profile = _load_yaml(path)
+        if isinstance(profile, dict):
+            profile["organization_id"] = "test-org"
+            profile["site_id"] = "test-site"
+        return profile
+
+    mod.PERSISTENCE.load_subject_profile = _load_scoped_profile
 
     monkeypatch.setattr(auth, "JWT_SECRET", "test-secret")
     return mod
