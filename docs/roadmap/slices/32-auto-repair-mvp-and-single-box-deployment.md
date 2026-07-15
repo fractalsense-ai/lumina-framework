@@ -4,7 +4,9 @@ slice: 32
 status: planned
 version: 0.1.0
 last_updated: 2026-07-11
-title: "Slice 32 — Business Ops Pack Bootstrap"
+---
+
+# Slice 32 — Business Ops Pack Bootstrap
 
 ## Purpose
 

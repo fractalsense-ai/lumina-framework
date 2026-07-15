@@ -161,7 +161,7 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 7cb164648f8f488f743793643529f56b777bf90fd6d85eb5bc090354eea35258
+  sha256: 3940e3422633bc26a86092648eb3da65d7d8db9b6ff3b48027ab102beb859c2d
 - path: docs/roadmap/slices/33-erpnext-reference-connector-and-fixtures.md
   type: doc
   section: 0
@@ -1308,7 +1308,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: 009963b9d43dbe15990133790e052cbc3a7f22c3a2a23e54c197d3b6b715d4e6
+  sha256: 28b899f26a693a36802b976e295adfc3eeafc0ab59f2f29998308691068e1607
 - path: model-packs/system/cfg/domain-role-defaults.yaml
   type: config
   doc_version: 1.0.0
@@ -1536,25 +1536,25 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: 0624a040063a596854ee4ac3d1189244f4d92facfafedc661d52167135dee0f4
+  sha256: 8915ab569a769f5c10d270eb76105bb1d6c464758aed5f5b41a3ea3d54d91a90
 - path: model-packs/education/modules/algebra-intro/student-profile-template.yaml
   type: config
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: 1ff09a068c55ebf3acd9ccbf78ba984c3ab5f6937b20add4818e4023fa5ac4e9
+  sha256: 08f0e571881a65806f99e0051bb8edf4358ee0a675e833617a34a6d31d03c468
 - path: model-packs/education/modules/algebra-1/student-profile-template.yaml
   type: config
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: 7f07297cdbac8c34ee560e4556292a49e3cdf82690121a358550cca244d23164
+  sha256: b7db8a8dde6e844616b603fd99b53f12a699864154ee63c0fced2d081a0801e0
 - path: model-packs/education/modules/algebra-level-1/student-profile-template.yaml
   type: config
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: edb2d70e33be7ccbb521a2e74c4da253ad4f90ce1cbb0ec270a3790e6f46a018
+  sha256: b64cc1e7a3ef39e1f51d802e25630101a13f3a67b8b1cc72f59b4acf32c3bc54
 - path: model-packs/education/modules/algebra-level-1/example-student-alice.yaml
   type: config
   doc_version: 1.0.0
@@ -1566,7 +1566,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: c2d7b674823477aaf5c3197f63f8c90cc0e3219f9eec55a614352e326f756642
+  sha256: fa8dabdc13a9180070be4a14e8ed12b10e43a32ac0ba8960cda509a14f7200ca
 - path: model-packs/system/pack.yaml
   type: config
   doc_version: 1.0.0
