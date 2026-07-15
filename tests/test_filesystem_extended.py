@@ -434,6 +434,39 @@ def test_query_log_records_offset_limit(adapter: FilesystemPersistenceAdapter) -
     assert page1[0]["record_id"] != page2[0]["record_id"]
 
 
+@pytest.mark.unit
+def test_query_log_records_filter_by_org_and_site(adapter: FilesystemPersistenceAdapter) -> None:
+    sid = "s-scope"
+    adapter.append_log_record(
+        sid,
+        {
+            "record_type": "TraceEvent",
+            "record_id": "scope-1",
+            "prev_record_hash": "genesis",
+            "session_id": sid,
+            "organization_id": "org-a",
+            "site_id": "site-1",
+            "timestamp_utc": "2024-01-01T00:00:00Z",
+        },
+    )
+    adapter.append_log_record(
+        sid,
+        {
+            "record_type": "TraceEvent",
+            "record_id": "scope-2",
+            "prev_record_hash": "genesis",
+            "session_id": sid,
+            "organization_id": "org-b",
+            "site_id": "site-2",
+            "timestamp_utc": "2024-01-01T00:01:00Z",
+        },
+    )
+
+    filtered = adapter.query_log_records(session_id=sid, organization_id="org-a", site_id="site-1")
+    assert len(filtered) == 1
+    assert filtered[0]["record_id"] == "scope-1"
+
+
 # ── list_log_sessions_summary ────────────────────────────────────────────────
 
 
@@ -487,6 +520,41 @@ def test_query_escalations_filter_status(adapter: FilesystemPersistenceAdapter) 
     assert any(rec["record_id"] == "e1" for rec in pending)
     resolved = adapter.query_escalations(status="resolved")
     assert not any(rec["record_id"] == "e1" for rec in resolved)
+
+
+@pytest.mark.unit
+def test_query_escalations_filter_org_and_site(adapter: FilesystemPersistenceAdapter) -> None:
+    sid = "s-esc-scope"
+    adapter.append_log_record(
+        sid,
+        {
+            "record_type": "EscalationRecord",
+            "record_id": "es-scope-1",
+            "prev_record_hash": "genesis",
+            "session_id": sid,
+            "status": "pending",
+            "organization_id": "org-a",
+            "site_id": "site-1",
+            "timestamp_utc": "2024-01-01T00:00:00Z",
+        },
+    )
+    adapter.append_log_record(
+        sid,
+        {
+            "record_type": "EscalationRecord",
+            "record_id": "es-scope-2",
+            "prev_record_hash": "genesis",
+            "session_id": sid,
+            "status": "pending",
+            "organization_id": "org-b",
+            "site_id": "site-2",
+            "timestamp_utc": "2024-01-01T00:01:00Z",
+        },
+    )
+
+    filtered = adapter.query_escalations(organization_id="org-a", site_id="site-1")
+    assert len(filtered) == 1
+    assert filtered[0]["record_id"] == "es-scope-1"
 
 
 # ── query_commitments ─────────────────────────────────────────────────────────

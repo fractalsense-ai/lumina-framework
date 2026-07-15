@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://projectlumina.org/ledger/commitment-record-schema-v1.json",
-  "schema_version": "1.2.0",
-  "last_updated": "2026-04-09",
+  "schema_version": "1.3.0",
+  "last_updated": "2026-07-15",
   "title": "CommitmentRecord Schema",
   "description": "A System Log record representing a deliberate commitment by a Domain Authority, Meta Authority, or the orchestrator acting under explicit authorization.",
   "type": "object",
@@ -41,6 +41,18 @@
     "actor_id": {
       "type": "string",
       "description": "Pseudonymous identifier of the actor making this commitment."
+    },
+    "organization_id": {
+      "type": ["string", "null"],
+      "description": "Organization scope identifier for institutional-memory lineage. Required by Slice 26 runtime write policy for new records."
+    },
+    "site_id": {
+      "type": ["string", "null"],
+      "description": "Site scope identifier within an organization. Required by Slice 26 runtime write policy for new records."
+    },
+    "device_id": {
+      "type": ["string", "null"],
+      "description": "Optional device/workstation identifier where the commitment originated."
     },
     "actor_role": {
       "type": "string",
@@ -112,6 +124,31 @@
       "type": "array",
       "items": { "type": "string" },
       "description": "Optional list of related record IDs (e.g., the prior domain pack commitment being superseded)."
+    },
+    "external_system_reference": {
+      "type": ["object", "null"],
+      "description": "Optional provider-neutral reference to a source-of-record entity. Provider-specific details must be nested under provider_data.",
+      "additionalProperties": false,
+      "required": ["connector_instance_id", "external_record_type", "external_record_id"],
+      "properties": {
+        "connector_instance_id": {
+          "type": "string",
+          "description": "Stable connector instance identifier scoped to organization/site routing policy."
+        },
+        "external_record_type": {
+          "type": "string",
+          "description": "Canonical external object category (e.g., invoice, work_order, customer)."
+        },
+        "external_record_id": {
+          "type": "string",
+          "description": "Provider-native stable identifier for the referenced record."
+        },
+        "provider_data": {
+          "type": "object",
+          "description": "Namespaced provider details (e.g., ERP doctype/field mappings). Must not include credentials.",
+          "additionalProperties": true
+        }
+      }
     },
     "metadata": {
       "type": "object",

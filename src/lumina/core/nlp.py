@@ -296,6 +296,11 @@ def search_domain(
     text: str,
     domain_id: str,
     k: int = 5,
+    *,
+    organization_id: str | None = None,
+    site_id: str | None = None,
+    actor_id: str | None = None,
+    device_id: str | None = None,
 ) -> list[Any]:
     """Search the per-domain vector store for *text*.
 
@@ -310,4 +315,11 @@ def search_domain(
     if store.size == 0:
         return []
     q_vec = _doc_embedder.embed_query(text)
-    return store.search(q_vec, k=k)
+    return store.search(
+        q_vec,
+        k=k,
+        organization_id=organization_id,
+        site_id=site_id,
+        actor_id=actor_id,
+        device_id=device_id,
+    )

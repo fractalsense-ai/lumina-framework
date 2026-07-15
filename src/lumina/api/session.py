@@ -221,6 +221,15 @@ def _build_domain_context(
         subject_profile_path = Path(runtime["subject_profile_path"])
 
     profile = _cfg.PERSISTENCE.load_subject_profile(str(subject_profile_path))
+    profile = dict(profile)
+    profile.setdefault(
+        "organization_id",
+        (user or {}).get("organization_id") or "<ORGANIZATION_ID>",
+    )
+    profile.setdefault(
+        "site_id",
+        (user or {}).get("site_id") or "<SITE_ID>",
+    )
     _module_map = runtime.get("module_map") or {}
     _resolved_module_key: str | None = None
     _profile_domain_id = profile.get("domain_id") or profile.get("subject_domain_id")

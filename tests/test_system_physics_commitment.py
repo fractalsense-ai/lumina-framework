@@ -213,5 +213,7 @@ def _minimal_domain() -> dict[str, Any]:
 def _minimal_profile() -> dict[str, Any]:
     return {
         "subject_id": "test-student",
+        "organization_id": "org-test",
+        "site_id": "site-test",
         "display_name": "Test Student",
     }

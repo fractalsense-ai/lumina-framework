@@ -515,6 +515,8 @@ class FilesystemPersistenceAdapter(PersistenceAdapter):
         record_type: str | None = None,
         event_type: str | None = None,
         domain_id: str | None = None,
+        organization_id: str | None = None,
+        site_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
@@ -548,6 +550,10 @@ class FilesystemPersistenceAdapter(PersistenceAdapter):
             filtered = [r for r in filtered if r.get("record_type") == record_type]
         if event_type:
             filtered = [r for r in filtered if r.get("event_type") == event_type]
+        if organization_id is not None:
+            filtered = [r for r in filtered if r.get("organization_id") == organization_id]
+        if site_id is not None:
+            filtered = [r for r in filtered if r.get("site_id") == site_id]
 
         # Sort by timestamp
         filtered.sort(key=lambda r: r.get("timestamp_utc", ""))
@@ -595,10 +601,16 @@ class FilesystemPersistenceAdapter(PersistenceAdapter):
         self,
         status: str | None = None,
         domain_id: str | None = None,
+        organization_id: str | None = None,
+        site_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
-        records = self.query_log_records(record_type="EscalationRecord")
+        records = self.query_log_records(
+            record_type="EscalationRecord",
+            organization_id=organization_id,
+            site_id=site_id,
+        )
         # Deduplicate by record_id, keeping the latest version (append-only log)
         seen: dict[str, dict[str, Any]] = {}
         for r in records:

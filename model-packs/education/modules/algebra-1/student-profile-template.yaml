@@ -14,6 +14,8 @@
 # version: 1.0.0
 # last_updated: 2026-04-04
 student_id: "<PSEUDONYMOUS_ID>"
+organization_id: "<ORGANIZATION_ID>"
+site_id: "<SITE_ID>"
 domain_id: "domain/edu/algebra-1/v1"
 display_name: null  # Optional nickname; not required
 

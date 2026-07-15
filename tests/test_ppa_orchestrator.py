@@ -33,7 +33,11 @@ def _make_orchestrator(domain: dict) -> PPAOrchestrator:
     tmp = tempfile.mkdtemp()
     return PPAOrchestrator(
         domain_physics=domain,
-        subject_profile={"id": "test-student"},
+        subject_profile={
+            "id": "test-student",
+            "organization_id": "org-test",
+            "site_id": "site-test",
+        },
         ledger_path=Path(tmp) / "test-ledger.jsonl",
     )
 

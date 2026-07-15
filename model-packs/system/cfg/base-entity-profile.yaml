@@ -10,6 +10,8 @@
 # version: 1.0.0
 # last_updated: 2026-04-04
 entity_id: null
+organization_id: "<ORGANIZATION_ID>"
+site_id: "<SITE_ID>"
 domain_id: null
 display_name: null
 

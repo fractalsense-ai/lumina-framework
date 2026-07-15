@@ -196,12 +196,15 @@ def _ensure_user_profile(
     # Check key-based store first (DB backend)
     existing = PERSISTENCE.load_profile(user_id, domain_key)
     if existing is not None:
+        existing = dict(existing)
+        existing.setdefault("organization_id", "<ORGANIZATION_ID>")
+        existing.setdefault("site_id", "<SITE_ID>")
+        PERSISTENCE.save_profile(user_id, domain_key, existing)
         # Ensure the filesystem copy also exists for path-based callers
-        if not target.exists():
-            target.parent.mkdir(parents=True, exist_ok=True)
-            import yaml
-            with open(target, "w", encoding="utf-8") as fh:
-                yaml.safe_dump(existing, fh, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        import yaml
+        with open(target, "w", encoding="utf-8") as fh:
+            yaml.safe_dump(existing, fh, default_flow_style=False, sort_keys=False, allow_unicode=True)
         return str(target)
 
     if not target.exists():

@@ -122,6 +122,30 @@ class SystemLogWriter:
             domain_id=get_model_pack_id(record),
         ))
 
+    def _required_scope_fields(self, record_type: str) -> dict[str, Any]:
+        """Return required/optional Slice 26 scope identifiers.
+
+        Commitment and escalation records are fail-closed for organization/site
+        during hard migration rollout.
+        """
+        scoped: dict[str, Any] = {}
+        missing: list[str] = []
+        for key in ("organization_id", "site_id"):
+            value = self._profile.get(key)
+            if isinstance(value, str) and value.strip():
+                scoped[key] = value
+            else:
+                missing.append(key)
+
+        if missing:
+            raise ValueError(
+                f"{record_type} requires scope fields: {', '.join(missing)}"
+            )
+
+        if "device_id" in self._profile:
+            scoped["device_id"] = self._profile.get("device_id")
+        return scoped
+
     # ── Record writers ────────────────────────────────────────
 
     def write_commitment_record(
@@ -155,6 +179,7 @@ class SystemLogWriter:
             "references": [],
             "metadata": {"session_id": self.session_id},
         }
+        record.update(self._required_scope_fields("CommitmentRecord"))
         self._append_log_record(record)
 
     def write_trace_event(
@@ -249,6 +274,7 @@ class SystemLogWriter:
             "sla_minutes": sla_minutes,
             "metadata": dict(provenance_metadata or {}),
         }
+        record.update(self._required_scope_fields("EscalationRecord"))
         if self._system_physics_hash is not None:
             record["metadata"]["system_physics_hash"] = self._system_physics_hash
         self._append_log_record(record)

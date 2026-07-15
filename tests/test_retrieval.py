@@ -306,6 +306,49 @@ class TestVectorStore:
         results = store.search(np.random.randn(EMBEDDING_DIM).astype(np.float32))
         assert results == []
 
+    def test_search_filters_scope_before_top_k(self, tmp_path):
+        store = VectorStore(tmp_path / "vs")
+        query = np.zeros(EMBEDDING_DIM, dtype=np.float32)
+        query[0] = 1.0
+        chunks = [
+            DocChunk(
+                "other.md", "## Other", "other", DocChunk.compute_hash("other"),
+                organization_id="org-a", site_id="site-2",
+            ),
+            DocChunk(
+                "allowed.md", "## Allowed", "allowed", DocChunk.compute_hash("allowed"),
+                organization_id="org-a", site_id="site-1",
+            ),
+        ]
+        vectors = np.zeros((2, EMBEDDING_DIM), dtype=np.float32)
+        vectors[0, 0] = 1.0
+        vectors[1, 1] = 1.0
+        store.add(chunks, vectors)
+
+        results = store.search(
+            query,
+            k=1,
+            organization_id="org-a",
+            site_id="site-1",
+        )
+
+        assert len(results) == 1
+        assert results[0].chunk.heading == "## Allowed"
+        assert results[0].score == 0.0
+
+    def test_search_scope_filter_excludes_legacy_unscoped_chunks(self, tmp_path):
+        store = VectorStore(tmp_path / "vs")
+        chunk = DocChunk("legacy.md", "## Legacy", "legacy", DocChunk.compute_hash("legacy"))
+        vector = np.zeros((1, EMBEDDING_DIM), dtype=np.float32)
+        vector[0, 0] = 1.0
+        store.add([chunk], vector)
+
+        assert store.search(
+            vector[0],
+            organization_id="org-a",
+            site_id="site-1",
+        ) == []
+
     def test_save_load_roundtrip(self, tmp_path):
         store_dir = tmp_path / "vs"
         store = VectorStore(store_dir)
@@ -323,6 +366,29 @@ class TestVectorStore:
         assert store2._chunks[0].source_path == "a.md"
         assert store2._chunks[1].text == "other"
         np.testing.assert_array_almost_equal(store2._vectors, vecs)
+
+    def test_save_load_roundtrip_preserves_scope_metadata(self, tmp_path):
+        store_dir = tmp_path / "vs"
+        store = VectorStore(store_dir)
+        chunk = DocChunk(
+            "scoped.md",
+            "## Scoped",
+            "body",
+            DocChunk.compute_hash("body"),
+            organization_id="org-a",
+            site_id="site-1",
+        )
+        vector = np.zeros((1, EMBEDDING_DIM), dtype=np.float32)
+        vector[0, 0] = 1.0
+        store.add([chunk], vector)
+        store.save()
+
+        loaded = VectorStore(store_dir)
+        loaded.load()
+        results = loaded.search(vector[0], organization_id="org-a", site_id="site-1")
+        assert len(results) == 1
+        assert results[0].chunk.organization_id == "org-a"
+        assert results[0].chunk.site_id == "site-1"
 
     def test_has_hash(self, tmp_path):
         store = VectorStore(tmp_path / "vs")

@@ -199,6 +199,37 @@ def test_sqlite_query_log_records_offset_limit(db: SQLitePersistenceAdapter) -> 
     assert len(page2) == 2
 
 
+@pytest.mark.unit
+def test_sqlite_query_log_records_filter_org_and_site(db: SQLitePersistenceAdapter) -> None:
+    sid = "s-scope"
+    db.append_log_record(
+        sid,
+        {
+            "record_type": "TraceEvent",
+            "record_id": "scope-1",
+            "prev_record_hash": "genesis",
+            "session_id": sid,
+            "organization_id": "org-a",
+            "site_id": "site-1",
+        },
+    )
+    db.append_log_record(
+        sid,
+        {
+            "record_type": "TraceEvent",
+            "record_id": "scope-2",
+            "prev_record_hash": "genesis",
+            "session_id": sid,
+            "organization_id": "org-b",
+            "site_id": "site-2",
+        },
+    )
+
+    filtered = db.query_log_records(session_id=sid, organization_id="org-a", site_id="site-1")
+    assert len(filtered) == 1
+    assert filtered[0]["record_id"] == "scope-1"
+
+
 # ── list_log_sessions_summary ─────────────────────────────────────────────────
 
 
@@ -259,6 +290,39 @@ def test_sqlite_query_escalations_filter_domain(db: SQLitePersistenceAdapter) ->
     assert any(r["record_id"] == "e2" for r in result)
     other = db.query_escalations(domain_id="science")
     assert not any(r["record_id"] == "e2" for r in other)
+
+
+@pytest.mark.unit
+def test_sqlite_query_escalations_filter_org_and_site(db: SQLitePersistenceAdapter) -> None:
+    sid = "s-esc-scope"
+    db.append_log_record(
+        sid,
+        {
+            "record_type": "EscalationRecord",
+            "record_id": "es-scope-1",
+            "prev_record_hash": "genesis",
+            "session_id": sid,
+            "status": "pending",
+            "organization_id": "org-a",
+            "site_id": "site-1",
+        },
+    )
+    db.append_log_record(
+        sid,
+        {
+            "record_type": "EscalationRecord",
+            "record_id": "es-scope-2",
+            "prev_record_hash": "genesis",
+            "session_id": sid,
+            "status": "pending",
+            "organization_id": "org-b",
+            "site_id": "site-2",
+        },
+    )
+
+    filtered = db.query_escalations(organization_id="org-a", site_id="site-1")
+    assert len(filtered) == 1
+    assert filtered[0]["record_id"] == "es-scope-1"
 
 
 # ── query_commitments ─────────────────────────────────────────────────────────

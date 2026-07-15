@@ -1,5 +1,5 @@
 schema_version: 1.0.0
-last_updated: 2026-07-13
+last_updated: 2026-07-15
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
@@ -1212,13 +1212,13 @@ artifacts:
   doc_version: 1.1.0
   status: active
   last_updated: 2026-03-15
-  sha256: 41eee610bcc7490ca4bd56af09e57d3e9f19e935fd679d67de437660ffda5aa6
+  sha256: 3b9e1d7eff327e7abf949cd060743837ee9884cd7dcaad5826464ec8b0e13281
 - path: standards/escalation-record-schema-v1.json
   type: schema
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-02
-  sha256: 9d4f59ab5e4a97c044d692cd938e88504fe3462d39f6064dbddc3f62b09a0da1
+  sha256: 35aa9d8991914a67c635fc6d483c7334c78c28bf8d77e02afd2b9daaa13a3dff
 - path: standards/ingestion-record-schema-v1.json
   type: schema
   doc_version: 1.0.0
@@ -1260,7 +1260,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-08
-  sha256: 40a77ccd8e6d7f4b15a23920cf126cf98f1070202680c0929ee83e46fdf95c5b
+  sha256: 61c659bbedc0a6485a32acfa25b349870aeb3af3f62c099c29aa4d783d4bb695
 - path: standards/spectral-advisory-schema-v1.json
   type: schema
   doc_version: 1.0.0
