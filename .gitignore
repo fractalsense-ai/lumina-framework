@@ -112,3 +112,5 @@ install_editable_log.txt
 .gitignore
 pytest_log2.txt
 install_providers_log.txt
+aftman.toml
+default.project.json
