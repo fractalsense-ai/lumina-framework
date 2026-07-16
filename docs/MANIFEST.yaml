@@ -1,5 +1,5 @@
 schema_version: 1.0.0
-last_updated: 2026-07-11
+last_updated: 2026-07-15
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
@@ -112,21 +112,21 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 3f789fd940de17239fca4471073fe4100e293217de745cd4debef59dc3a23908
+  sha256: d1269972f25d580c3615c71bb084b56cf34b992eee8386cbfab9a6002c4c9a04
 - path: docs/roadmap/slices/26-tenant-site-actor-memory-contracts.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 6e3e10dadccae8b0e35ec99d3769dafaa89c92c3420100798d3910cb8068c1ac
+  sha256: 6713bafe5d539d26ed2e3c5b907ff88e3f62093ce4da0f1b33860f3f3439946c
 - path: docs/roadmap/slices/27-institutional-vector-memory-layer.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: d7448762c2f1b6fd036c0c6ae2b038b506efdf734bc56530b818756b76648612
+  sha256: a06cd3055f704efb331ad3e4fe5aadb2c18b87e0fd8cae54a0500f0234ca37ae
 - path: docs/roadmap/slices/28-semantic-thread-routing-and-forking.md
   type: doc
   section: 0
@@ -140,28 +140,56 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 6a304e2d0d4a0705c62552cd29535969fbb613f582b726a839e25fc27764e5df
+  sha256: 9739b4e1557efc2a5a730b4b24e4595ca5bb65b909036caae93daebc81092587
 - path: docs/roadmap/slices/30-erpnext-adapter-foundation-and-fixtures.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 6c56436d9d0a2cdbcab08bd919ba7ce44b325779228215c0dd236f6fbe867ef6
+  sha256: 2b19417ac8180907cc10626e4d997dbc88ed1891c488dddbc0d003d765ba9d28
 - path: docs/roadmap/slices/31-business-ops-pack-bootstrap.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 37c0d82d5fcf1baf1fc9a5cde72d9ed2db3120a5fa0381dc665c115c6b8a91f0
+  sha256: f862ee779eafc1b9bb627587bdab047a054c654e1422cff7d6200c076fba72f7
 - path: docs/roadmap/slices/32-auto-repair-mvp-and-single-box-deployment.md
   type: doc
   section: 0
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 79b8765877e708b41cf8fdab003e821e6551961ff403a13ac9dd656402336f27
+  sha256: 3940e3422633bc26a86092648eb3da65d7d8db9b6ff3b48027ab102beb859c2d
+- path: docs/roadmap/slices/33-erpnext-reference-connector-and-fixtures.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: b65e7f13cd6a455028340b151f4b999ad4a416aba6a4a3e7f6d114ba82064657
+- path: docs/roadmap/slices/34-secondary-provider-connector-and-conformance-harness.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 9445a7b931a92de6c9335ff3c369abc7d324911b42e364a96721a83e7587571b
+- path: docs/roadmap/slices/35-auto-repair-mvp-over-connector-abstractions.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 351237b1729ebab358f0714aa985d88e8ab73bc4548dba02bfbb2414fbf96ae8
+- path: docs/roadmap/slices/36-single-box-deployment-and-operational-hardening.md
+  type: doc
+  section: 0
+  doc_version: 1.0.0
+  status: planned
+  last_updated: 2026-07-11
+  sha256: 0e53f2d78c40586c69919e5d3be45fe831e41490721797f68c44b7d549eecf56
 - path: docs/1-commands/README.md
   type: doc
   section: 1
@@ -1184,19 +1212,43 @@ artifacts:
   doc_version: 1.1.0
   status: active
   last_updated: 2026-03-15
-  sha256: 41eee610bcc7490ca4bd56af09e57d3e9f19e935fd679d67de437660ffda5aa6
+  sha256: 3b9e1d7eff327e7abf949cd060743837ee9884cd7dcaad5826464ec8b0e13281
 - path: standards/escalation-record-schema-v1.json
   type: schema
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-02
-  sha256: 9d4f59ab5e4a97c044d692cd938e88504fe3462d39f6064dbddc3f62b09a0da1
+  sha256: 35aa9d8991914a67c635fc6d483c7334c78c28bf8d77e02afd2b9daaa13a3dff
 - path: standards/ingestion-record-schema-v1.json
   type: schema
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-20
   sha256: 778bd1cd4b74ca3cb1f88b2656d1a2b827ba96e1297a7d708dc56f3d2c0995af
+- path: standards/institutional-memory-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 0998143116ba282aebed0e317d9a6760bf72c14d90dd9ed9261cd0242d7a3a4e
+- path: standards/decision-precedent-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 314288783f2368817fb92c54c71fceb46046fa93410b61603517a00ebcf55cd9
+- path: standards/thread-summary-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 1bde3f792774b36a45a41b461c466fe12ac3112181bdd165eb7bd6b412949731
+- path: standards/business-system-event-mirror-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 5e64b85600b8c035f2f176eb520892ae607444085e6c4f6fe269a8bc8f184148
 - path: standards/trace-event-schema-v1.json
   type: schema
   doc_version: 1.1.0
@@ -1232,7 +1284,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-03-08
-  sha256: 40a77ccd8e6d7f4b15a23920cf126cf98f1070202680c0929ee83e46fdf95c5b
+  sha256: 61c659bbedc0a6485a32acfa25b349870aeb3af3f62c099c29aa4d783d4bb695
 - path: standards/spectral-advisory-schema-v1.json
   type: schema
   doc_version: 1.0.0
@@ -1280,7 +1332,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: 009963b9d43dbe15990133790e052cbc3a7f22c3a2a23e54c197d3b6b715d4e6
+  sha256: 28b899f26a693a36802b976e295adfc3eeafc0ab59f2f29998308691068e1607
 - path: model-packs/system/cfg/domain-role-defaults.yaml
   type: config
   doc_version: 1.0.0
@@ -1508,25 +1560,25 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: 0624a040063a596854ee4ac3d1189244f4d92facfafedc661d52167135dee0f4
+  sha256: 8915ab569a769f5c10d270eb76105bb1d6c464758aed5f5b41a3ea3d54d91a90
 - path: model-packs/education/modules/algebra-intro/student-profile-template.yaml
   type: config
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: 1ff09a068c55ebf3acd9ccbf78ba984c3ab5f6937b20add4818e4023fa5ac4e9
+  sha256: 08f0e571881a65806f99e0051bb8edf4358ee0a675e833617a34a6d31d03c468
 - path: model-packs/education/modules/algebra-1/student-profile-template.yaml
   type: config
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: 7f07297cdbac8c34ee560e4556292a49e3cdf82690121a358550cca244d23164
+  sha256: b7db8a8dde6e844616b603fd99b53f12a699864154ee63c0fced2d081a0801e0
 - path: model-packs/education/modules/algebra-level-1/student-profile-template.yaml
   type: config
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: edb2d70e33be7ccbb521a2e74c4da253ad4f90ce1cbb0ec270a3790e6f46a018
+  sha256: b64cc1e7a3ef39e1f51d802e25630101a13f3a67b8b1cc72f59b4acf32c3bc54
 - path: model-packs/education/modules/algebra-level-1/example-student-alice.yaml
   type: config
   doc_version: 1.0.0
@@ -1538,7 +1590,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-04-04
-  sha256: c2d7b674823477aaf5c3197f63f8c90cc0e3219f9eec55a614352e326f756642
+  sha256: fa8dabdc13a9180070be4a14e8ed12b10e43a32ac0ba8960cda509a14f7200ca
 - path: model-packs/system/pack.yaml
   type: config
   doc_version: 1.0.0
@@ -1929,7 +1981,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: bc6610499e4a2533a8bf51a55435485af6aa414d60dde438a0961163801c14ff
+  sha256: fcdad3cffe06b8c09ea17f417487280c2e9f5040f9f6c2a419f037c64c6609f8
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
@@ -1995,3 +2047,9 @@ artifacts:
   status: active
   last_updated: 2026-06-28
   sha256: a080a741dc7d25042889d223aae44a4474e511d526170075c1c16c71ce1ae784
+- path: docs/7-concepts/identity-and-scoped-memory.md
+  type: doc
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 31204a3d1a96dd764e98ba48bf15642c73fc6c52e8a84de750917d9f57d150b3

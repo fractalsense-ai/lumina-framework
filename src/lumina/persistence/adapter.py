@@ -283,6 +283,8 @@ class PersistenceAdapter(SystemPersistence, DomainPersistence):
         record_type: str | None = None,
         event_type: str | None = None,
         domain_id: str | None = None,
+        organization_id: str | None = None,
+        site_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
@@ -297,6 +299,8 @@ class PersistenceAdapter(SystemPersistence, DomainPersistence):
         self,
         status: str | None = None,
         domain_id: str | None = None,
+        organization_id: str | None = None,
+        site_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
@@ -555,6 +559,8 @@ class NullPersistenceAdapter(PersistenceAdapter):
         record_type: str | None = None,
         event_type: str | None = None,
         domain_id: str | None = None,
+        organization_id: str | None = None,
+        site_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
@@ -567,6 +573,8 @@ class NullPersistenceAdapter(PersistenceAdapter):
         self,
         status: str | None = None,
         domain_id: str | None = None,
+        organization_id: str | None = None,
+        site_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:

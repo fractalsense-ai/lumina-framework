@@ -8,12 +8,12 @@ last_updated: 2026-07-11
 
 ## Purpose
 
-Extend the existing retrieval stack into a tenant/site/actor-scoped institutional memory layer that stores and retrieves operational precedent, summaries, and ERP-linked evidence while preserving local-first deployment.
+Extend the existing retrieval stack into a tenant/site/actor-scoped institutional memory layer that stores and retrieves operational precedent, summaries, and external-system-linked evidence while preserving local-first deployment.
 
 ## Scope
 
 - Define indexing and retrieval behavior for institutional memory artifacts.
-- Specify incremental ingestion from decision records, summaries, and ERP event mirrors.
+- Specify incremental ingestion from decision records, summaries, and business-system event mirrors.
 - Specify filter and ranking rules combining semantic similarity with strict scope constraints.
 - Define rollout path from current flat-file vector stores to pluggable local backends without API contract breakage.
 
@@ -33,7 +33,7 @@ Extend the existing retrieval stack into a tenant/site/actor-scoped institutiona
 
 - New scoped retrieval contract:
   - hard filters (`organization_id`, `site_id`) before scoring,
-  - optional filters (`actor_id`, `module_key`, ERP doctype/id).
+  - optional filters (`actor_id`, `module_key`, `provider`, `external_record_type`, `external_record_id`).
 - New memory ingestion contract:
   - index summaries and decision/evidence artifacts,
   - raw transcripts optional and not required.

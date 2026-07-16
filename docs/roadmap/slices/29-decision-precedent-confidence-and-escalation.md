@@ -70,5 +70,5 @@ Codify institutional decision precedent retrieval and confidence scoring so Lumi
 
 ## Follow-Up Slices
 
-- Slice 30: ERPNext adapter foundation.
-- Slice 31: business-ops pack bootstrap uses precedent/escalation policies.
+- Slice 30: canonical business-system contracts and capability taxonomy.
+- Slice 31: connector registry and capability routing.

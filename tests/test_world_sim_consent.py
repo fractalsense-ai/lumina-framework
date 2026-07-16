@@ -70,7 +70,15 @@ def api_module(monkeypatch: pytest.MonkeyPatch):
     )
     mod._session_containers.clear()
     monkeypatch.setattr(auth, "JWT_SECRET", "test-secret-fgh")
-    mod.PERSISTENCE.load_subject_profile = _load_yaml
+
+    def _load_scoped_profile(path):
+        profile = _load_yaml(path)
+        if isinstance(profile, dict):
+            profile["organization_id"] = "test-org"
+            profile["site_id"] = "test-site"
+        return profile
+
+    mod.PERSISTENCE.load_subject_profile = _load_scoped_profile
     # Strip RBAC permissions from domain physics so consent tests can focus
     # on consent gating rather than module-level RBAC.
     _orig_load = mod.PERSISTENCE.load_domain_physics

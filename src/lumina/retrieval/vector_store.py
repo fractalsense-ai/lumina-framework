@@ -75,24 +75,56 @@ class VectorStore:
 
     # ── Search ────────────────────────────────────────────────
 
-    def search(self, query_vec: NDArray[np.float32], k: int = 5) -> list[SearchResult]:
-        """Return the top-*k* chunks by cosine similarity to *query_vec*."""
+    def search(
+        self,
+        query_vec: NDArray[np.float32],
+        k: int = 5,
+        *,
+        organization_id: str | None = None,
+        site_id: str | None = None,
+        actor_id: str | None = None,
+        device_id: str | None = None,
+    ) -> list[SearchResult]:
+        """Return top-*k* chunks, applying scope filters before ranking."""
         if self._vectors.size == 0:
             return []
 
+        filters = {
+            "organization_id": organization_id,
+            "site_id": site_id,
+            "actor_id": actor_id,
+            "device_id": device_id,
+        }
+        eligible_indices = [
+            index
+            for index, chunk in enumerate(self._chunks)
+            if all(
+                expected is None or getattr(chunk, field_name, None) == expected
+                for field_name, expected in filters.items()
+            )
+        ]
+        if not eligible_indices:
+            return []
+
         # Cosine similarity: dot(a, b) / (||a|| * ||b||)
-        norms = np.linalg.norm(self._vectors, axis=1)
+        candidate_vectors = self._vectors[eligible_indices]
+        norms = np.linalg.norm(candidate_vectors, axis=1)
         q_norm = np.linalg.norm(query_vec)
         # Guard against zero-norm vectors
         safe_denom = norms * q_norm
         safe_denom = np.where(safe_denom == 0, 1.0, safe_denom)
-        scores = self._vectors @ query_vec / safe_denom
+        scores = candidate_vectors @ query_vec / safe_denom
 
         top_k = min(k, len(scores))
+        if top_k <= 0:
+            return []
         top_indices = np.argpartition(scores, -top_k)[-top_k:]
         top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
 
-        return [SearchResult(self._chunks[i], float(scores[i])) for i in top_indices]
+        return [
+            SearchResult(self._chunks[eligible_indices[i]], float(scores[i]))
+            for i in top_indices
+        ]
 
     # ── Persistence ───────────────────────────────────────────
 
@@ -124,6 +156,10 @@ class VectorStore:
                 content_hash=r["content_hash"],
                 content_type=r.get("content_type", "doc"),
                 domain_id=r.get("domain_id", ""),
+                organization_id=r.get("organization_id"),
+                site_id=r.get("site_id"),
+                actor_id=r.get("actor_id"),
+                device_id=r.get("device_id"),
             )
             for r in raw
         ]

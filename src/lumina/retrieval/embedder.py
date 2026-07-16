@@ -37,6 +37,10 @@ class DocChunk:
     content_hash: str = field(repr=False)
     content_type: str = field(default="doc", repr=False)
     domain_id: str = field(default="", repr=False)
+    organization_id: str | None = field(default=None, repr=False)
+    site_id: str | None = field(default=None, repr=False)
+    actor_id: str | None = field(default=None, repr=False)
+    device_id: str | None = field(default=None, repr=False)
 
     @staticmethod
     def compute_hash(text: str) -> str:

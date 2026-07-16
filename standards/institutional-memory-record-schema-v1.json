@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectlumina.org/memory/institutional-memory-record-schema-v1.json",
+  "schema_version": "1.0.0",
+  "last_updated": "2026-07-15",
+  "title": "Institutional Memory Record Schema V1",
+  "description": "Provider-neutral, pseudonymous institutional memory artifact scoped to one organization and site.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_type", "record_id", "organization_id", "site_id", "actor_id", "memory_type", "summary", "created_utc"],
+  "properties": {
+    "record_type": { "const": "InstitutionalMemoryRecord" },
+    "record_id": { "type": "string", "minLength": 1 },
+    "organization_id": { "type": "string", "minLength": 1 },
+    "site_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "device_id": { "type": ["string", "null"], "minLength": 1 },
+    "memory_type": { "type": "string", "enum": ["observation", "decision", "pattern", "procedure", "outcome", "other"] },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "domain_id": { "type": ["string", "null"] },
+    "module_key": { "type": ["string", "null"] },
+    "created_utc": { "type": "string", "format": "date-time" },
+    "content_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "external_system_reference": { "$ref": "#/$defs/external_system_reference" },
+    "metadata": { "type": "object", "additionalProperties": true, "description": "Structured metadata without credentials, secrets, tokens, passwords, or raw transcripts." }
+  },
+  "$defs": {
+    "external_system_reference": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["connector_instance_id", "external_record_type", "external_record_id"],
+      "properties": {
+        "connector_instance_id": { "type": "string", "minLength": 1 },
+        "external_record_type": { "type": "string", "minLength": 1 },
+        "external_record_id": { "type": "string", "minLength": 1 },
+        "provider_data": { "type": "object", "additionalProperties": true, "description": "Namespaced provider details only; credentials are forbidden." }
+      }
+    }
+  }
+}

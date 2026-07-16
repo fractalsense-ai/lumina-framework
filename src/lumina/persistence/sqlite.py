@@ -771,11 +771,22 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
         record_type: str | None = None,
         event_type: str | None = None,
         domain_id: str | None = None,
+        organization_id: str | None = None,
+        site_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
         return asyncio.run(
-            self._query_log_records_async(session_id, record_type, event_type, domain_id, limit, offset)
+            self._query_log_records_async(
+                session_id,
+                record_type,
+                event_type,
+                domain_id,
+                organization_id,
+                site_id,
+                limit,
+                offset,
+            )
         )
 
     async def _query_log_records_async(
@@ -784,6 +795,8 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
         record_type: str | None,
         event_type: str | None,
         domain_id: str | None,
+        organization_id: str | None,
+        site_id: str | None,
         limit: int,
         offset: int,
     ) -> list[dict[str, Any]]:
@@ -809,6 +822,10 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
             if not isinstance(rec, dict):
                 continue
             if event_type and rec.get("event_type") != event_type:
+                continue
+            if organization_id is not None and rec.get("organization_id") != organization_id:
+                continue
+            if site_id is not None and rec.get("site_id") != site_id:
                 continue
             records.append(rec)
         return records
@@ -843,10 +860,17 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
         self,
         status: str | None = None,
         domain_id: str | None = None,
+        organization_id: str | None = None,
+        site_id: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
-        records = self.query_log_records(record_type="EscalationRecord", limit=10000)
+        records = self.query_log_records(
+            record_type="EscalationRecord",
+            organization_id=organization_id,
+            site_id=site_id,
+            limit=10000,
+        )
         # Deduplicate by record_id, keeping the latest version (append-only log)
         seen: dict[str, dict[str, Any]] = {}
         for r in records:

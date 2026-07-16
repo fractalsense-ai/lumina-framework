@@ -44,11 +44,16 @@ def test_hash_payload_matches_hash_record() -> None:
 # ── SystemLogWriter — callback-based construction ─────────────────────────────
 
 
-def _make_writer(tmp_path: Path, callback=None) -> SystemLogWriter:
+def _make_writer(tmp_path: Path, callback=None, profile: dict[str, str] | None = None) -> SystemLogWriter:
     return SystemLogWriter(
         ledger_path=tmp_path / "ledger.jsonl",
         session_id="sess-001",
-        profile={"subject_id": "student-a"},
+        profile=profile
+        or {
+            "subject_id": "student-a",
+            "organization_id": "org-default",
+            "site_id": "site-default",
+        },
         system_physics_hash="abc123",
         log_append_callback=callback,
     )
@@ -94,6 +99,91 @@ def test_write_commitment_record_writes_file(tmp_path: Path) -> None:
     assert ledger.exists()
     records = [json.loads(line) for line in ledger.read_text().strip().split("\n")]
     assert records[0]["record_type"] == "CommitmentRecord"
+
+
+@pytest.mark.unit
+def test_write_commitment_record_includes_scope_fields_from_profile(tmp_path: Path) -> None:
+    appended = []
+    writer = _make_writer(
+        tmp_path,
+        callback=lambda sid, rec: appended.append(rec),
+        profile={
+            "subject_id": "student-a",
+            "organization_id": "org-001",
+            "site_id": "site-nyc",
+            "device_id": "device-kiosk-7",
+        },
+    )
+    domain = {"id": "education", "version": "1.0"}
+    policy_commitment = {
+        "subject_id": "education",
+        "subject_version": "1.0",
+        "subject_hash": "hashval",
+    }
+    writer.write_commitment_record(domain, policy_commitment)
+    rec = appended[0]
+    assert rec["organization_id"] == "org-001"
+    assert rec["site_id"] == "site-nyc"
+    assert rec["device_id"] == "device-kiosk-7"
+
+
+@pytest.mark.unit
+def test_write_commitment_record_requires_organization_and_site(tmp_path: Path) -> None:
+    writer = _make_writer(
+        tmp_path,
+        profile={
+            "subject_id": "student-a",
+            "organization_id": "org-001",
+        },
+    )
+    with pytest.raises(ValueError, match="CommitmentRecord requires scope fields"):
+        writer.write_commitment_record(
+            {"id": "education", "version": "1.0"},
+            {
+                "subject_id": "education",
+                "subject_version": "1.0",
+                "subject_hash": "hashval",
+            },
+        )
+
+
+@pytest.mark.unit
+def test_write_commitment_record_rejects_placeholder_scope_and_invalid_device(tmp_path: Path) -> None:
+    writer = _make_writer(
+        tmp_path,
+        profile={
+            "subject_id": "student-a",
+            "organization_id": "<ORGANIZATION_ID>",
+            "site_id": "site-nyc",
+            "device_id": "   ",
+        },
+    )
+    with pytest.raises(ValueError, match="CommitmentRecord requires scope fields"):
+        writer.write_commitment_record(
+            {"id": "education", "version": "1.0"},
+            {
+                "subject_id": "education",
+                "subject_version": "1.0",
+                "subject_hash": "hashval",
+            },
+        )
+
+    writer = _make_writer(
+        tmp_path,
+        profile={
+            "subject_id": "student-a",
+            "organization_id": "org-001",
+            "site_id": "site-nyc",
+            "device_id": 42,
+        },
+    )
+    appended = []
+    writer._log_append_callback = lambda sid, rec: appended.append(rec)
+    writer.write_commitment_record(
+        {"id": "education", "version": "1.0"},
+        {"subject_id": "education", "subject_version": "1.0", "subject_hash": "hashval"},
+    )
+    assert "device_id" not in appended[0]
 
 
 # ── write_trace_event ─────────────────────────────────────────────────────────
@@ -210,6 +300,51 @@ def test_write_escalation_record_system_physics_hash_in_metadata(tmp_path: Path)
         domain_physics={"auto_freeze_on_escalation": False},
     )
     assert appended[0]["metadata"].get("system_physics_hash") == "abc123"
+
+
+@pytest.mark.unit
+def test_write_escalation_record_includes_scope_fields_from_profile(tmp_path: Path) -> None:
+    appended = []
+    writer = _make_writer(
+        tmp_path,
+        callback=lambda sid, rec: appended.append(rec),
+        profile={
+            "subject_id": "student-a",
+            "organization_id": "org-001",
+            "site_id": "site-phx",
+            "device_id": "device-frontdesk-2",
+        },
+    )
+    writer.write_escalation_record(
+        task_spec={},
+        domain_lib_decision={},
+        trigger="t",
+        provenance_metadata=None,
+        domain_physics={"auto_freeze_on_escalation": False},
+    )
+    rec = appended[0]
+    assert rec["organization_id"] == "org-001"
+    assert rec["site_id"] == "site-phx"
+    assert rec["device_id"] == "device-frontdesk-2"
+
+
+@pytest.mark.unit
+def test_write_escalation_record_requires_organization_and_site(tmp_path: Path) -> None:
+    writer = _make_writer(
+        tmp_path,
+        profile={
+            "subject_id": "student-a",
+            "site_id": "site-phx",
+        },
+    )
+    with pytest.raises(ValueError, match="EscalationRecord requires scope fields"):
+        writer.write_escalation_record(
+            task_spec={},
+            domain_lib_decision={},
+            trigger="t",
+            provenance_metadata=None,
+            domain_physics={"auto_freeze_on_escalation": False},
+        )
 
 
 # ── append_provenance_trace ────────────────────────────────────────────────────

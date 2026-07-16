@@ -42,6 +42,8 @@ def _make_domain(
 def _make_profile() -> dict[str, Any]:
     return {
         "subject_id": "subject_test_001",
+        "organization_id": "org-test",
+        "site_id": "site-test",
         "preferences": {"interests": ["science"]},
     }
 
