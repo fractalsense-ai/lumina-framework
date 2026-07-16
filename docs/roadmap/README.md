@@ -51,7 +51,7 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [23](slices/23-evidence-harvest-and-teardown.md) | Evidence Harvest and Teardown | Delivered |
 | [24](slices/24-system-led-evidence-commit-and-teardown-confirmation.md) | System-Led Evidence Commit and Teardown Confirmation | Delivered |
 | [25](slices/25-b2b-workstream-boundary-and-task-graph.md) | B2B Workstream Boundary and Global Task Graph | Planned |
-| [26](slices/26-tenant-site-actor-memory-contracts.md) | Tenant/Site/Actor Memory Contracts | Planned |
+| [26](slices/26-tenant-site-actor-memory-contracts.md) | Tenant/Site/Actor Memory Contracts | Delivered |
 | [27](slices/27-institutional-vector-memory-layer.md) | Institutional Vector Memory Layer | Planned |
 | [28](slices/28-semantic-thread-routing-and-forking.md) | Semantic Thread Routing and Context Forking | Planned |
 | [29](slices/29-decision-precedent-confidence-and-escalation.md) | Decision Precedent, Confidence, and Escalation | Planned |

@@ -119,7 +119,7 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 84995e10af9d3880d5022e24f372747acd3887d0fc4ca6cf34285630f35cc5a2
+  sha256: 6713bafe5d539d26ed2e3c5b907ff88e3f62093ce4da0f1b33860f3f3439946c
 - path: docs/roadmap/slices/27-institutional-vector-memory-layer.md
   type: doc
   section: 0
@@ -1225,6 +1225,30 @@ artifacts:
   status: active
   last_updated: 2026-03-20
   sha256: 778bd1cd4b74ca3cb1f88b2656d1a2b827ba96e1297a7d708dc56f3d2c0995af
+- path: standards/institutional-memory-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 0998143116ba282aebed0e317d9a6760bf72c14d90dd9ed9261cd0242d7a3a4e
+- path: standards/decision-precedent-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 314288783f2368817fb92c54c71fceb46046fa93410b61603517a00ebcf55cd9
+- path: standards/thread-summary-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 1bde3f792774b36a45a41b461c466fe12ac3112181bdd165eb7bd6b412949731
+- path: standards/business-system-event-mirror-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 5e64b85600b8c035f2f176eb520892ae607444085e6c4f6fe269a8bc8f184148
 - path: standards/trace-event-schema-v1.json
   type: schema
   doc_version: 1.1.0
@@ -1957,7 +1981,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-06-18
-  sha256: ef5c4cb711e07afa08f0460fc7044c37fe664a1d185107357404aaa1ea274bbe
+  sha256: fcdad3cffe06b8c09ea17f417487280c2e9f5040f9f6c2a419f037c64c6609f8
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0
@@ -2023,3 +2047,9 @@ artifacts:
   status: active
   last_updated: 2026-06-28
   sha256: a080a741dc7d25042889d223aae44a4474e511d526170075c1c16c71ce1ae784
+- path: docs/7-concepts/identity-and-scoped-memory.md
+  type: doc
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-15
+  sha256: 31204a3d1a96dd764e98ba48bf15642c73fc6c52e8a84de750917d9f57d150b3
