@@ -18,6 +18,8 @@ import logging
 import re
 from typing import Any
 
+from lumina.retrieval.contracts import RetrievalFilter
+
 log = logging.getLogger("lumina.core-nlp")
 
 # ── Lazy spaCy loader ────────────────────────────────────────
@@ -301,6 +303,7 @@ def search_domain(
     site_id: str | None = None,
     actor_id: str | None = None,
     device_id: str | None = None,
+    retrieval_filter: RetrievalFilter | None = None,
 ) -> list[Any]:
     """Search the per-domain vector store for *text*.
 
@@ -322,4 +325,5 @@ def search_domain(
         site_id=site_id,
         actor_id=actor_id,
         device_id=device_id,
+        retrieval_filter=retrieval_filter,
     )

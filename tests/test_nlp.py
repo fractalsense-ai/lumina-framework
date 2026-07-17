@@ -10,6 +10,7 @@ from lumina.core.nlp import (
     split_sentences,
     tokenize,
 )
+from lumina.retrieval.contracts import RetrievalFilter
 
 
 # ── get_nlp ────────────────────────────────────────────────────────────────────
@@ -244,3 +245,41 @@ def test_classify_domain_confidence_scaled_up() -> None:
     result = classify_domain("algebra equation solve variable something", domain_map)
     assert result is not None
     assert result["confidence"] <= 1.0
+
+
+@pytest.mark.unit
+def test_search_domain_accepts_typed_retrieval_filter(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _Store:
+        size = 1
+
+        def search(self, query_vec, *, k, organization_id, site_id, actor_id, device_id, retrieval_filter):
+            assert retrieval_filter == RetrievalFilter(
+                organization_id="org-a",
+                site_id="site-1",
+                institutional_only=True,
+            )
+            assert organization_id is None
+            assert site_id is None
+            return ["hit"]
+
+    class _Registry:
+        def get(self, domain_id):
+            assert domain_id == "education"
+            return _Store()
+
+    class _Embedder:
+        def embed_query(self, text):
+            return [1.0]
+
+    monkeypatch.setattr(nlp_mod, "_vector_registry", _Registry())
+    monkeypatch.setattr(nlp_mod, "_doc_embedder", _Embedder())
+
+    assert nlp_mod.search_domain(
+        "maintenance decision",
+        "education",
+        retrieval_filter=RetrievalFilter(
+            organization_id="org-a",
+            site_id="site-1",
+            institutional_only=True,
+        ),
+    ) == ["hit"]
