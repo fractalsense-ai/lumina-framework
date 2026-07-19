@@ -90,11 +90,6 @@ class VectorStore:
         """Return top-*k* chunks, applying scope filters before ranking."""
         if retrieval_filter is not None:
             retrieval_filter.validate()
-            metadata_filters = retrieval_filter.as_metadata()
-            organization_id = metadata_filters["organization_id"]
-            site_id = metadata_filters["site_id"]
-            actor_id = metadata_filters["actor_id"]
-            device_id = metadata_filters["device_id"]
         if self._vectors.size == 0:
             return []
 
@@ -108,7 +103,7 @@ class VectorStore:
             filters.update({
                 key: value
                 for key, value in retrieval_filter.as_metadata().items()
-                if key not in filters
+                if value is not None and filters.get(key) is None
             })
         eligible_indices = [
             index

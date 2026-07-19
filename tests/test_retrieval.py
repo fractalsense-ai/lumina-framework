@@ -405,6 +405,30 @@ class TestVectorStore:
                 ),
             )
 
+    def test_retrieval_filter_cannot_clear_keyword_scope(self, tmp_path):
+        store = VectorStore(tmp_path / "vs")
+        chunks = [
+            DocChunk(
+                "org-a.json", "summary", "allowed", DocChunk.compute_hash("allowed"),
+                organization_id="org-a", module_key="ops",
+            ),
+            DocChunk(
+                "org-b.json", "summary", "excluded", DocChunk.compute_hash("excluded"),
+                organization_id="org-b", module_key="ops",
+            ),
+        ]
+        vectors = np.zeros((2, EMBEDDING_DIM), dtype=np.float32)
+        vectors[:, 0] = 1.0
+        store.add(chunks, vectors)
+
+        results = store.search(
+            vectors[0],
+            organization_id="org-a",
+            retrieval_filter=RetrievalFilter(module_key="ops"),
+        )
+
+        assert [result.chunk.text for result in results] == ["allowed"]
+
     def test_save_load_roundtrip(self, tmp_path):
         store_dir = tmp_path / "vs"
         store = VectorStore(store_dir)

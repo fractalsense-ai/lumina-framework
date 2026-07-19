@@ -1,4 +1,4 @@
-"""Local-first ingestion of Slice 26 institutional memory records."""
+"""Local-first Slice 27 ingestion of the Slice 26 institutional record families."""
 from __future__ import annotations
 
 import json
