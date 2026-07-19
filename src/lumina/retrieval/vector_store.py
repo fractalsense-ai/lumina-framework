@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from lumina.retrieval.embedder import EMBEDDING_DIM, DocChunk
+from lumina.retrieval.contracts import RetrievalFilter
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -84,8 +85,11 @@ class VectorStore:
         site_id: str | None = None,
         actor_id: str | None = None,
         device_id: str | None = None,
+        retrieval_filter: RetrievalFilter | None = None,
     ) -> list[SearchResult]:
         """Return top-*k* chunks, applying scope filters before ranking."""
+        if retrieval_filter is not None:
+            retrieval_filter.validate()
         if self._vectors.size == 0:
             return []
 
@@ -95,12 +99,22 @@ class VectorStore:
             "actor_id": actor_id,
             "device_id": device_id,
         }
+        if retrieval_filter is not None:
+            filters.update({
+                key: value
+                for key, value in retrieval_filter.as_metadata().items()
+                if value is not None and filters.get(key) is None
+            })
         eligible_indices = [
             index
             for index, chunk in enumerate(self._chunks)
-            if all(
-                expected is None or getattr(chunk, field_name, None) == expected
-                for field_name, expected in filters.items()
+            if (
+                (not retrieval_filter or not retrieval_filter.institutional_only
+                 or chunk.content_type == "institutional_memory")
+                and all(
+                    expected is None or getattr(chunk, field_name, None) == expected
+                    for field_name, expected in filters.items()
+                )
             )
         ]
         if not eligible_indices:
@@ -160,6 +174,11 @@ class VectorStore:
                 site_id=r.get("site_id"),
                 actor_id=r.get("actor_id"),
                 device_id=r.get("device_id"),
+                record_id=r.get("record_id"),
+                provider=r.get("provider"),
+                external_record_type=r.get("external_record_type"),
+                external_record_id=r.get("external_record_id"),
+                module_key=r.get("module_key"),
             )
             for r in raw
         ]

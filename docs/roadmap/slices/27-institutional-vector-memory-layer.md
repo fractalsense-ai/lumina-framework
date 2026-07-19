@@ -1,9 +1,9 @@
 ---
 title: "Slice 27 — Institutional Vector Memory Layer"
 slice: 27
-status: planned
-version: 0.1.0
-last_updated: 2026-07-11
+status: delivered
+version: 1.0.0
+last_updated: 2026-07-19
 ---
 
 ## Purpose
@@ -28,6 +28,17 @@ Extend the existing retrieval stack into a tenant/site/actor-scoped institutiona
 - Add retrieval subsystem design docs for scoped institutional indexing.
 - Add interface updates for scoped store registry and filter-aware search.
 - Add deterministic benchmark fixtures for memory recall quality.
+
+## Delivered Implementation
+
+- Added `RetrievalFilter` and `InstitutionalMemoryStore` contracts for scoped,
+  backend-portable local retrieval.
+- Added transcript-free conversion and incremental ingestion for the Slice 26
+  record families, with scope- and record-aware content identity.
+- Extended flat-file vector metadata and pre-score filtering for institutional
+  provenance and optional metadata constraints.
+- Added deterministic isolation, deduplication, and recall-fixture tests.
+- Added the institutional vector-memory design and lifecycle note.
 
 ## New/Changed Contracts
 

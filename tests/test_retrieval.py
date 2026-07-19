@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -12,13 +11,13 @@ import pytest
 
 from lumina.retrieval.embedder import (
     EMBEDDING_DIM,
-    PROVIDER_OLLAMA,
     PROVIDER_SENTENCE_TRANSFORMERS,
     DocChunk,
     DocEmbedder,
     chunk_markdown,
 )
 from lumina.retrieval.vector_store import SearchResult, VectorStore, VectorStoreRegistry
+from lumina.retrieval.contracts import RetrievalFilter
 from lumina.retrieval.housekeeper import (
     Housekeeper,
     collect_md_files,
@@ -348,6 +347,87 @@ class TestVectorStore:
             organization_id="org-a",
             site_id="site-1",
         ) == []
+
+    def test_search_retrieval_filter_applies_optional_institutional_metadata(self, tmp_path):
+        store = VectorStore(tmp_path / "vs")
+        chunks = [
+            DocChunk(
+                "precedent-a.json", "summary", "allowed", DocChunk.compute_hash("allowed"),
+                content_type="institutional_memory",
+                organization_id="org-a", site_id="site-1", actor_id="actor-1",
+                provider="erp", external_record_type="work_order",
+                external_record_id="wo-1", module_key="ops",
+            ),
+            DocChunk(
+                "precedent-b.json", "summary", "excluded", DocChunk.compute_hash("excluded"),
+                content_type="institutional_memory",
+                organization_id="org-a", site_id="site-1", actor_id="actor-2",
+                provider="erp", external_record_type="work_order",
+                external_record_id="wo-2", module_key="ops",
+            ),
+        ]
+        vectors = np.zeros((2, EMBEDDING_DIM), dtype=np.float32)
+        vectors[:, 0] = 1.0
+        store.add(chunks, vectors)
+
+        results = store.search(
+            vectors[0],
+            k=5,
+            retrieval_filter=RetrievalFilter(
+                organization_id="org-a",
+                site_id="site-1",
+                actor_id="actor-1",
+                module_key="ops",
+                provider="erp",
+                external_record_type="work_order",
+                external_record_id="wo-1",
+                institutional_only=True,
+            ),
+        )
+
+        assert [result.chunk.text for result in results] == ["allowed"]
+
+    def test_institutional_retrieval_filter_requires_organization_and_site(self, tmp_path):
+        store = VectorStore(tmp_path / "vs")
+        vector = np.zeros((1, EMBEDDING_DIM), dtype=np.float32)
+        with pytest.raises(ValueError, match="requires organization_id"):
+            store.search(
+                vector[0],
+                retrieval_filter=RetrievalFilter(institutional_only=True),
+            )
+
+        with pytest.raises(ValueError, match="requires site_id"):
+            store.search(
+                vector[0],
+                retrieval_filter=RetrievalFilter(
+                    organization_id="org-a",
+                    institutional_only=True,
+                ),
+            )
+
+    def test_retrieval_filter_cannot_clear_keyword_scope(self, tmp_path):
+        store = VectorStore(tmp_path / "vs")
+        chunks = [
+            DocChunk(
+                "org-a.json", "summary", "allowed", DocChunk.compute_hash("allowed"),
+                organization_id="org-a", module_key="ops",
+            ),
+            DocChunk(
+                "org-b.json", "summary", "excluded", DocChunk.compute_hash("excluded"),
+                organization_id="org-b", module_key="ops",
+            ),
+        ]
+        vectors = np.zeros((2, EMBEDDING_DIM), dtype=np.float32)
+        vectors[:, 0] = 1.0
+        store.add(chunks, vectors)
+
+        results = store.search(
+            vectors[0],
+            organization_id="org-a",
+            retrieval_filter=RetrievalFilter(module_key="ops"),
+        )
+
+        assert [result.chunk.text for result in results] == ["allowed"]
 
     def test_save_load_roundtrip(self, tmp_path):
         store_dir = tmp_path / "vs"
