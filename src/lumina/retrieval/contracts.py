@@ -2,6 +2,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
+    from lumina.retrieval.embedder import DocChunk
+    from lumina.retrieval.vector_store import SearchResult
 
 
 @dataclass(frozen=True)
@@ -37,3 +45,26 @@ class RetrievalFilter:
             "external_record_type": self.external_record_type,
             "external_record_id": self.external_record_id,
         }
+
+
+class InstitutionalMemoryStore(Protocol):
+    """Portable local-store contract consumed by institutional-memory indexing."""
+
+    @property
+    def size(self) -> int: ...
+
+    def has_hash(self, content_hash: str) -> bool: ...
+
+    def add(self, chunks: list[DocChunk], vectors: NDArray[np.float32]) -> None: ...
+
+    def save(self) -> None: ...
+
+    def load(self) -> None: ...
+
+    def search(
+        self,
+        query_vec: NDArray[np.float32],
+        k: int = 5,
+        *,
+        retrieval_filter: RetrievalFilter | None = None,
+    ) -> list[SearchResult]: ...

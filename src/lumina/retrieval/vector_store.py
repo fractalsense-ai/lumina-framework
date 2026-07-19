@@ -113,9 +113,13 @@ class VectorStore:
         eligible_indices = [
             index
             for index, chunk in enumerate(self._chunks)
-            if all(
-                expected is None or getattr(chunk, field_name, None) == expected
-                for field_name, expected in filters.items()
+            if (
+                (not retrieval_filter or not retrieval_filter.institutional_only
+                 or chunk.content_type == "institutional_memory")
+                and all(
+                    expected is None or getattr(chunk, field_name, None) == expected
+                    for field_name, expected in filters.items()
+                )
             )
         ]
         if not eligible_indices:

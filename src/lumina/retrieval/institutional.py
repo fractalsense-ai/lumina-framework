@@ -6,7 +6,8 @@ from collections.abc import Iterable
 from typing import Any
 
 from lumina.retrieval.embedder import DocChunk, DocEmbedder
-from lumina.retrieval.vector_store import SearchResult, VectorStore
+from lumina.retrieval.contracts import InstitutionalMemoryStore, RetrievalFilter
+from lumina.retrieval.vector_store import SearchResult
 
 _RECORD_SUMMARY_FIELDS = (
     "summary",
@@ -52,7 +53,18 @@ def record_to_chunk(record: dict[str, Any]) -> DocChunk:
     site_id = _required_identifier(record, "site_id")
     actor_id = _required_identifier(record, "actor_id")
     summary = _summary_text(record)
-    content = f"{record_type}\n{summary}"
+    content = json.dumps(
+        {
+            "organization_id": organization_id,
+            "site_id": site_id,
+            "record_type": record_type,
+            "record_id": record_id,
+            "summary": summary,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
     metadata = _metadata(record)
 
     return DocChunk(
@@ -77,7 +89,7 @@ def record_to_chunk(record: dict[str, Any]) -> DocChunk:
 class InstitutionalMemoryIndexer:
     """Embed and persist scoped memory records using the current local store."""
 
-    def __init__(self, store: VectorStore, embedder: DocEmbedder) -> None:
+    def __init__(self, store: InstitutionalMemoryStore, embedder: DocEmbedder) -> None:
         self._store = store
         self._embedder = embedder
 
@@ -106,7 +118,7 @@ class InstitutionalMemoryIndexer:
     def search(
         self,
         query: str,
-        retrieval_filter,
+        retrieval_filter: RetrievalFilter,
         *,
         k: int = 5,
     ) -> list[SearchResult]:
@@ -127,7 +139,13 @@ class InstitutionalMemoryIndexer:
     def canonical_content(record: dict[str, Any]) -> str:
         """Return the stable content payload used for deterministic inspection."""
         return json.dumps(
-            {"record_type": record.get("record_type"), "summary": _summary_text(record)},
+            {
+                "organization_id": record.get("organization_id"),
+                "site_id": record.get("site_id"),
+                "record_type": record.get("record_type"),
+                "record_id": record.get("record_id"),
+                "summary": _summary_text(record),
+            },
             sort_keys=True,
             separators=(",", ":"),
             ensure_ascii=False,

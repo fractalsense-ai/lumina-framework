@@ -353,12 +353,14 @@ class TestVectorStore:
         chunks = [
             DocChunk(
                 "precedent-a.json", "summary", "allowed", DocChunk.compute_hash("allowed"),
+                content_type="institutional_memory",
                 organization_id="org-a", site_id="site-1", actor_id="actor-1",
                 provider="erp", external_record_type="work_order",
                 external_record_id="wo-1", module_key="ops",
             ),
             DocChunk(
                 "precedent-b.json", "summary", "excluded", DocChunk.compute_hash("excluded"),
+                content_type="institutional_memory",
                 organization_id="org-a", site_id="site-1", actor_id="actor-2",
                 provider="erp", external_record_type="work_order",
                 external_record_id="wo-2", module_key="ops",

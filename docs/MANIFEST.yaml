@@ -1,5 +1,5 @@
 schema_version: 1.0.0
-last_updated: 2026-07-15
+last_updated: 2026-07-19
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
@@ -124,9 +124,9 @@ artifacts:
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
-  last_updated: 2026-07-11
-  sha256: a06cd3055f704efb331ad3e4fe5aadb2c18b87e0fd8cae54a0500f0234ca37ae
+  status: delivered
+  last_updated: 2026-07-19
+  sha256: 6776e3b50464b33879ea74b2a6003042487597bdcf8c00dbb0f2bccb6aebc626
 - path: docs/roadmap/slices/28-semantic-thread-routing-and-forking.md
   type: doc
   section: 0
@@ -384,8 +384,8 @@ artifacts:
   section: 7
   doc_version: 1.5.0
   status: active
-  last_updated: 2026-04-16
-  sha256: 760169b81def1d53e2e6a16794c3b7c7d68b988c27314a2d91806e925e9e4743
+  last_updated: 2026-07-19
+  sha256: 1f0f420c2675be57aa256bccd311a956d74ef91f79d6641684a0425674c15761
 - path: docs/7-concepts/ai-governance-principles.md
   type: doc
   section: 7
@@ -838,6 +838,13 @@ artifacts:
   status: active
   last_updated: 2026-03-02
   sha256: 65add1e5e81eb427795d2ad02d0785847fc21dbe0269e9674f3301f815970b12
+- path: docs/7-concepts/institutional-vector-memory.md
+  type: doc
+  section: 7
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-19
+  sha256: 001031e1152b5c62eefbffd66595ca0b8cc1808112bd1f4ed47e403f5f5f09de
 - path: docs/8-admin/domain-authority-roles.md
   type: doc
   section: 8
@@ -1980,8 +1987,8 @@ artifacts:
   type: doc
   doc_version: 1.0.0
   status: active
-  last_updated: 2026-06-18
-  sha256: fcdad3cffe06b8c09ea17f417487280c2e9f5040f9f6c2a419f037c64c6609f8
+  last_updated: 2026-07-19
+  sha256: e5fa69a75ef53ff1977dcaf403338a2c8bfb431cc95fb786caceea12cc8f6cfe
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0

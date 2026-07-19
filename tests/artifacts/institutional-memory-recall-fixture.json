@@ -1,0 +1,38 @@
+{
+  "query": "brake inspection procedure",
+  "k": 1,
+  "filter": {
+    "organization_id": "org-a",
+    "site_id": "site-1",
+    "institutional_only": true
+  },
+  "records": [
+    {
+      "record_type": "DecisionPrecedentRecord",
+      "record_id": "precedent-a",
+      "organization_id": "org-a",
+      "site_id": "site-1",
+      "actor_id": "actor-1",
+      "decision_summary": "Use the approved brake inspection procedure.",
+      "outcome": "successful"
+    },
+    {
+      "record_type": "InstitutionalMemoryRecord",
+      "record_id": "memory-a",
+      "organization_id": "org-a",
+      "site_id": "site-1",
+      "actor_id": "actor-1",
+      "summary": "The oil-change checklist is complete."
+    },
+    {
+      "record_type": "DecisionPrecedentRecord",
+      "record_id": "precedent-b",
+      "organization_id": "org-b",
+      "site_id": "site-2",
+      "actor_id": "actor-2",
+      "decision_summary": "Use the approved brake inspection procedure.",
+      "outcome": "successful"
+    }
+  ],
+  "expected_record_ids": ["precedent-a"]
+}

@@ -1,13 +1,13 @@
 ---
-version: 1.3.0
-last_updated: 2026-05-07
+version: 1.5.0
+last_updated: 2026-07-19
 ---
 
 # Section 7 — Concepts
 
-**Version:** 1.3.0
+**Version:** 1.5.0
 **Status:** Active
-**Last updated:** 2026-05-07
+**Last updated:** 2026-07-19
 
 ---
 
@@ -20,6 +20,7 @@ This section is Lumina's architectural rationale layer. It explains *why* scoped
 - [`prompt-packet-assembly(7)`](prompt-packet-assembly.md) — runtime pipeline that assembles task-complete context packets
 - [`domain-pack-anatomy(7)`](domain-pack-anatomy.md) — model-pack structure and isolation boundaries
 - [`edge-vectorization(7)`](edge-vectorization.md) — per-domain retrieval isolation and scoped context delivery
+- [`institutional-vector-memory(7)`](institutional-vector-memory.md) — scoped, transcript-free operational recall
 
 ## Reading paths
 
@@ -35,6 +36,8 @@ This section is Lumina's architectural rationale layer. It explains *why* scoped
 
 - **Retrieval + scoped-context path**
   - [`edge-vectorization.md`](edge-vectorization.md)
+  - [`identity-and-scoped-memory.md`](identity-and-scoped-memory.md)
+  - [`institutional-vector-memory.md`](institutional-vector-memory.md)
   - [`rag-contracts.md`](rag-contracts.md)
   - [`slm-compute-distribution.md`](slm-compute-distribution.md)
 

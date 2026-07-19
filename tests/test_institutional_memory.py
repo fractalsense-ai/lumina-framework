@@ -1,12 +1,17 @@
 """Tests for local-first institutional memory ingestion."""
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 import pytest
 
 from lumina.retrieval.embedder import EMBEDDING_DIM
 from lumina.retrieval.institutional import InstitutionalMemoryIndexer, record_to_chunk
 from lumina.retrieval.vector_store import VectorStore
+
+FIXTURE_PATH = Path(__file__).parent / "artifacts" / "institutional-memory-recall-fixture.json"
 
 
 class _FakeEmbedder:
@@ -15,6 +20,20 @@ class _FakeEmbedder:
 
     def embed_query(self, query):
         return np.ones(EMBEDDING_DIM, dtype=np.float32)
+
+
+class _FixtureEmbedder:
+    @staticmethod
+    def _embed(text: str) -> np.ndarray:
+        vector = np.zeros(EMBEDDING_DIM, dtype=np.float32)
+        vector[0 if "brake" in text.lower() else 1] = 1.0
+        return vector
+
+    def embed_chunks(self, chunks):
+        return np.asarray([self._embed(chunk.text) for chunk in chunks], dtype=np.float32)
+
+    def embed_query(self, query):
+        return self._embed(query)
 
 
 def _record(record_id: str = "memory-1") -> dict:
@@ -61,6 +80,19 @@ def test_indexer_deduplicates_by_content_hash(tmp_path) -> None:
     assert store.size == 1
 
 
+def test_indexer_keeps_distinct_records_with_matching_summaries(tmp_path) -> None:
+    store = VectorStore(tmp_path / "vs")
+    indexer = InstitutionalMemoryIndexer(store, _FakeEmbedder())
+    other_record = _record("memory-2")
+    other_record["organization_id"] = "org-b"
+    other_record["site_id"] = "site-2"
+
+    result = indexer.ingest([_record(), other_record])
+
+    assert result == {"records_seen": 2, "records_indexed": 2, "records_skipped": 0}
+    assert store.size == 2
+
+
 def test_indexer_accepts_transcript_free_decision_record(tmp_path) -> None:
     record = _record("decision-1")
     record.pop("thread_id")
@@ -98,6 +130,55 @@ def test_indexer_search_requires_hard_scope(tmp_path) -> None:
             "maintenance",
             RetrievalFilter(organization_id="org-a", site_id="site-1"),
         )
+
+
+def test_indexer_search_excludes_scoped_non_institutional_chunks(tmp_path) -> None:
+    from lumina.retrieval.contracts import RetrievalFilter
+    from lumina.retrieval.embedder import DocChunk
+
+    store = VectorStore(tmp_path / "vs")
+    store.add(
+        [
+            DocChunk(
+                source_path="domain.md",
+                heading="domain",
+                text="maintenance decision",
+                content_hash=DocChunk.compute_hash("domain"),
+                organization_id="org-a",
+                site_id="site-1",
+            ),
+        ],
+        np.ones((1, EMBEDDING_DIM), dtype=np.float32),
+    )
+    indexer = InstitutionalMemoryIndexer(store, _FakeEmbedder())
+    indexer.ingest([_record()])
+
+    results = indexer.search(
+        "maintenance",
+        RetrievalFilter(
+            organization_id="org-a",
+            site_id="site-1",
+            institutional_only=True,
+        ),
+    )
+
+    assert [result.chunk.content_type for result in results] == ["institutional_memory"]
+
+
+def test_recall_fixture_returns_only_the_scoped_expected_precedent(tmp_path) -> None:
+    from lumina.retrieval.contracts import RetrievalFilter
+
+    fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+    indexer = InstitutionalMemoryIndexer(VectorStore(tmp_path / "vs"), _FixtureEmbedder())
+    indexer.ingest(fixture["records"])
+
+    results = indexer.search(
+        fixture["query"],
+        RetrievalFilter(**fixture["filter"]),
+        k=fixture["k"],
+    )
+
+    assert [result.chunk.record_id for result in results] == fixture["expected_record_ids"]
 
 
 @pytest.mark.parametrize("field", ["organization_id", "site_id", "actor_id"])
