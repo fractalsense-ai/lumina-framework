@@ -29,6 +29,8 @@ def _precedent_candidates(results: object) -> list[PrecedentCandidate]:
     candidates: dict[str, PrecedentCandidate] = {}
     for result in results:
         chunk = result.chunk
+        if chunk.record_type != "ThreadSummaryRecord":
+            continue
         created_utc = _parse_created_utc(chunk.created_utc)
         if not chunk.thread_id or not chunk.record_id or created_utc is None:
             continue

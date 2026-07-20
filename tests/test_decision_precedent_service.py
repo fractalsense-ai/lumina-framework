@@ -72,6 +72,22 @@ def test_missing_timestamp_is_not_eligible_precedent(tmp_path) -> None:
 
 
 @pytest.mark.unit
+def test_non_summary_institutional_records_are_not_eligible_precedent(tmp_path) -> None:
+    indexer = InstitutionalMemoryIndexer(VectorStore(tmp_path / "memory"), _FakeEmbedder())
+    non_summary = _summary("non-summary")
+    non_summary["record_type"] = "DecisionConfidenceScore"
+    indexer.ingest([non_summary])
+
+    score = evaluate_decision_precedent(
+        "brake update", indexer=indexer, policy=_policy(), actor_id="actor-a", risk_class="routine",
+        evaluated_utc=datetime(2026, 7, 20, tzinfo=UTC), record_id="score-a",
+    )
+
+    assert score.tier == "mandatory_escalation"
+    assert score.precedent_matches == ()
+
+
+@pytest.mark.unit
 def test_persisted_store_retains_summary_timestamp(tmp_path) -> None:
     store = VectorStore(tmp_path / "memory")
     indexer = InstitutionalMemoryIndexer(store, _FakeEmbedder())

@@ -84,6 +84,7 @@ def record_to_chunk(record: dict[str, Any]) -> DocChunk:
         site_id=site_id,
         actor_id=actor_id,
         device_id=record.get("device_id") if isinstance(record.get("device_id"), str) else None,
+        record_type=record_type,
         record_id=record_id,
         thread_id=thread_id.strip() if isinstance(thread_id, str) else None,
         provider=metadata["provider"],

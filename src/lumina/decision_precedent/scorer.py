@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from lumina.decision_precedent.policy import DecisionPrecedentPolicy
@@ -106,7 +106,7 @@ def _require_identifier(value: str, field_name: str) -> str:
 def _ordered_matches(
     candidates: list[PrecedentCandidate], policy: DecisionPrecedentPolicy, *, evaluated_utc: datetime
 ) -> tuple[PrecedentMatch, ...]:
-    cutoff = evaluated_utc - __import__("datetime").timedelta(days=policy.stale_after_days)
+    cutoff = evaluated_utc - timedelta(days=policy.stale_after_days)
     ordered = sorted(candidates, key=lambda candidate: (-candidate.similarity, candidate.summary_record_id))
     matches: list[PrecedentMatch] = []
     for rank, candidate in enumerate(ordered[: policy.candidate_limit], start=1):
