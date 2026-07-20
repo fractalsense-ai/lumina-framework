@@ -86,6 +86,34 @@ class ThreadRoutingConfirmationResponse(BaseModel):
     session_id: str
 
 
+# ── Decision precedent ───────────────────────────────────────
+
+class DecisionPrecedentPreflightRequest(BaseModel):
+    message: str = Field(min_length=1)
+    risk_class: str = Field(min_length=1)
+    session_id: str | None = None
+
+
+class DecisionPrecedentPreflightResponse(BaseModel):
+    confidence_record_id: str
+    organization_id: str
+    site_id: str
+    actor_id: str
+    policy_version: int
+    risk_class: str
+    final_score: float
+    tier: str
+    rationale_codes: list[str]
+    confirmation_required: bool
+    escalation_record_id: str | None = None
+
+
+class DecisionPrecedentConfirmationResponse(BaseModel):
+    confirmation_id: str
+    confidence_record_id: str
+    tier: str
+
+
 # ── Holodeck Sandbox ─────────────────────────────────────────
 
 class HolodeckSimulateRequest(BaseModel):

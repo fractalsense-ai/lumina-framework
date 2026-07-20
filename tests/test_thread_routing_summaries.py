@@ -12,6 +12,7 @@ from lumina.thread_routing.summaries import record_thread_recap
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = REPO_ROOT / "standards" / "thread-summary-state-schema-v1.json"
+SUMMARY_RECORD_SCHEMA_PATH = REPO_ROOT / "standards" / "thread-summary-record-schema-v1.json"
 
 
 class _RecordingIndexer:
@@ -59,6 +60,8 @@ def test_recap_indexes_first_turn_and_uses_schema_valid_transcript_free_state() 
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     jsonschema.validate(state, schema, format_checker=jsonschema.FormatChecker())
     assert len(indexer.records) == 1
+    summary_schema = json.loads(SUMMARY_RECORD_SCHEMA_PATH.read_text(encoding="utf-8"))
+    jsonschema.validate(indexer.records[0], summary_schema, format_checker=jsonschema.FormatChecker())
     serialized = json.dumps({"state": state, "record": indexer.records[0]}).lower()
     assert message.lower() not in serialized
     assert "transcript" not in serialized

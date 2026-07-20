@@ -93,7 +93,7 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
         actor_id="actor-a",
     )
     import lumina.api.routes.thread_routing as route_module
-    monkeypatch.setattr(route_module, "_get_institutional_indexer", lambda: indexer)
+    monkeypatch.setattr(route_module, "get_institutional_indexer", lambda: indexer)
     route_module._pending_decisions.clear()
     route_module._consumed_decision_ids.clear()
     return TestClient(mod.app), persistence

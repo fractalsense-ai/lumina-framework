@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import functools
 import logging
 import time
 import uuid
@@ -13,6 +12,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from starlette.concurrency import run_in_threadpool
 
 from lumina.api import config as _cfg
+from lumina.api.dependencies import get_institutional_indexer
 from lumina.api.middleware import _bearer_scheme, get_current_user
 from lumina.api.models import ChatRequest, ChatResponse
 from lumina.api.processing import process_message
@@ -23,24 +23,12 @@ from lumina.system_log.commit_guard import requires_log_commit
 from lumina.thread_routing.bindings import load_thread_session_binding
 from lumina.thread_routing.policy import load_thread_routing_policy
 from lumina.thread_routing.summaries import record_thread_recap
-from lumina.retrieval.embedder import DocEmbedder
-from lumina.retrieval.institutional import InstitutionalMemoryIndexer
-from lumina.retrieval.vector_store import VectorStore
 
 log = logging.getLogger("lumina-api")
 
 router = APIRouter()
 
 _THREAD_ROUTING_POLICY_PATH = _cfg._REPO_ROOT / "model-packs" / "business-ops" / "cfg" / "thread-routing-policy.yaml"
-_INSTITUTIONAL_INDEX_DIR = _cfg._REPO_ROOT / "data" / "retrieval-index" / "institutional-memory"
-
-
-@functools.lru_cache(maxsize=1)
-def _get_institutional_indexer() -> InstitutionalMemoryIndexer:
-    """Build the recap indexer lazily and reuse it across routed chat turns."""
-    return InstitutionalMemoryIndexer(VectorStore(_INSTITUTIONAL_INDEX_DIR), DocEmbedder())
-
-
 def _get_accessible_domain_ids(
     user: dict[str, Any],
     routing_map: dict[str, dict[str, Any]],
@@ -279,7 +267,7 @@ async def chat(
             await run_in_threadpool(
                 record_thread_recap,
                 persistence=_cfg.PERSISTENCE,
-                indexer=_get_institutional_indexer(),
+                indexer=get_institutional_indexer(),
                 policy=policy,
                 thread_id=req.thread_id,
                 actor_id=str(user["sub"]),

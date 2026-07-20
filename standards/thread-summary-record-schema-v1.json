@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://projectlumina.org/memory/thread-summary-record-schema-v1.json",
-  "schema_version": "1.0.0",
-  "last_updated": "2026-07-15",
+  "schema_version": "1.0.1",
+  "last_updated": "2026-07-20",
   "title": "Thread Summary Record Schema V1",
   "description": "A concise, pseudonymous summary of a scoped operational thread without raw transcript persistence.",
   "type": "object",
@@ -17,6 +17,7 @@
     "device_id": { "type": ["string", "null"], "minLength": 1 },
     "thread_id": { "type": "string", "minLength": 1 },
     "summary": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "domain_id": { "type": ["string", "null"] },
     "topics": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "status": { "type": "string", "enum": ["open", "resolved", "escalated", "archived"] },
     "created_utc": { "type": "string", "format": "date-time" },

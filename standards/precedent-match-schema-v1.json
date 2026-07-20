@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectlumina.org/standards/precedent-match-schema-v1.json",
+  "schema_version": "1.0.0",
+  "last_updated": "2026-07-20",
+  "title": "Precedent Match Schema",
+  "description": "Transcript-free, scope-bound institutional evidence selected for a decision precedent evaluation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_id", "organization_id", "site_id", "actor_id", "summary_record_id",
+    "thread_id", "similarity", "created_utc", "recency_band", "rank"
+  ],
+  "properties": {
+    "record_id": {"type": "string", "minLength": 1},
+    "organization_id": {"type": "string", "minLength": 1},
+    "site_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "summary_record_id": {"type": "string", "minLength": 1},
+    "thread_id": {"type": "string", "minLength": 1},
+    "similarity": {"type": "number", "minimum": 0, "maximum": 1},
+    "created_utc": {"type": "string", "format": "date-time"},
+    "recency_band": {"type": "string", "enum": ["current", "stale"]},
+    "rank": {"type": "integer", "minimum": 1}
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectlumina.org/standards/decision-precedent-policy-schema-v1.json",
+  "schema_version": "1.0.0",
+  "last_updated": "2026-07-20",
+  "title": "Decision Precedent Policy Schema",
+  "description": "Business Ops configuration for deterministic, scoped decision precedent evaluation.",
+  "type": "object",
+  "required": ["schema_version", "policy_version", "defaults", "organizations"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "policy_version": {"type": "integer", "minimum": 1},
+    "defaults": {"$ref": "#/$defs/policy"},
+    "organizations": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/override"
+      }
+    }
+  },
+  "$defs": {
+    "policy": {
+      "type": "object",
+      "required": [
+        "candidate_limit",
+        "suggest_threshold",
+        "confirmation_threshold",
+        "stale_after_days",
+        "stale_penalty",
+        "missing_precedent_penalty",
+        "high_risk_classes",
+        "confirmation_risk_classes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "candidate_limit": {"type": "integer", "minimum": 1},
+        "suggest_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "confirmation_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "stale_after_days": {"type": "integer", "minimum": 1},
+        "stale_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+        "missing_precedent_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+        "high_risk_classes": {"$ref": "#/$defs/riskClasses"},
+        "confirmation_risk_classes": {"$ref": "#/$defs/riskClasses"}
+      }
+    },
+    "override": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "candidate_limit": {"type": "integer", "minimum": 1},
+        "suggest_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "confirmation_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "stale_after_days": {"type": "integer", "minimum": 1},
+        "stale_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+        "missing_precedent_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+        "high_risk_classes": {"$ref": "#/$defs/riskClasses"},
+        "confirmation_risk_classes": {"$ref": "#/$defs/riskClasses"},
+        "sites": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/override"}
+        }
+      }
+    },
+    "riskClasses": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}
