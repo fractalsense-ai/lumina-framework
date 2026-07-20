@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectlumina.org/thread-routing-policy-schema-v1.json",
+  "schema_version": "1.0.0",
+  "last_updated": "2026-07-19",
+  "title": "Thread Routing Policy Schema V1",
+  "description": "Configurable Business Ops policy for deterministic, scoped thread routing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_version", "defaults"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "policy_version": { "type": "integer", "minimum": 1 },
+    "defaults": { "$ref": "#/$defs/default_policy" },
+    "organizations": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/organization_override" }
+    }
+  },
+  "$defs": {
+    "policy_fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attach_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "fork_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ambiguity_margin": { "type": "number", "minimum": 0, "maximum": 1 },
+        "recap_interval_turns": { "type": "integer", "minimum": 1 },
+        "candidate_limit": { "type": "integer", "minimum": 1 },
+        "manual_only": { "type": "boolean" },
+        "require_operator_confirmation_for": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["attach_existing", "create_new", "fork_from", "ambiguous_attach"]
+          }
+        }
+      }
+    },
+    "default_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/policy_fields" },
+        {
+          "required": [
+            "attach_threshold",
+            "fork_threshold",
+            "ambiguity_margin",
+            "recap_interval_turns",
+            "candidate_limit",
+            "manual_only",
+            "require_operator_confirmation_for"
+          ]
+        }
+      ]
+    },
+    "organization_override": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attach_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "fork_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ambiguity_margin": { "type": "number", "minimum": 0, "maximum": 1 },
+        "recap_interval_turns": { "type": "integer", "minimum": 1 },
+        "candidate_limit": { "type": "integer", "minimum": 1 },
+        "manual_only": { "type": "boolean" },
+        "require_operator_confirmation_for": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["attach_existing", "create_new", "fork_from", "ambiguous_attach"]
+          }
+        },
+        "sites": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/policy_fields" }
+        }
+      }
+    }
+  }
+}

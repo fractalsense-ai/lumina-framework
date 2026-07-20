@@ -1,0 +1,10 @@
+# version: 1.0.0
+# last_updated: 2026-07-19
+# Policy-only Business Ops foundation for Slice 28.
+#
+# This is intentionally not an activatable domain runtime configuration yet.
+# Slice 32 adds the full Business Ops pack, including adapters, profiles,
+# domain physics, modules, and role mappings.
+pack_id: business-ops
+policy_version: 1
+thread_routing_policy_path: model-packs/business-ops/cfg/thread-routing-policy.yaml

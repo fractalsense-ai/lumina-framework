@@ -133,6 +133,34 @@ def test_create_and_verify_jwt_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.unit
+def test_create_scoped_jwt_carries_one_active_operating_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(auth, "JWT_SECRET", "test-secret")
+    token = auth.create_scoped_jwt(
+        user_id="u-123",
+        role="user",
+        organization_id="org-1",
+        site_id="site-2",
+        device_id="device-3",
+        site_role="manager",
+    )
+
+    payload = auth.verify_scoped_jwt(token)
+    assert payload["organization_id"] == "org-1"
+    assert payload["site_id"] == "site-2"
+    assert payload["device_id"] == "device-3"
+    assert payload["site_role"] == "manager"
+
+
+@pytest.mark.unit
+def test_create_jwt_rejects_partial_operating_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(auth, "JWT_SECRET", "test-secret")
+    with pytest.raises(ValueError, match="supplied together"):
+        auth.create_jwt(user_id="u-123", role="user", organization_id="org-1")
+
+
+@pytest.mark.unit
 def test_create_jwt_rejects_invalid_role(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(auth, "JWT_SECRET", "test-secret")
     with pytest.raises(ValueError, match="Invalid role"):

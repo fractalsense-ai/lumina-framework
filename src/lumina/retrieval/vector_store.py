@@ -175,6 +175,7 @@ class VectorStore:
                 actor_id=r.get("actor_id"),
                 device_id=r.get("device_id"),
                 record_id=r.get("record_id"),
+                thread_id=r.get("thread_id"),
                 provider=r.get("provider"),
                 external_record_type=r.get("external_record_type"),
                 external_record_id=r.get("external_record_id"),

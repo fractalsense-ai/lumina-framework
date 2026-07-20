@@ -1,0 +1,22 @@
+FROM python:3.13-slim
+
+WORKDIR /workspace
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y bash git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --upgrade pip \
+    && python -m pip install --index-url https://download.pytorch.org/whl/cpu torch \
+    && python -m pip install \
+        fastapi uvicorn httpx python-multipart pyyaml \
+        openai anthropic \
+        'sqlalchemy[asyncio]' aiosqlite \
+        bcrypt argon2-cffi spacy sympy sentence-transformers caldav \
+        pytest pytest-cov jsonschema \
+    && python -m pip install --only-binary=:all: 'numpy>=1.26.0' \
+    && python -m spacy download en_core_web_sm

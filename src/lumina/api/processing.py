@@ -135,6 +135,9 @@ def _compute_transcript_seal(
             "turn_count": session.get("turn_count", 0),
             "last_activity_utc": time.time(),
         }
+        for _scope_key in ("organization_id", "site_id", "device_id"):
+            if user.get(_scope_key) is not None:
+                _seal_meta[_scope_key] = user[_scope_key]
         _seal = sign_transcript(
             _user_id, {"transcript": _transcript, "metadata": _seal_meta}
         )

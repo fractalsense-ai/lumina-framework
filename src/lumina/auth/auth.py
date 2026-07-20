@@ -274,6 +274,10 @@ def create_jwt(
     governed_modules: list[str] | None = None,
     domain_roles: dict[str, str] | None = None,
     ttl_minutes: int | None = None,
+    organization_id: str | None = None,
+    site_id: str | None = None,
+    device_id: str | None = None,
+    site_role: str | None = None,
 ) -> str:
     """Create a signed JWT with Lumina claims.
 
@@ -322,6 +326,13 @@ def create_jwt(
     }
     if domain_roles:
         payload["domain_roles"] = domain_roles
+    _add_operating_context_claims(
+        payload,
+        organization_id=organization_id,
+        site_id=site_id,
+        device_id=device_id,
+        site_role=site_role,
+    )
 
     h = _b64url_encode(json.dumps(header, separators=(",", ":")).encode("utf-8"))
     p = _b64url_encode(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
@@ -414,12 +425,43 @@ def _scope_for_role(role: str) -> str:
     return "user"
 
 
+def _add_operating_context_claims(
+    payload: dict[str, Any],
+    *,
+    organization_id: str | None,
+    site_id: str | None,
+    device_id: str | None,
+    site_role: str | None,
+) -> None:
+    """Add one active organization/site context without widening JWT scope."""
+    if bool(organization_id) != bool(site_id):
+        raise ValueError("organization_id and site_id must be supplied together")
+    if not organization_id:
+        return
+    if not organization_id.strip() or not site_id or not site_id.strip():
+        raise ValueError("operating context identifiers must be non-empty")
+    payload["organization_id"] = organization_id.strip()
+    payload["site_id"] = site_id.strip()
+    if device_id:
+        if not device_id.strip():
+            raise ValueError("device_id must be non-empty when supplied")
+        payload["device_id"] = device_id.strip()
+    if site_role:
+        if not site_role.strip():
+            raise ValueError("site_role must be non-empty when supplied")
+        payload["site_role"] = site_role.strip()
+
+
 def create_scoped_jwt(
     user_id: str,
     role: str,
     governed_modules: list[str] | None = None,
     domain_roles: dict[str, str] | None = None,
     ttl_minutes: int | None = None,
+    organization_id: str | None = None,
+    site_id: str | None = None,
+    device_id: str | None = None,
+    site_role: str | None = None,
 ) -> str:
     """Create a JWT with automatic scope based on the role.
 
@@ -465,6 +507,13 @@ def create_scoped_jwt(
     }
     if domain_roles:
         payload["domain_roles"] = domain_roles
+    _add_operating_context_claims(
+        payload,
+        organization_id=organization_id,
+        site_id=site_id,
+        device_id=device_id,
+        site_role=site_role,
+    )
 
     h = _b64url_encode(json.dumps(header, separators=(",", ":")).encode("utf-8"))
     p = _b64url_encode(json.dumps(payload, separators=(",", ":")).encode("utf-8"))

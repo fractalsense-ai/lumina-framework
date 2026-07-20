@@ -1,0 +1,20 @@
+# version: 1.0.0
+# last_updated: 2026-07-19
+schema_version: 1.0.0
+policy_version: 1
+
+# Business Ops defaults. Organizations and sites may only tune these operating
+# values; System Pack scope, audit, and authority controls remain mandatory.
+defaults:
+  attach_threshold: 0.86
+  fork_threshold: 0.62
+  ambiguity_margin: 0.04
+  recap_interval_turns: 12
+  candidate_limit: 5
+  manual_only: false
+  require_operator_confirmation_for:
+    - fork_from
+    - ambiguous_attach
+
+# Configuration precedence is site, organization, then these defaults.
+organizations: {}

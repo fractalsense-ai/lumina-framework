@@ -53,7 +53,7 @@ under `docs/roadmap/slices/` and delivered as a focused PR.
 | [25](slices/25-b2b-workstream-boundary-and-task-graph.md) | B2B Workstream Boundary and Global Task Graph | Planned |
 | [26](slices/26-tenant-site-actor-memory-contracts.md) | Tenant/Site/Actor Memory Contracts | Delivered |
 | [27](slices/27-institutional-vector-memory-layer.md) | Institutional Vector Memory Layer | Delivered |
-| [28](slices/28-semantic-thread-routing-and-forking.md) | Semantic Thread Routing and Context Forking | Planned |
+| [28](slices/28-semantic-thread-routing-and-forking.md) | Semantic Thread Routing and Context Forking | Delivered |
 | [29](slices/29-decision-precedent-confidence-and-escalation.md) | Decision Precedent, Confidence, and Escalation | Planned |
 | [30](slices/30-erpnext-adapter-foundation-and-fixtures.md) | Canonical Business-System Contracts and Capability Taxonomy | Planned |
 | [31](slices/31-business-ops-pack-bootstrap.md) | Connector Registry and Capability Routing | Planned |

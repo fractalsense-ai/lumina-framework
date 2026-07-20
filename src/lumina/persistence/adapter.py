@@ -108,6 +108,14 @@ class SystemPersistence(ABC):
         Duplicate additions are ignored (idempotent).
         """
 
+    @abstractmethod
+    def update_user_operating_memberships(
+        self,
+        user_id: str,
+        memberships: list[dict[str, Any]],
+    ) -> dict[str, Any] | None:
+        """Replace validated organization/site memberships for an existing user."""
+
     # ── User-level consent persistence ────────────────────────
 
     @abstractmethod
@@ -526,6 +534,15 @@ class NullPersistenceAdapter(PersistenceAdapter):
             if m in modules:
                 modules.remove(m)
         self._users[user_id]["governed_modules"] = modules
+        return {k: v for k, v in self._users[user_id].items() if k != "password_hash"}
+
+    def update_user_operating_memberships(
+        self, user_id: str, memberships: list[dict[str, Any]]
+    ) -> dict[str, Any] | None:
+        self.__init_users()
+        if user_id not in self._users:
+            return None
+        self._users[user_id]["operating_memberships"] = memberships
         return {k: v for k, v in self._users[user_id].items() if k != "password_hash"}
 
     def set_user_invite_token(self, user_id: str, token: str, expires_at: float) -> bool:

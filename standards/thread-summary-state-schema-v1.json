@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectlumina.org/thread-summary-state-schema-v1.json",
+  "schema_version": "1.0.0",
+  "last_updated": "2026-07-19",
+  "title": "Thread Summary State Schema V1",
+  "description": "Transcript-free runtime continuity state for one scoped operational thread.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "thread_id",
+    "organization_id",
+    "site_id",
+    "actor_id",
+    "status",
+    "summary_record_id",
+    "recap_version",
+    "turn_start",
+    "turn_end",
+    "updated_utc"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "thread_id": { "type": "string", "minLength": 1 },
+    "organization_id": { "type": "string", "minLength": 1 },
+    "site_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "device_id": { "type": ["string", "null"], "minLength": 1 },
+    "status": { "type": "string", "enum": ["open", "resolved", "escalated", "archived"] },
+    "summary_record_id": { "type": "string", "minLength": 1 },
+    "latest_routing_decision_id": { "type": ["string", "null"], "minLength": 1 },
+    "recap_version": { "type": "integer", "minimum": 1 },
+    "turn_start": { "type": "integer", "minimum": 1 },
+    "turn_end": { "type": "integer", "minimum": 1 },
+    "topics": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "updated_utc": { "type": "string", "format": "date-time" }
+  }
+}

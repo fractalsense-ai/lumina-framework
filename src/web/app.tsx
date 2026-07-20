@@ -50,6 +50,20 @@ type ApiChatResponse = {
   transcript_snapshot?: TranscriptTurn[]
 }
 
+type ThreadRoutingPreflight = {
+  decision_id: string
+  decision: 'attach_existing' | 'create_new' | 'fork_from'
+  thread_id: string
+  operator_confirmation_required: boolean
+  candidates: Array<{ thread_id: string }>
+}
+
+type ThreadRoutingConfirmation = {
+  thread_id: string
+  session_id: string
+  decision: 'attach_existing' | 'create_new' | 'fork_from'
+}
+
 interface UiManifest {
   title: string
   subtitle: string
@@ -169,6 +183,7 @@ async function loadDomainPlugin(domainKey: string): Promise<void> {
 async function orchestratorApiCall(
   userText: string,
   sessionId: string | null,
+  threadId: string | null,
   auth: AuthState | null,
 ): Promise<ApiChatResponse> {
   const headers: Record<string, string> = {
@@ -182,6 +197,7 @@ async function orchestratorApiCall(
     headers,
     body: JSON.stringify({
       session_id: sessionId,
+      thread_id: threadId,
       message: userText,
     }),
   })
@@ -192,6 +208,35 @@ async function orchestratorApiCall(
   }
 
   return (await res.json()) as ApiChatResponse
+}
+
+function jwtHasOperatingContext(token: string): boolean {
+  try {
+    const encodedPayload = token.split('.')[1]
+    if (!encodedPayload) return false
+    const base64Payload = encodedPayload.replace(/-/g, '+').replace(/_/g, '/')
+    const paddedPayload = base64Payload.padEnd(base64Payload.length + ((4 - base64Payload.length % 4) % 4), '=')
+    const payload = JSON.parse(atob(paddedPayload))
+    return typeof payload.organization_id === 'string' && typeof payload.site_id === 'string'
+  } catch {
+    return false
+  }
+}
+
+async function threadRoutingCall<T>(
+  path: string,
+  body: Record<string, unknown>,
+  auth: AuthState,
+): Promise<T> {
+  const res = await fetch(`${getApiBase()}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    throw new Error(`${res.status}:${await res.text()}`)
+  }
+  return (await res.json()) as T
 }
 
 type AdminCommandResponse = {
@@ -704,6 +749,10 @@ function ChatInterface({
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [sessionPanelOpen, setSessionPanelOpen] = useState(true)
   const [sessionRefreshKey, setSessionRefreshKey] = useState(0)
+  const [pendingRouting, setPendingRouting] = useState<{
+    message: string
+    decision: ThreadRoutingPreflight
+  } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // ── Client-side transcript persistence ───────────────────
@@ -714,6 +763,7 @@ function ChatInterface({
   const turnCounterRef = useRef<number>(0)
   const sessionLabelRef = useRef<string>('')
   const activeModuleIdRef = useRef<string>('')
+  const threadIdRef = useRef<string | null>(null)
 
   // ── Session management helpers ───────────────────────────
   const resetChatState = () => {
@@ -726,6 +776,8 @@ function ChatInterface({
     turnCounterRef.current = 0
     sessionLabelRef.current = ''
     activeModuleIdRef.current = ''
+    threadIdRef.current = null
+    setPendingRouting(null)
   }
 
   const saveCurrentSession = async () => {
@@ -733,6 +785,7 @@ function ChatInterface({
     if (sessionId && sealRef.current && transcriptRef.current.length > 0 && meta) {
       await transcriptStoreRef.current.saveSession({
         sessionId,
+        threadId: threadIdRef.current ?? undefined,
         messages: transcriptRef.current,
         seal: sealRef.current,
         metadata: meta,
@@ -849,6 +902,7 @@ function ChatInterface({
           turnCounterRef.current = stored.messages.length
           sessionLabelRef.current = stored.label ?? ''
           activeModuleIdRef.current = stored.moduleId ?? ''
+          threadIdRef.current = stored.threadId ?? null
         } else {
           // Server rejected the seal — wipe stale local data
           await store.deleteSession(sessionId)
@@ -877,6 +931,7 @@ function ChatInterface({
       if (sessionId && sealRef.current && transcriptRef.current.length > 0 && meta) {
         transcriptStoreRef.current.saveSession({
           sessionId,
+          threadId: threadIdRef.current ?? undefined,
           messages: transcriptRef.current,
           seal: sealRef.current,
           metadata: meta,
@@ -1000,7 +1055,30 @@ function ChatInterface({
       }
 
       // ── Normal chat flow ────────────────────────────────
-      const apiResponse = await orchestratorApiCall(trimmedInput, sessionId, auth)
+      let activeThreadId = threadIdRef.current
+      let activeSessionId = sessionId
+      if (!activeThreadId && jwtHasOperatingContext(auth.token)) {
+        const preflight = await threadRoutingCall<ThreadRoutingPreflight>(
+          '/api/thread-routing/preflight',
+          { message: trimmedInput, session_id: sessionId },
+          auth,
+        )
+        if (preflight.operator_confirmation_required) {
+          setPendingRouting({ message: trimmedInput, decision: preflight })
+          setIsLoading(false)
+          return
+        }
+        const confirmation = await threadRoutingCall<ThreadRoutingConfirmation>(
+          `/api/thread-routing/${preflight.decision_id}/confirm`,
+          { action: 'accept' },
+          auth,
+        )
+        activeThreadId = confirmation.thread_id
+        activeSessionId = confirmation.session_id
+        threadIdRef.current = activeThreadId
+        setSessionId(activeSessionId)
+      }
+      const apiResponse = await orchestratorApiCall(trimmedInput, activeSessionId, activeThreadId, auth)
 
       const assistantMessage: Message = {
         role: 'assistant',
@@ -1049,9 +1127,10 @@ function ChatInterface({
           }
           transcriptRef.current = [...transcriptRef.current, turn]
         }
-        if (sessionId) {
+        if (activeSessionId) {
           transcriptStoreRef.current.saveSession({
-            sessionId,
+            sessionId: activeSessionId,
+            threadId: activeThreadId ?? undefined,
             messages: transcriptRef.current,
             seal: sealRef.current,
             metadata: apiResponse.transcript_seal_metadata!,
@@ -1072,6 +1151,63 @@ function ChatInterface({
         id: `error-${Date.now()}`,
       }
       setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const confirmPendingRouting = async (action: 'accept' | 'attach_existing' | 'create_new' | 'fork_from') => {
+    if (!pendingRouting || isLoading) return
+    setIsLoading(true)
+    try {
+      const confirmation = await threadRoutingCall<ThreadRoutingConfirmation>(
+        `/api/thread-routing/${pendingRouting.decision.decision_id}/confirm`,
+        { action },
+        auth,
+      )
+      threadIdRef.current = confirmation.thread_id
+      setSessionId(confirmation.session_id)
+      setPendingRouting(null)
+      const apiResponse = await orchestratorApiCall(
+        pendingRouting.message,
+        confirmation.session_id,
+        confirmation.thread_id,
+        auth,
+      )
+      setMessages((prev) => [...prev, {
+        role: 'assistant', content: apiResponse.response, id: `assistant-${Date.now()}`,
+        meta: { action: apiResponse.action, promptType: apiResponse.prompt_type, escalated: apiResponse.escalated },
+        structured_content: apiResponse.structured_content as ActionCardData | undefined,
+      }])
+      if (apiResponse.transcript_seal && apiResponse.transcript_seal_metadata) {
+        sealRef.current = apiResponse.transcript_seal
+        sealMetadataRef.current = apiResponse.transcript_seal_metadata
+        turnCounterRef.current += 1
+        transcriptRef.current = Array.isArray(apiResponse.transcript_snapshot)
+          ? apiResponse.transcript_snapshot as TranscriptTurn[]
+          : [...transcriptRef.current, {
+              turn: turnCounterRef.current,
+              user: pendingRouting.message,
+              assistant: apiResponse.response,
+              ts: Date.now() / 1000,
+              domain_id: apiResponse.transcript_seal_metadata.domain_id,
+            }]
+        await transcriptStoreRef.current.saveSession({
+          sessionId: confirmation.session_id,
+          threadId: confirmation.thread_id,
+          messages: transcriptRef.current,
+          seal: sealRef.current,
+          metadata: apiResponse.transcript_seal_metadata,
+          updatedAt: Date.now(),
+          label: sessionLabelRef.current || undefined,
+          moduleId: activeModuleIdRef.current || undefined,
+        })
+        setSessionRefreshKey((value) => value + 1)
+      }
+    } catch {
+      setMessages((prev) => [...prev, {
+        role: 'assistant', content: 'Routing confirmation could not be applied.', id: `error-${Date.now()}`,
+      }])
     } finally {
       setIsLoading(false)
     }
@@ -1178,6 +1314,16 @@ function ChatInterface({
           </ScrollArea>
 
           <div className="border-t border-border bg-card px-6 py-4">
+            {pendingRouting && (
+              <div className="max-w-3xl mx-auto mb-3 flex items-center gap-2 border border-border bg-muted px-3 py-2 text-sm">
+                <span className="flex-1">Choose where to continue this conversation.</span>
+                {pendingRouting.decision.candidates.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => confirmPendingRouting('attach_existing')}>Attach</Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => confirmPendingRouting('create_new')}>New</Button>
+                <Button variant="outline" size="sm" onClick={() => confirmPendingRouting('fork_from')}>Fork</Button>
+              </div>
+            )}
             {sessionFrozen && (
               <div className="max-w-3xl mx-auto mb-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 px-4 py-2 text-sm text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
                 <Warning size={16} weight="bold" />
@@ -1207,14 +1353,14 @@ function ChatInterface({
                 }}
                 onKeyDown={handleKeyPress}
                 placeholder={sessionFrozen ? '6-digit PIN' : (manifest.input_placeholder ?? manifest.placeholder_text)}
-                disabled={isLoading}
+                disabled={isLoading || pendingRouting !== null}
                 className="flex-1 text-base"
                 inputMode={sessionFrozen ? 'numeric' : undefined}
                 pattern={sessionFrozen ? '\\d{6}' : undefined}
               />
               <Button
                 onClick={handleSend}
-                disabled={!inputValue.trim() || isLoading}
+                disabled={!inputValue.trim() || isLoading || pendingRouting !== null}
                 size="icon"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 w-10"
               >

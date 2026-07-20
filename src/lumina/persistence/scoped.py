@@ -26,6 +26,7 @@ _BLOCKED_SYSTEM_METHODS: frozenset[str] = frozenset({
     "activate_user",
     "deactivate_user",
     "update_user_password",
+    "update_user_operating_memberships",
     "set_user_invite_token",
     "clear_user_invite_token",
     "list_users",

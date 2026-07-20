@@ -69,6 +69,7 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
             role = Column(String(64), nullable=False)
             governed_modules_json = Column(Text, nullable=False, server_default="[]")
             domain_roles_json = Column(Text, nullable=False, server_default="{}")
+            operating_memberships_json = Column(Text, nullable=False, server_default="[]")
             active = Column(Boolean, nullable=False, server_default="1")
             invite_token = Column(String(128), nullable=True)
             invite_token_expires_at = Column(Text, nullable=True)
@@ -136,6 +137,7 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
             for _col_ddl in (
                 "ALTER TABLE users ADD COLUMN invite_token TEXT",
                 "ALTER TABLE users ADD COLUMN invite_token_expires_at TEXT",
+                "ALTER TABLE users ADD COLUMN operating_memberships_json TEXT NOT NULL DEFAULT '[]'",
             ):
                 try:
                     await conn.execute(text(_col_ddl))
@@ -486,6 +488,7 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
             "role": row.role,
             "governed_modules": json.loads(row.governed_modules_json),
             "domain_roles": json.loads(row.domain_roles_json or "{}"),
+            "operating_memberships": json.loads(row.operating_memberships_json or "[]"),
             "active": bool(row.active),
         }
 
@@ -518,6 +521,7 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
             password_hash=password_hash,
             role=role,
             governed_modules_json=modules_json,
+            operating_memberships_json="[]",
             active=True,
         )
         async with self._engine.begin() as conn:
@@ -527,6 +531,7 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
             "username": username,
             "role": role,
             "governed_modules": governed_modules or [],
+            "operating_memberships": [],
             "active": True,
         }
 
@@ -697,6 +702,26 @@ class SQLitePersistenceAdapter(PersistenceAdapter):
                 .where(self._User.user_id == user_id)
                 .values(governed_modules_json=json.dumps(current, ensure_ascii=False))
             )
+        return await self._get_user_async(user_id)
+
+    def update_user_operating_memberships(
+        self, user_id: str, memberships: list[dict[str, Any]]
+    ) -> dict[str, Any] | None:
+        return asyncio.run(self._update_user_operating_memberships_async(user_id, memberships))
+
+    async def _update_user_operating_memberships_async(
+        self, user_id: str, memberships: list[dict[str, Any]]
+    ) -> dict[str, Any] | None:
+        from sqlalchemy import update
+
+        async with self._engine.begin() as conn:
+            result = await conn.execute(
+                update(self._User)
+                .where(self._User.user_id == user_id)
+                .values(operating_memberships_json=json.dumps(memberships, ensure_ascii=False))
+            )
+        if result.rowcount == 0:
+            return None
         return await self._get_user_async(user_id)
 
     def set_user_invite_token(self, user_id: str, token: str, expires_at: float) -> bool:
