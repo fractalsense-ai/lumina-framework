@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from lumina.core.policy_validation import validate_policy_header
 from lumina.core.yaml_loader import load_yaml
 
 _POLICY_FIELDS = frozenset({
@@ -127,13 +128,7 @@ def resolve_decision_precedent_policy(
     """Resolve site, organization, then default policy for authenticated scope."""
     organization_id = _require_scope(organization_id, "organization_id")
     site_id = _require_scope(site_id, "site_id")
-    allowed_top_level = {"schema_version", "policy_version", "defaults", "organizations"}
-    unknown = set(config) - allowed_top_level
-    if unknown:
-        names = ", ".join(sorted(unknown))
-        raise ValueError(f"decision precedent policy has unknown top-level fields: {names}")
-    if config.get("schema_version") != "1.0.0":
-        raise ValueError("unsupported decision precedent policy schema_version")
+    config = validate_policy_header(config, policy_name="decision precedent")
     defaults = _as_mapping(config.get("defaults"), "defaults")
     resolved = _merge_policy({}, defaults, "defaults")
     organizations = _as_mapping(config.get("organizations", {}), "organizations")

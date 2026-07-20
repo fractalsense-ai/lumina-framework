@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from lumina.core.policy_validation import validate_policy_header
 from lumina.core.yaml_loader import load_yaml
 
 _POLICY_FIELDS = frozenset({
@@ -128,12 +129,7 @@ def resolve_thread_routing_policy(
     """Resolve site, organization, then default policy for authenticated scope."""
     organization_id = _require_scope(organization_id, "organization_id")
     site_id = _require_scope(site_id, "site_id")
-    unknown = set(config) - {"schema_version", "policy_version", "defaults", "organizations"}
-    if unknown:
-        names = ", ".join(sorted(unknown))
-        raise ValueError(f"thread routing policy has unknown top-level fields: {names}")
-    if config.get("schema_version") != "1.0.0":
-        raise ValueError("unsupported thread routing policy schema_version")
+    config = validate_policy_header(config, policy_name="thread routing")
     policy_version = config.get("policy_version")
     defaults = _as_mapping(config.get("defaults"), "defaults")
     resolved = _merge_policy({}, defaults, "defaults")

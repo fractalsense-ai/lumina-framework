@@ -110,6 +110,15 @@ def test_policy_rejects_unknown_override_fields() -> None:
 
 
 @pytest.mark.unit
+def test_policy_rejects_unknown_top_level_fields() -> None:
+    config = _config()
+    config["skip_audit"] = True
+
+    with pytest.raises(ValueError, match="unknown top-level"):
+        resolve_decision_precedent_policy(config, organization_id="org-a", site_id="site-a")
+
+
+@pytest.mark.unit
 def test_policy_file_loads_through_core_yaml_loader() -> None:
     policy = load_decision_precedent_policy(POLICY_PATH, organization_id="org-a", site_id="site-a")
 

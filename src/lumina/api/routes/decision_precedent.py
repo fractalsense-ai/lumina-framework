@@ -1,37 +1,34 @@
 """Authenticated, scope-safe decision-precedent preflight API."""
 from __future__ import annotations
 
-import functools
 import time
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials
 from starlette.concurrency import run_in_threadpool
 
 from lumina.api import config as _cfg
-from lumina.api.middleware import _bearer_scheme, get_current_user, require_auth
+from lumina.api.dependencies import (
+    get_active_operating_context,
+    get_authenticated_user,
+    get_institutional_indexer,
+)
 from lumina.api.models import (
     DecisionPrecedentConfirmationResponse,
     DecisionPrecedentPreflightRequest,
     DecisionPrecedentPreflightResponse,
 )
-from lumina.auth.operating_context import operating_context_from_claims
 from lumina.decision_precedent.policy import load_decision_precedent_policy
 from lumina.decision_precedent.scorer import DecisionConfidenceScore
 from lumina.decision_precedent.service import evaluate_decision_precedent
-from lumina.retrieval.embedder import DocEmbedder
-from lumina.retrieval.institutional import InstitutionalMemoryIndexer
-from lumina.retrieval.vector_store import VectorStore
 from lumina.system_log.admin_operations import build_trace_event
 from lumina.system_log.commit_guard import requires_log_commit
 
 router = APIRouter()
 
 _POLICY_PATH = _cfg._REPO_ROOT / "model-packs" / "business-ops" / "cfg" / "decision-precedent-policy.yaml"
-_DEFAULT_INDEX_DIR = _cfg._REPO_ROOT / "data" / "retrieval-index" / "institutional-memory"
 _PENDING_CONFIRMATION_TTL_SECONDS = 300
 _ESCALATION_TARGET_ROLE = "business-ops:owner-manager"
 
@@ -47,12 +44,6 @@ _pending_confirmations: dict[str, _PendingConfirmation] = {}
 _consumed_confirmation_ids: dict[str, float] = {}
 
 
-@functools.lru_cache(maxsize=1)
-def _get_institutional_indexer() -> InstitutionalMemoryIndexer:
-    """Build the local institutional index provider lazily on first preflight."""
-    return InstitutionalMemoryIndexer(VectorStore(_DEFAULT_INDEX_DIR), DocEmbedder())
-
-
 def _prune_expired_confirmations(now: float | None = None) -> None:
     """Bound in-memory confirmation state to its fixed replay-protection TTL."""
     current = time.monotonic() if now is None else now
@@ -62,16 +53,6 @@ def _prune_expired_confirmations(now: float | None = None) -> None:
     for record_id, expires_at in list(_consumed_confirmation_ids.items()):
         if expires_at <= current:
             del _consumed_confirmation_ids[record_id]
-
-
-def _active_context(user: dict[str, object]) -> dict[str, str | None]:
-    try:
-        context = operating_context_from_claims(user)
-    except ValueError as exc:
-        raise HTTPException(status_code=403, detail="Invalid active operating context") from exc
-    if context is None:
-        raise HTTPException(status_code=403, detail="An active organization and site context is required")
-    return context
 
 
 def _escalation_session_id(session_id: str | None, confidence_record_id: str) -> str:
@@ -133,11 +114,10 @@ def _build_escalation_record(
 @requires_log_commit
 async def preflight(
     req: DecisionPrecedentPreflightRequest,
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    user: dict[str, object] = Depends(get_authenticated_user),
+    context: dict[str, str | None] = Depends(get_active_operating_context),
 ) -> DecisionPrecedentPreflightResponse:
     """Evaluate scoped precedent and create audit evidence without executing work."""
-    user = require_auth(await get_current_user(credentials))
-    context = _active_context(user)
     try:
         policy = load_decision_precedent_policy(
             _POLICY_PATH,
@@ -147,7 +127,7 @@ async def preflight(
         score = await run_in_threadpool(
             evaluate_decision_precedent,
             req.message,
-            indexer=_get_institutional_indexer(),
+            indexer=get_institutional_indexer(),
             policy=policy,
             actor_id=str(user["sub"]),
             risk_class=req.risk_class,
@@ -209,11 +189,10 @@ async def preflight(
 @requires_log_commit
 async def confirm(
     confidence_record_id: str,
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    user: dict[str, object] = Depends(get_authenticated_user),
+    context: dict[str, str | None] = Depends(get_active_operating_context),
 ) -> DecisionPrecedentConfirmationResponse:
     """Record explicit confirmation intent; this endpoint cannot execute a business action."""
-    user = require_auth(await get_current_user(credentials))
-    context = _active_context(user)
     _prune_expired_confirmations()
     if confidence_record_id in _consumed_confirmation_ids:
         raise HTTPException(status_code=409, detail="Decision precedent confirmation has already been applied")

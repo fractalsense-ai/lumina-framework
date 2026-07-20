@@ -69,7 +69,7 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     indexer = InstitutionalMemoryIndexer(VectorStore(tmp_path / "memory"), _FakeEmbedder())
     indexer.ingest([_summary("same-site"), _summary("other-site", site_id="site-2")])
     import lumina.api.routes.decision_precedent as route_module
-    monkeypatch.setattr(route_module, "_get_institutional_indexer", lambda: indexer)
+    monkeypatch.setattr(route_module, "get_institutional_indexer", lambda: indexer)
     route_module._pending_confirmations.clear()
     route_module._consumed_confirmation_ids.clear()
     return TestClient(module.app), persistence

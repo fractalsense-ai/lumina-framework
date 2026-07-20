@@ -1,17 +1,19 @@
 """Authenticated, scope-safe thread-routing preflight API."""
 from __future__ import annotations
 
-import functools
 import time
 import uuid
 from dataclasses import dataclass, replace
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials
 from starlette.concurrency import run_in_threadpool
 
 from lumina.api import config as _cfg
-from lumina.api.middleware import _bearer_scheme, get_current_user, require_auth
+from lumina.api.dependencies import (
+    get_active_operating_context,
+    get_authenticated_user,
+    get_institutional_indexer,
+)
 from lumina.api.models import (
     ThreadRoutingCandidateResponse,
     ThreadRoutingConfirmationRequest,
@@ -19,10 +21,6 @@ from lumina.api.models import (
     ThreadRoutingPreflightRequest,
     ThreadRoutingPreflightResponse,
 )
-from lumina.auth.operating_context import operating_context_from_claims
-from lumina.retrieval.embedder import DocEmbedder
-from lumina.retrieval.institutional import InstitutionalMemoryIndexer
-from lumina.retrieval.vector_store import VectorStore
 from lumina.system_log.commit_guard import requires_log_commit
 from lumina.system_log.admin_operations import build_trace_event
 from lumina.thread_routing.policy import load_thread_routing_policy
@@ -36,7 +34,6 @@ from lumina.thread_routing.bindings import (
 router = APIRouter()
 
 _POLICY_PATH = _cfg._REPO_ROOT / "model-packs" / "business-ops" / "cfg" / "thread-routing-policy.yaml"
-_DEFAULT_INDEX_DIR = _cfg._REPO_ROOT / "data" / "retrieval-index" / "institutional-memory"
 _PENDING_DECISION_TTL_SECONDS = 300
 
 
@@ -50,12 +47,6 @@ class _PendingDecision:
 
 _pending_decisions: dict[str, _PendingDecision] = {}
 _consumed_decision_ids: dict[str, float] = {}
-
-
-@functools.lru_cache(maxsize=1)
-def _get_institutional_indexer() -> InstitutionalMemoryIndexer:
-    """Build the local institutional index provider lazily on first preflight."""
-    return InstitutionalMemoryIndexer(VectorStore(_DEFAULT_INDEX_DIR), DocEmbedder())
 
 
 def _prune_expired_decisions(now: float | None = None) -> None:
@@ -93,16 +84,6 @@ def _response_from_record(record: dict[str, object]) -> ThreadRoutingPreflightRe
         operator_override=bool(record["operator_override"]),
         candidates=candidates,
     )
-
-
-def _active_context(user: dict[str, object]) -> dict[str, str | None]:
-    try:
-        context = operating_context_from_claims(user)
-    except ValueError as exc:
-        raise HTTPException(status_code=403, detail="Invalid active operating context") from exc
-    if context is None:
-        raise HTTPException(status_code=403, detail="An active organization and site context is required")
-    return context
 
 
 def _resolve_confirmation(
@@ -158,12 +139,10 @@ def _resolve_confirmation(
 @requires_log_commit
 async def preflight(
     req: ThreadRoutingPreflightRequest,
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    user: dict[str, object] = Depends(get_authenticated_user),
+    context: dict[str, str | None] = Depends(get_active_operating_context),
 ) -> ThreadRoutingPreflightResponse:
     """Return an auditable attach/new/fork recommendation without mutating a session."""
-    user = require_auth(await get_current_user(credentials))
-    context = _active_context(user)
-
     try:
         policy = load_thread_routing_policy(
             _POLICY_PATH,
@@ -173,7 +152,7 @@ async def preflight(
         preflight_result = await run_in_threadpool(
             preflight_thread_route,
             req.message,
-            indexer=_get_institutional_indexer(),
+            indexer=get_institutional_indexer(),
             policy=policy,
             actor_id=str(user["sub"]),
             active_thread_id=req.active_thread_id,
@@ -207,11 +186,10 @@ async def preflight(
 async def confirm(
     decision_id: str,
     req: ThreadRoutingConfirmationRequest,
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    user: dict[str, object] = Depends(get_authenticated_user),
+    context: dict[str, str | None] = Depends(get_active_operating_context),
 ) -> ThreadRoutingConfirmationResponse:
     """Confirm or override a preflight decision as auditable routing intent."""
-    user = require_auth(await get_current_user(credentials))
-    context = _active_context(user)
     current_time = time.monotonic()
     for consumed_id, expires_at in list(_consumed_decision_ids.items()):
         if expires_at <= current_time:
