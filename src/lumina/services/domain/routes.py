@@ -253,6 +253,9 @@ async def session_handoff(
         "turn_count": turn_count,
         "last_activity_utc": container.last_activity,
     }
+    for scope_key in ("organization_id", "site_id", "device_id"):
+        if user_data.get(scope_key) is not None:
+            metadata[scope_key] = user_data[scope_key]
 
     seal_payload = {"transcript": transcript, "metadata": metadata}
     seal = sign_transcript(user_id, seal_payload)
@@ -279,6 +282,14 @@ async def session_resume(
     user_data = require_auth(current)
 
     user_id: str = user_data["sub"]
+
+    from lumina.auth.operating_context import contexts_match
+
+    try:
+        if not contexts_match(req.metadata, user_data):
+            raise HTTPException(status_code=403, detail="Transcript operating context does not match active context")
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail="Transcript operating context is invalid") from exc
 
     # Verify HMAC seal
     seal_payload = {"transcript": req.transcript, "metadata": req.metadata}

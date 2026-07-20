@@ -1,0 +1,56 @@
+name: lumina-ci
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    image: lumina-ci-backend:local
+    working_dir: /workspace
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: volume
+        source: backend-pytest-cache
+        target: /workspace/.pytest_cache
+    command: >
+      bash -lc "python -m pip install -e '.[providers,sqlite,passwords,nlp,math,retrieval,calendar,dev]'
+      && tr -d '\015' < scripts/check-local-secret-hygiene.sh | bash && python -m pytest tests -q
+      --cov=lumina --cov-report=term-missing --cov-fail-under=85"
+
+  frontend-unit:
+    image: node:20-bookworm
+    working_dir: /workspace/src/web
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: volume
+        source: frontend-unit-node-modules
+        target: /workspace/src/web/node_modules
+      - type: volume
+        source: npm-cache
+        target: /root/.npm
+    command: bash -lc "npm ci && npm run test:unit"
+
+  frontend-e2e:
+    image: mcr.microsoft.com/playwright:v1.58.2-noble
+    working_dir: /workspace/src/web
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: volume
+        source: frontend-e2e-node-modules
+        target: /workspace/src/web/node_modules
+      - type: volume
+        source: npm-cache
+        target: /root/.npm
+    command: bash -lc "npm ci && npm run test:e2e"
+
+volumes:
+  backend-pytest-cache:
+  frontend-unit-node-modules:
+  frontend-e2e-node-modules:
+  npm-cache:

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectlumina.org/thread-routing-decision-schema-v1.json",
+  "schema_version": "1.0.0",
+  "last_updated": "2026-07-19",
+  "title": "Thread Routing Decision Schema V1",
+  "description": "Auditable, transcript-free routing evidence for one scoped user turn.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "organization_id",
+    "site_id",
+    "actor_id",
+    "decision",
+    "thread_id",
+    "policy_version",
+    "confidence",
+    "rationale_code",
+    "operator_confirmation_required",
+    "operator_override",
+    "candidates",
+    "created_utc"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "decision_id": { "type": "string", "minLength": 1 },
+    "organization_id": { "type": "string", "minLength": 1 },
+    "site_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "device_id": { "type": ["string", "null"], "minLength": 1 },
+    "decision": { "type": "string", "enum": ["attach_existing", "create_new", "fork_from"] },
+    "thread_id": { "type": "string", "minLength": 1 },
+    "source_thread_id": { "type": ["string", "null"], "minLength": 1 },
+    "policy_version": { "type": "integer", "minimum": 1 },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "rationale_code": {
+      "type": "string",
+      "enum": ["high_confidence_match", "no_eligible_match", "topic_drift", "ambiguous_attach", "manual_policy", "operator_override"]
+    },
+    "operator_confirmation_required": { "type": "boolean" },
+    "operator_override": { "type": "boolean" },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["thread_id", "summary_record_id", "score", "rank"],
+        "properties": {
+          "thread_id": { "type": "string", "minLength": 1 },
+          "summary_record_id": { "type": "string", "minLength": 1 },
+          "score": { "type": "number", "minimum": 0, "maximum": 1 },
+          "rank": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "created_utc": { "type": "string", "format": "date-time" }
+  }
+}

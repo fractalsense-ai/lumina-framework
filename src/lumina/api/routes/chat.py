@@ -15,13 +15,27 @@ from lumina.api import config as _cfg
 from lumina.api.middleware import _bearer_scheme, get_current_user
 from lumina.api.models import ChatRequest, ChatResponse
 from lumina.api.processing import process_message
+from lumina.api.session import _session_containers
 from lumina.core.domain_registry import DomainNotFoundError
 from lumina.core.permissions import Operation, check_permission
 from lumina.system_log.commit_guard import requires_log_commit
+from lumina.thread_routing.bindings import load_thread_session_binding
+from lumina.thread_routing.policy import load_thread_routing_policy
+from lumina.thread_routing.summaries import record_thread_recap
+from lumina.retrieval.embedder import DocEmbedder
+from lumina.retrieval.institutional import InstitutionalMemoryIndexer
+from lumina.retrieval.vector_store import VectorStore
 
 log = logging.getLogger("lumina-api")
 
 router = APIRouter()
+
+_THREAD_ROUTING_POLICY_PATH = _cfg._REPO_ROOT / "model-packs" / "business-ops" / "cfg" / "thread-routing-policy.yaml"
+_INSTITUTIONAL_INDEX_DIR = _cfg._REPO_ROOT / "data" / "retrieval-index" / "institutional-memory"
+
+
+def _get_institutional_indexer() -> InstitutionalMemoryIndexer:
+    return InstitutionalMemoryIndexer(VectorStore(_INSTITUTIONAL_INDEX_DIR), DocEmbedder())
 
 
 def _get_accessible_domain_ids(
@@ -67,12 +81,33 @@ async def chat(
     req: ChatRequest,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> ChatResponse:
-    session_id = req.session_id or str(uuid.uuid4())
-
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     user = await get_current_user(credentials)
+    if req.thread_id is not None:
+        if user is None:
+            raise HTTPException(status_code=401, detail="Thread routing requires authentication")
+        organization_id = user.get("organization_id")
+        site_id = user.get("site_id")
+        if not isinstance(organization_id, str) or not organization_id or not isinstance(site_id, str) or not site_id:
+            raise HTTPException(status_code=403, detail="Thread routing requires an active organization and site context")
+        binding = await run_in_threadpool(
+            load_thread_session_binding,
+            _cfg.PERSISTENCE,
+            thread_id=req.thread_id,
+            organization_id=organization_id,
+            site_id=site_id,
+        )
+        if binding is None:
+            raise HTTPException(status_code=404, detail="Thread routing binding was not found")
+        if binding.actor_id != user.get("sub"):
+            raise HTTPException(status_code=403, detail="Thread routing binding belongs to another actor")
+        if req.session_id is not None and req.session_id != binding.session_id:
+            raise HTTPException(status_code=409, detail="session_id does not match the requested thread")
+        session_id = binding.session_id
+    else:
+        session_id = req.session_id or str(uuid.uuid4())
 
     # ── Domain resolution: semantic routing → explicit → default ──
     routing_record: dict[str, Any] = {
@@ -228,6 +263,31 @@ async def chat(
     except Exception as exc:
         log.exception("Error processing message for session %s", session_id)
         raise HTTPException(status_code=500, detail=str(exc))
+
+    if req.thread_id is not None and user is not None:
+        try:
+            policy = load_thread_routing_policy(
+                _THREAD_ROUTING_POLICY_PATH,
+                organization_id=str(user["organization_id"]),
+                site_id=str(user["site_id"]),
+            )
+            container = _session_containers.get(session_id)
+            turn_count = container.active_context.turn_count if container is not None else 0
+            await run_in_threadpool(
+                record_thread_recap,
+                persistence=_cfg.PERSISTENCE,
+                indexer=_get_institutional_indexer(),
+                policy=policy,
+                thread_id=req.thread_id,
+                actor_id=str(user["sub"]),
+                turn_count=turn_count,
+                message=req.message,
+                action=str(result["action"]),
+                domain_id=result.get("domain_id"),
+                device_id=user.get("device_id"),
+            )
+        except Exception:
+            log.warning("Could not record thread recap for %s", req.thread_id, exc_info=True)
 
     return ChatResponse(
         session_id=session_id,

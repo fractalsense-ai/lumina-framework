@@ -24,6 +24,7 @@ export interface TranscriptMetadata {
 
 export interface StoredSession {
   sessionId: string
+  threadId?: string
   messages: TranscriptTurn[]
   seal: string
   metadata: TranscriptMetadata
@@ -34,6 +35,7 @@ export interface StoredSession {
 
 export interface SessionSummary {
   sessionId: string
+  threadId?: string
   turnCount: number
   updatedAt: number
   domainId: string
@@ -111,6 +113,7 @@ export class IndexedDBTranscriptStore implements TranscriptStore {
         resolve(
           sessions.map((s) => ({
             sessionId: s.sessionId,
+            threadId: s.threadId,
             turnCount: s.messages.length,
             updatedAt: s.updatedAt,
             domainId: s.metadata.domain_id,
@@ -160,6 +163,7 @@ export class LocalStorageTranscriptStore implements TranscriptStore {
         const s = JSON.parse(localStorage.getItem(key)!) as StoredSession
         summaries.push({
           sessionId: s.sessionId,
+          threadId: s.threadId,
           turnCount: s.messages.length,
           updatedAt: s.updatedAt,
           domainId: s.metadata.domain_id,

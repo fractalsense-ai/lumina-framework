@@ -41,6 +41,7 @@ class DocChunk:
     actor_id: str | None = field(default=None, repr=False)
     device_id: str | None = field(default=None, repr=False)
     record_id: str | None = field(default=None, repr=False)
+    thread_id: str | None = field(default=None, repr=False)
     provider: str | None = field(default=None, repr=False)
     external_record_type: str | None = field(default=None, repr=False)
     external_record_id: str | None = field(default=None, repr=False)

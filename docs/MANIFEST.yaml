@@ -1,5 +1,5 @@
 schema_version: 1.0.0
-last_updated: 2026-07-19
+last_updated: 2026-07-20
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
@@ -131,9 +131,9 @@ artifacts:
   type: doc
   section: 0
   doc_version: 1.0.0
-  status: planned
-  last_updated: 2026-07-11
-  sha256: 5bb3dca25408d17a6dd704a8a4e618da9dd3c49280d7233b21b41f72aabc9f2a
+  status: delivered
+  last_updated: 2026-07-20
+  sha256: 053a73f6f10a9431e845b2d20f383fec5151dd0cc3317f6855f41bbfdbf8a91e
 - path: docs/roadmap/slices/29-decision-precedent-confidence-and-escalation.md
   type: doc
   section: 0
@@ -1022,6 +1022,24 @@ artifacts:
   status: active
   last_updated: 2025-07-19
   sha256: 65ed14c51f61c138aa27bcf81908b491a538322b17ed1d74d1c1957a528f306c
+- path: standards/thread-routing-policy-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-19
+  sha256: c8363ce17943b8d5ab5cf4587c60e2b88d6f003a69be9d68d422a1785efea7f9
+- path: standards/thread-routing-decision-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-19
+  sha256: ec2c3b9a0d4e6bf2989b52cf8f14a41255733ec2db05dfd43891c6627342c6c5
+- path: standards/thread-summary-state-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-19
+  sha256: 276c9e1d39ff172a842617b375e19461f24890668ae60662848bd963c8ce2eb5
 - path: standards/admin-command-schemas/approve-interpretation.json
   type: schema
   doc_version: 1.0.0
@@ -1352,6 +1370,18 @@ artifacts:
   status: active
   last_updated: 2026-04-04
   sha256: c0a5645b08a577f59f2efc36e302757d17ad6d0a5dcf48a8cfea43d4999affb0
+- path: model-packs/business-ops/cfg/runtime-config.yaml
+  type: config
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-19
+  sha256: eeb6d1aae718d30278f7d706d7499b27a47eb33d4f4b923e30804ced2afee8fc
+- path: model-packs/business-ops/cfg/thread-routing-policy.yaml
+  type: config
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-19
+  sha256: 0e8b48ec4a6d86e900ab0778664a248c80345a16f7f2805d9ab442e98d957a7f
 - path: model-packs/system/cfg/ui-config.yaml
   type: config
   doc_version: 1.0.0
@@ -1988,7 +2018,7 @@ artifacts:
   doc_version: 1.0.0
   status: active
   last_updated: 2026-07-19
-  sha256: e5fa69a75ef53ff1977dcaf403338a2c8bfb431cc95fb786caceea12cc8f6cfe
+  sha256: a8b615756c6f172107129339ed97a5497fa7451f8d088ac8b93499a94490e2cc
 - path: docs/roadmap/slices/01-framework-boundary.md
   type: doc
   doc_version: 1.0.0

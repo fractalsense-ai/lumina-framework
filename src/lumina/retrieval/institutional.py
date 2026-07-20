@@ -52,6 +52,11 @@ def record_to_chunk(record: dict[str, Any]) -> DocChunk:
     organization_id = _required_identifier(record, "organization_id")
     site_id = _required_identifier(record, "site_id")
     actor_id = _required_identifier(record, "actor_id")
+    thread_id = record.get("thread_id")
+    if record_type == "ThreadSummaryRecord":
+        thread_id = _required_identifier(record, "thread_id")
+    elif thread_id is not None and (not isinstance(thread_id, str) or not thread_id.strip()):
+        raise ValueError("institutional record thread_id must be a non-empty string when supplied")
     summary = _summary_text(record)
     content = json.dumps(
         {
@@ -79,6 +84,7 @@ def record_to_chunk(record: dict[str, Any]) -> DocChunk:
         actor_id=actor_id,
         device_id=record.get("device_id") if isinstance(record.get("device_id"), str) else None,
         record_id=record_id,
+        thread_id=thread_id.strip() if isinstance(thread_id, str) else None,
         provider=metadata["provider"],
         external_record_type=metadata["external_record_type"],
         external_record_id=metadata["external_record_id"],

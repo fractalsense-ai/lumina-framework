@@ -13,6 +13,7 @@ from lumina.auth.auth import (
     TokenInvalidError,
     verify_scoped_jwt,
 )
+from lumina.auth.operating_context import operating_context_from_claims
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -33,6 +34,10 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Token expired")
     except (TokenInvalidError, AuthError):
         raise HTTPException(status_code=401, detail="Invalid token")
+    try:
+        operating_context_from_claims(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail="Invalid operating context") from exc
     return payload
 
 

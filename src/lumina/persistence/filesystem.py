@@ -391,6 +391,7 @@ class FilesystemPersistenceAdapter(PersistenceAdapter):
             "password_hash": password_hash,
             "role": role,
             "governed_modules": governed_modules or [],
+            "operating_memberships": [],
             "active": active,
         }
         users[user_id] = record
@@ -480,6 +481,16 @@ class FilesystemPersistenceAdapter(PersistenceAdapter):
         if remove:
             current = [m for m in current if m not in remove]
         users[user_id]["governed_modules"] = current
+        self._save_users(users)
+        return {k: v for k, v in users[user_id].items() if k != "password_hash"}
+
+    def update_user_operating_memberships(
+        self, user_id: str, memberships: list[dict[str, Any]]
+    ) -> dict[str, Any] | None:
+        users = self._load_users()
+        if user_id not in users:
+            return None
+        users[user_id]["operating_memberships"] = memberships
         self._save_users(users)
         return {k: v for k, v in users[user_id].items() if k != "password_hash"}
 

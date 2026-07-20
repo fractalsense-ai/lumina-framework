@@ -17,6 +17,7 @@ from lumina.api.middleware import _bearer_scheme, get_current_user, require_auth
 from lumina.api.models import (
     InviteUserRequest,
     LoginRequest,
+    OperatingContextSwitchRequest,
     PasswordResetRequest,
     RegisterRequest,
     RevokeRequest,
@@ -36,6 +37,11 @@ from lumina.auth.auth import (
     revoke_token_jti,
     verify_password,
 )
+from lumina.auth.operating_context import (
+    default_operating_context,
+    normalize_operating_memberships,
+    resolve_operating_context,
+)
 from lumina.system_log.admin_operations import (
     build_domain_role_assignment,
     build_domain_role_revocation,
@@ -54,6 +60,45 @@ from lumina.core.invite_store import (
 log = logging.getLogger("lumina-api")
 
 router = APIRouter()
+
+
+def _token_response(
+    user: dict[str, Any],
+    *,
+    operating_context: dict[str, str | None] | None = None,
+    device_id: str | None = None,
+) -> TokenResponse:
+    """Issue a legacy-compatible user JWT carrying one validated context."""
+    context = operating_context or {}
+    token = create_jwt(
+        user_id=user["user_id"],
+        role=user["role"],
+        governed_modules=user.get("governed_modules") or [],
+        domain_roles=user.get("domain_roles") or {},
+        organization_id=context.get("organization_id"),
+        site_id=context.get("site_id"),
+        device_id=device_id,
+        site_role=context.get("site_role"),
+    )
+    return TokenResponse(
+        access_token=token,
+        user_id=user["user_id"],
+        role=user["role"],
+        organization_id=context.get("organization_id"),
+        site_id=context.get("site_id"),
+        device_id=device_id,
+    )
+
+
+def _user_response(user: dict[str, Any]) -> UserResponse:
+    return UserResponse(
+        user_id=user["user_id"],
+        username=user["username"],
+        role=user["role"],
+        governed_modules=user.get("governed_modules") or [],
+        active=user.get("active", True),
+        operating_memberships=user.get("operating_memberships") or [],
+    )
 
 
 @router.post("/api/auth/register", response_model=TokenResponse)
@@ -129,13 +174,7 @@ async def login(req: LoginRequest) -> TokenResponse:
             detail="Domain authorities must use /api/domain/auth/login",
         )
 
-    token = create_jwt(
-        user_id=user["user_id"],
-        role=user["role"],
-        governed_modules=user.get("governed_modules") or [],
-        domain_roles=user.get("domain_roles") or {},
-    )
-    return TokenResponse(access_token=token, user_id=user["user_id"], role=user["role"])
+    return _token_response(user, operating_context=default_operating_context(user.get("operating_memberships")))
 
 
 @router.get("/api/auth/guest-token", response_model=TokenResponse)
@@ -156,13 +195,19 @@ async def refresh(
     if user is None or not user.get("active", True):
         raise HTTPException(status_code=401, detail="User not found or deactivated")
 
-    token = create_jwt(
-        user_id=user["user_id"],
-        role=user["role"],
-        governed_modules=user.get("governed_modules") or [],
-        domain_roles=user.get("domain_roles") or {},
-    )
-    return TokenResponse(access_token=token, user_id=user["user_id"], role=user["role"])
+    try:
+        context = (
+            resolve_operating_context(
+                user.get("operating_memberships"),
+                organization_id=user_data["organization_id"],
+                site_id=user_data["site_id"],
+            )
+            if user_data.get("organization_id") or user_data.get("site_id")
+            else default_operating_context(user.get("operating_memberships"))
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail="Active operating context is no longer assigned") from exc
+    return _token_response(user, operating_context=context, device_id=user_data.get("device_id"))
 
 
 @router.get("/api/auth/me", response_model=UserResponse)
@@ -174,13 +219,7 @@ async def me(
     user = await run_in_threadpool(_cfg.PERSISTENCE.get_user, user_data["sub"])
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return UserResponse(
-        user_id=user["user_id"],
-        username=user["username"],
-        role=user["role"],
-        governed_modules=user.get("governed_modules") or [],
-        active=user.get("active", True),
-    )
+    return _user_response(user)
 
 
 @router.get("/api/auth/users", response_model=list[UserResponse])
@@ -192,13 +231,7 @@ async def list_all_users(
     require_role(user_data, "root", "super_admin")
     users = await run_in_threadpool(_cfg.PERSISTENCE.list_users)
     return [
-        UserResponse(
-            user_id=u["user_id"],
-            username=u["username"],
-            role=u["role"],
-            governed_modules=u.get("governed_modules") or [],
-            active=u.get("active", True),
-        )
+        _user_response(u)
         for u in users
     ]
 
@@ -277,6 +310,36 @@ async def update_user(
             except Exception:
                 log.debug("Could not write domain_role_assignment System Log record")
 
+    if req.operating_memberships is not None:
+        try:
+            memberships = normalize_operating_memberships(
+                [membership.model_dump() for membership in req.operating_memberships]
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        membership_updated = await run_in_threadpool(
+            _cfg.PERSISTENCE.update_user_operating_memberships,
+            user_id,
+            memberships,
+        )
+        if membership_updated is not None:
+            updated = membership_updated
+        event = build_trace_event(
+            session_id="admin",
+            actor_id=user_data["sub"],
+            event_type="other",
+            decision="operating_memberships_updated",
+            evidence_summary={
+                "target_user_id": user_id,
+                "organization_count": len(memberships),
+                "site_count": sum(len(item["site_ids"]) for item in memberships),
+            },
+        )
+        _cfg.PERSISTENCE.append_log_record(
+            "admin", event,
+            ledger_path=_cfg.PERSISTENCE.get_system_ledger_path("admin"),
+        )
+
     if new_role != old_role:
         event = build_trace_event(
             session_id="admin",
@@ -297,13 +360,53 @@ async def update_user(
         except Exception:
             log.debug("Could not write role_change trace event")
 
-    return UserResponse(
-        user_id=updated["user_id"],
-        username=updated["username"],
-        role=updated["role"],
-        governed_modules=updated.get("governed_modules") or [],
-        active=updated.get("active", True),
+    return _user_response(updated)
+
+
+@router.post("/api/auth/operating-context", response_model=TokenResponse)
+@requires_log_commit
+async def switch_operating_context(
+    req: OperatingContextSwitchRequest,
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+) -> TokenResponse:
+    """Validate a permitted site and replace the caller's active-context token."""
+    current = await get_current_user(credentials)
+    user_data = require_auth(current)
+    if user_data.get("token_scope") != "user":
+        raise HTTPException(status_code=403, detail="Operating context is available to user-track tokens only")
+    user = await run_in_threadpool(_cfg.PERSISTENCE.get_user, user_data["sub"])
+    if user is None or not user.get("active", True):
+        raise HTTPException(status_code=401, detail="User not found or deactivated")
+    try:
+        context = resolve_operating_context(
+            user.get("operating_memberships"),
+            organization_id=req.organization_id,
+            site_id=req.site_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    old_jti = user_data.get("jti")
+    if old_jti:
+        revoke_token_jti(old_jti)
+    event = build_trace_event(
+        session_id="admin",
+        actor_id=user_data["sub"],
+        event_type="other",
+        decision="operating_context_switched",
+        evidence_summary={
+            "from_organization_id": user_data.get("organization_id"),
+            "from_site_id": user_data.get("site_id"),
+            "organization_id": context["organization_id"],
+            "site_id": context["site_id"],
+            "device_id": req.device_id,
+        },
     )
+    _cfg.PERSISTENCE.append_log_record(
+        "admin", event,
+        ledger_path=_cfg.PERSISTENCE.get_system_ledger_path("admin"),
+    )
+    return _token_response(user, operating_context=context, device_id=req.device_id)
 
 
 @router.delete("/api/auth/users/{user_id}", status_code=204)

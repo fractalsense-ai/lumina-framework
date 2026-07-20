@@ -107,3 +107,54 @@ def test_users_endpoint_role_gating(client: TestClient) -> None:
 
     users_as_regular = client.get("/api/auth/users", headers={"Authorization": f"Bearer {user_token}"})
     assert users_as_regular.status_code == 403
+
+
+@pytest.mark.integration
+def test_user_can_switch_only_to_an_assigned_operating_context(client: TestClient) -> None:
+    root = client.post(
+        "/api/auth/register",
+        json={"username": "context-root", "password": "test-pass-123", "role": "user"},
+    ).json()
+    employee = client.post(
+        "/api/auth/register",
+        json={"username": "context-employee", "password": "test-pass-123", "role": "user"},
+    ).json()
+
+    assignment = client.patch(
+        f"/api/auth/users/{employee['user_id']}",
+        headers={"Authorization": f"Bearer {root['access_token']}"},
+        json={
+            "operating_memberships": [
+                {
+                    "organization_id": "org-1",
+                    "site_ids": ["site-1", "site-2"],
+                    "site_roles": {"site-1": "cashier", "site-2": "manager"},
+                }
+            ]
+        },
+    )
+    assert assignment.status_code == 200
+
+    login = client.post(
+        "/api/auth/login",
+        json={"username": "context-employee", "password": "test-pass-123"},
+    )
+    assert login.status_code == 200
+    assert login.json()["organization_id"] == "org-1"
+    assert login.json()["site_id"] == "site-1"
+
+    switched = client.post(
+        "/api/auth/operating-context",
+        headers={"Authorization": f"Bearer {login.json()['access_token']}"},
+        json={"organization_id": "org-1", "site_id": "site-2", "device_id": "device-9"},
+    )
+    assert switched.status_code == 200
+    assert switched.json()["site_id"] == "site-2"
+    assert switched.json()["device_id"] == "device-9"
+
+    forbidden = client.post(
+        "/api/auth/operating-context",
+        headers={"Authorization": f"Bearer {switched.json()['access_token']}"},
+        json={"organization_id": "org-1", "site_id": "site-3"},
+    )
+    assert forbidden.status_code == 403

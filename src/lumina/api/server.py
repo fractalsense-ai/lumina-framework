@@ -136,6 +136,7 @@ from lumina.api.routes.admin import (  # noqa: E402
 )
 from lumina.api.routes.auth import router as auth_router  # noqa: E402
 from lumina.api.routes.chat import router as chat_router  # noqa: E402
+from lumina.api.routes.thread_routing import router as thread_routing_router  # noqa: E402
 from lumina.api.routes.system_log import router as system_log_router  # noqa: E402
 from lumina.api.routes.dashboard import router as dashboard_router  # noqa: E402
 from lumina.api.routes.domain import router as domain_router  # noqa: E402
@@ -209,6 +210,7 @@ app.add_middleware(_InFlightCounterMiddleware)
 
 # Register route groups
 app.include_router(chat_router)
+app.include_router(thread_routing_router)
 app.include_router(auth_router)
 app.include_router(system_router)
 app.include_router(domain_router)

@@ -10,6 +10,8 @@ import pytest
 from lumina.retrieval.embedder import EMBEDDING_DIM
 from lumina.retrieval.institutional import InstitutionalMemoryIndexer, record_to_chunk
 from lumina.retrieval.vector_store import VectorStore
+from lumina.thread_routing.policy import ThreadRoutingPolicy
+from lumina.thread_routing.service import preflight_thread_route
 
 FIXTURE_PATH = Path(__file__).parent / "artifacts" / "institutional-memory-recall-fixture.json"
 
@@ -56,6 +58,21 @@ def _record(record_id: str = "memory-1") -> dict:
     }
 
 
+def _routing_policy() -> ThreadRoutingPolicy:
+    return ThreadRoutingPolicy(
+        policy_version=1,
+        attach_threshold=0.85,
+        fork_threshold=0.60,
+        ambiguity_margin=0.04,
+        recap_interval_turns=10,
+        candidate_limit=5,
+        manual_only=False,
+        require_operator_confirmation_for=("fork_from",),
+        organization_id="org-a",
+        site_id="site-1",
+    )
+
+
 def test_record_to_chunk_preserves_scope_and_provenance() -> None:
     chunk = record_to_chunk(_record())
     assert chunk.content_type == "institutional_memory"
@@ -63,6 +80,7 @@ def test_record_to_chunk_preserves_scope_and_provenance() -> None:
     assert chunk.site_id == "site-1"
     assert chunk.actor_id == "actor-1"
     assert chunk.record_id == "memory-1"
+    assert chunk.thread_id == "thread-1"
     assert chunk.provider == "erp"
     assert chunk.external_record_id == "wo-1"
     assert chunk.content_hash == record_to_chunk(_record()).content_hash
@@ -78,6 +96,17 @@ def test_indexer_deduplicates_by_content_hash(tmp_path) -> None:
     assert first == {"records_seen": 1, "records_indexed": 1, "records_skipped": 0}
     assert second == {"records_seen": 1, "records_indexed": 0, "records_skipped": 1}
     assert store.size == 1
+
+
+def test_vector_store_round_trip_preserves_institutional_thread_id(tmp_path) -> None:
+    store = VectorStore(tmp_path / "vs")
+    indexer = InstitutionalMemoryIndexer(store, _FakeEmbedder())
+    indexer.ingest([_record()])
+
+    restored = VectorStore(tmp_path / "vs")
+    restored.load()
+
+    assert restored._chunks[0].thread_id == "thread-1"
 
 
 def test_indexer_keeps_distinct_records_with_matching_summaries(tmp_path) -> None:
@@ -179,6 +208,45 @@ def test_recall_fixture_returns_only_the_scoped_expected_precedent(tmp_path) -> 
     )
 
     assert [result.chunk.record_id for result in results] == fixture["expected_record_ids"]
+
+
+def test_preflight_routes_to_same_site_thread_and_excludes_other_sites(tmp_path) -> None:
+    store = VectorStore(tmp_path / "vs")
+    indexer = InstitutionalMemoryIndexer(store, _FixtureEmbedder())
+    same_site = _record("summary-brake")
+    same_site["summary"] = "Brake maintenance work order is open."
+    same_site["thread_id"] = "thread-brake"
+    other_site = _record("summary-other-site")
+    other_site["site_id"] = "site-2"
+    other_site["summary"] = "Brake maintenance work order is open."
+    other_site["thread_id"] = "thread-other-site"
+    indexer.ingest([same_site, other_site])
+
+    preflight = preflight_thread_route(
+        "brake inspection update",
+        indexer=indexer,
+        policy=_routing_policy(),
+        actor_id="actor-1",
+    )
+
+    assert preflight.decision.decision == "attach_existing"
+    assert preflight.decision.thread_id == "thread-brake"
+    assert [candidate.thread_id for candidate in preflight.candidates] == ["thread-brake"]
+
+
+def test_preflight_forks_when_active_thread_has_no_scoped_match(tmp_path) -> None:
+    indexer = InstitutionalMemoryIndexer(VectorStore(tmp_path / "vs"), _FixtureEmbedder())
+
+    preflight = preflight_thread_route(
+        "unrelated inventory count",
+        indexer=indexer,
+        policy=_routing_policy(),
+        actor_id="actor-1",
+        active_thread_id="thread-active",
+    )
+
+    assert preflight.decision.decision == "fork_from"
+    assert preflight.decision.source_thread_id == "thread-active"
 
 
 @pytest.mark.parametrize("field", ["organization_id", "site_id", "actor_id"])

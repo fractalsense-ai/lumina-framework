@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ── Chat ─────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
     session_id: str | None = None
+    thread_id: str | None = None
     message: str
     deterministic_response: bool = False
     turn_data_override: dict[str, Any] | None = None
@@ -39,6 +40,50 @@ class ChatResponse(BaseModel):
     transcript_seal: str | None = None
     transcript_seal_metadata: dict[str, Any] | None = None
     transcript_snapshot: list[dict[str, Any]] | None = None
+
+
+# ── Thread routing ───────────────────────────────────────────
+
+class ThreadRoutingPreflightRequest(BaseModel):
+    message: str = Field(min_length=1)
+    active_thread_id: str | None = None
+    session_id: str | None = None
+
+
+class ThreadRoutingCandidateResponse(BaseModel):
+    thread_id: str
+    summary_record_id: str
+    score: float
+
+
+class ThreadRoutingPreflightResponse(BaseModel):
+    decision_id: str
+    organization_id: str
+    site_id: str
+    actor_id: str
+    decision: str
+    thread_id: str
+    source_thread_id: str | None = None
+    policy_version: int
+    confidence: float
+    rationale_code: str
+    operator_confirmation_required: bool
+    operator_override: bool = False
+    candidates: list[ThreadRoutingCandidateResponse]
+
+
+class ThreadRoutingConfirmationRequest(BaseModel):
+    action: str = "accept"
+
+
+class ThreadRoutingConfirmationResponse(BaseModel):
+    application_id: str
+    decision_id: str
+    thread_id: str
+    source_thread_id: str | None = None
+    decision: str
+    operator_override: bool
+    session_id: str
 
 
 # ── Holodeck Sandbox ─────────────────────────────────────────
@@ -130,6 +175,23 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user_id: str
     role: str
+    organization_id: str | None = None
+    site_id: str | None = None
+    device_id: str | None = None
+
+
+class OperatingMembership(BaseModel):
+    """One organization and the sites an actor may operate from."""
+
+    organization_id: str
+    site_ids: list[str] = Field(min_length=1)
+    site_roles: dict[str, str] = Field(default_factory=dict)
+
+
+class OperatingContextSwitchRequest(BaseModel):
+    organization_id: str
+    site_id: str
+    device_id: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -138,6 +200,7 @@ class UserResponse(BaseModel):
     role: str
     governed_modules: list[str]
     active: bool
+    operating_memberships: list[OperatingMembership] = Field(default_factory=list)
 
 
 # ── Admin ────────────────────────────────────────────────────
@@ -146,6 +209,7 @@ class UpdateUserRequest(BaseModel):
     role: str | None = None
     governed_modules: list[str] | None = None
     domain_roles: dict[str, str] | None = None  # module_id → domain_role_id
+    operating_memberships: list[OperatingMembership] | None = None
 
 
 class RevokeRequest(BaseModel):
