@@ -87,6 +87,7 @@ def record_thread_recap(
         "organization_id": policy.organization_id,
         "site_id": policy.site_id,
         "actor_id": actor_id,
+        "created_utc": updated_utc,
         "thread_id": thread_id,
         "summary": summary,
         "domain_id": domain_id or "",

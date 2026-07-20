@@ -137,10 +137,10 @@ artifacts:
 - path: docs/roadmap/slices/29-decision-precedent-confidence-and-escalation.md
   type: doc
   section: 0
-  doc_version: 1.0.0
+  doc_version: 0.2.0
   status: planned
-  last_updated: 2026-07-11
-  sha256: 9739b4e1557efc2a5a730b4b24e4595ca5bb65b909036caae93daebc81092587
+  last_updated: 2026-07-20
+  sha256: 9b5a025494cc1f9a008960ed95e53af3f6b87b8f174b427c3e7a1f7a1f78944d
 - path: docs/roadmap/slices/30-erpnext-adapter-foundation-and-fixtures.md
   type: doc
   section: 0
@@ -1262,12 +1262,36 @@ artifacts:
   status: active
   last_updated: 2026-07-15
   sha256: 314288783f2368817fb92c54c71fceb46046fa93410b61603517a00ebcf55cd9
-- path: standards/thread-summary-record-schema-v1.json
+- path: standards/precedent-match-schema-v1.json
   type: schema
   doc_version: 1.0.0
   status: active
-  last_updated: 2026-07-15
-  sha256: 1bde3f792774b36a45a41b461c466fe12ac3112181bdd165eb7bd6b412949731
+  last_updated: 2026-07-20
+  sha256: 949a32f06142c0cb7f3943fcd6a5e058db531f05e82ef31b061f5ab071e8973c
+- path: standards/decision-confidence-score-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-20
+  sha256: f1e69ab3cefc4d3a5ab2aa780f307ad59836305208ef7de0d748fb70ca0292e1
+- path: standards/business-escalation-packet-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-20
+  sha256: d512b3a966472acc8545394bfa8a808fdee262df210d7d77a41efff723148c50
+- path: standards/decision-precedent-policy-schema-v1.json
+  type: schema
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-20
+  sha256: f26486a4f3b83955c670a499902107301afcf4ab6769b65f9ca2927d660a9069
+- path: standards/thread-summary-record-schema-v1.json
+  type: schema
+  doc_version: 1.0.1
+  status: active
+  last_updated: 2026-07-20
+  sha256: 3c29292fb70196adb591e77d96e746e96b0576a97adcfa1ac7d7431155e5a28a
 - path: standards/business-system-event-mirror-record-schema-v1.json
   type: schema
   doc_version: 1.0.0
@@ -1382,6 +1406,12 @@ artifacts:
   status: active
   last_updated: 2026-07-19
   sha256: 0e8b48ec4a6d86e900ab0778664a248c80345a16f7f2805d9ab442e98d957a7f
+- path: model-packs/business-ops/cfg/decision-precedent-policy.yaml
+  type: config
+  doc_version: 1.0.0
+  status: active
+  last_updated: 2026-07-20
+  sha256: 97433cb5c0bd13f7bffd5efcf8d4cec4567b9b0d83e6bf9006e7beafa2a6a039
 - path: model-packs/system/cfg/ui-config.yaml
   type: config
   doc_version: 1.0.0

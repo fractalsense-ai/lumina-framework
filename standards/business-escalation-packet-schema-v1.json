@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectlumina.org/standards/business-escalation-packet-schema-v1.json",
+  "schema_version": "1.0.0",
+  "last_updated": "2026-07-20",
+  "title": "Business Escalation Packet Schema",
+  "description": "Transcript-free, scope-bound approval request created by a mandatory decision precedent escalation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id", "organization_id", "site_id", "actor_id", "confidence_record_id",
+    "policy_version", "risk_class", "tier", "target_role", "status", "created_utc"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "minLength": 1},
+    "organization_id": {"type": "string", "minLength": 1},
+    "site_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "confidence_record_id": {"type": "string", "minLength": 1},
+    "policy_version": {"type": "integer", "minimum": 1},
+    "risk_class": {"type": "string", "minLength": 1},
+    "tier": {"const": "mandatory_escalation"},
+    "target_role": {"type": "string", "minLength": 1},
+    "status": {"const": "pending"},
+    "precedent_summary_record_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "created_utc": {"type": "string", "format": "date-time"}
+  }
+}

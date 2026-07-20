@@ -1,0 +1,23 @@
+# version: 1.0.0
+# last_updated: 2026-07-20
+schema_version: 1.0.0
+policy_version: 1
+
+# Business Ops owns these operating thresholds. System code always enforces
+# active organization/site scope, audit evidence, and escalation lifecycle.
+defaults:
+  candidate_limit: 5
+  suggest_threshold: 0.88
+  confirmation_threshold: 0.70
+  stale_after_days: 90
+  stale_penalty: 0.18
+  missing_precedent_penalty: 1.0
+  high_risk_classes:
+    - financial
+    - safety
+    - legal
+  confirmation_risk_classes:
+    - operational
+
+# Configuration precedence is site, organization, then these defaults.
+organizations: {}

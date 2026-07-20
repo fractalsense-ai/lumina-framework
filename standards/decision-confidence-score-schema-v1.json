@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectlumina.org/standards/decision-confidence-score-schema-v1.json",
+  "schema_version": "1.0.0",
+  "last_updated": "2026-07-20",
+  "title": "Decision Confidence Score Schema",
+  "description": "Deterministic, transcript-free confidence evidence for a scoped decision precedent evaluation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_id", "organization_id", "site_id", "actor_id", "policy_version",
+    "risk_class", "similarity_score", "recency_penalty", "missing_precedent_penalty",
+    "final_score", "tier", "rationale_codes", "precedent_matches", "created_utc"
+  ],
+  "properties": {
+    "record_id": {"type": "string", "minLength": 1},
+    "organization_id": {"type": "string", "minLength": 1},
+    "site_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "policy_version": {"type": "integer", "minimum": 1},
+    "risk_class": {"type": "string", "minLength": 1},
+    "similarity_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "recency_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+    "missing_precedent_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+    "final_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "tier": {"type": "string", "enum": ["suggest_only", "require_confirmation", "mandatory_escalation"]},
+    "rationale_codes": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "precedent_matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "record_id", "organization_id", "site_id", "actor_id", "summary_record_id",
+          "thread_id", "similarity", "created_utc", "recency_band", "rank"
+        ],
+        "properties": {
+          "record_id": {"type": "string", "minLength": 1},
+          "organization_id": {"type": "string", "minLength": 1},
+          "site_id": {"type": "string", "minLength": 1},
+          "actor_id": {"type": "string", "minLength": 1},
+          "summary_record_id": {"type": "string", "minLength": 1},
+          "thread_id": {"type": "string", "minLength": 1},
+          "similarity": {"type": "number", "minimum": 0, "maximum": 1},
+          "created_utc": {"type": "string", "format": "date-time"},
+          "recency_band": {"type": "string", "enum": ["current", "stale"]},
+          "rank": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "created_utc": {"type": "string", "format": "date-time"}
+  }
+}

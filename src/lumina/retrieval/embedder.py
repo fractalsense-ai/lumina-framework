@@ -46,6 +46,7 @@ class DocChunk:
     external_record_type: str | None = field(default=None, repr=False)
     external_record_id: str | None = field(default=None, repr=False)
     module_key: str | None = field(default=None, repr=False)
+    created_utc: str | None = field(default=None, repr=False)
 
     @staticmethod
     def compute_hash(text: str) -> str:

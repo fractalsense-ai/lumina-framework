@@ -42,6 +42,7 @@ def _metadata(record: dict[str, Any]) -> dict[str, str | None]:
         "external_record_type": reference.get("external_record_type"),
         "external_record_id": reference.get("external_record_id"),
         "module_key": record.get("module_key"),
+        "created_utc": record.get("created_utc"),
     }
 
 
@@ -89,6 +90,7 @@ def record_to_chunk(record: dict[str, Any]) -> DocChunk:
         external_record_type=metadata["external_record_type"],
         external_record_id=metadata["external_record_id"],
         module_key=metadata["module_key"],
+        created_utc=metadata["created_utc"],
     )
 
 

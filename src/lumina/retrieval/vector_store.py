@@ -180,6 +180,7 @@ class VectorStore:
                 external_record_type=r.get("external_record_type"),
                 external_record_id=r.get("external_record_id"),
                 module_key=r.get("module_key"),
+                created_utc=r.get("created_utc"),
             )
             for r in raw
         ]
