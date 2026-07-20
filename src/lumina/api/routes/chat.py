@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 import time
 import uuid
@@ -34,7 +35,9 @@ _THREAD_ROUTING_POLICY_PATH = _cfg._REPO_ROOT / "model-packs" / "business-ops" /
 _INSTITUTIONAL_INDEX_DIR = _cfg._REPO_ROOT / "data" / "retrieval-index" / "institutional-memory"
 
 
+@functools.lru_cache(maxsize=1)
 def _get_institutional_indexer() -> InstitutionalMemoryIndexer:
+    """Build the recap indexer lazily and reuse it across routed chat turns."""
     return InstitutionalMemoryIndexer(VectorStore(_INSTITUTIONAL_INDEX_DIR), DocEmbedder())
 
 

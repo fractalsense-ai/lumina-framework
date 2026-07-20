@@ -212,6 +212,68 @@ def test_confirmation_can_create_new_thread_once(client) -> None:
 
 
 @pytest.mark.integration
+def test_preflight_prunes_expired_pending_and_consumed_decisions(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    test_client, _ = client
+    import lumina.api.routes.thread_routing as route_module
+
+    expired_at = 10.0
+    route_module._pending_decisions["expired-pending"] = route_module._PendingDecision(
+        decision=route_module.ThreadRoutingDecision(
+            decision_id="expired-pending",
+            organization_id="org-a",
+            site_id="site-1",
+            actor_id="actor-a",
+            decision="create_new",
+            thread_id="thread-expired",
+            source_thread_id=None,
+            policy_version=1,
+            confidence=0.0,
+            rationale_code="no_match",
+            operator_confirmation_required=False,
+            operator_override=False,
+            candidates=(),
+        ),
+        session_id="session-expired",
+        active_thread_id=None,
+        expires_at=expired_at,
+    )
+    route_module._consumed_decision_ids["expired-consumed"] = expired_at
+    monkeypatch.setattr(route_module.time, "monotonic", lambda: expired_at + 1)
+
+    response = test_client.post(
+        "/api/thread-routing/preflight",
+        headers={"Authorization": f"Bearer {_token()}"},
+        json={"message": "brake inspection update"},
+    )
+
+    assert response.status_code == 200
+    assert "expired-pending" not in route_module._pending_decisions
+    assert "expired-consumed" not in route_module._consumed_decision_ids
+
+
+@pytest.mark.integration
+def test_confirmation_reports_expired_decision_as_gone(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    test_client, _ = client
+    preflight = test_client.post(
+        "/api/thread-routing/preflight",
+        headers={"Authorization": f"Bearer {_token()}"},
+        json={"message": "brake inspection update"},
+    )
+    decision_id = preflight.json()["decision_id"]
+    import lumina.api.routes.thread_routing as route_module
+
+    expires_at = route_module._pending_decisions[decision_id].expires_at
+    monkeypatch.setattr(route_module.time, "monotonic", lambda: expires_at + 1)
+    response = test_client.post(
+        f"/api/thread-routing/{decision_id}/confirm",
+        headers={"Authorization": f"Bearer {_token()}"},
+        json={"action": "accept"},
+    )
+
+    assert response.status_code == 410
+
+
+@pytest.mark.integration
 def test_confirmation_rejects_different_actor_or_active_context(client) -> None:
     test_client, _ = client
     preflight = test_client.post(

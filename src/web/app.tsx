@@ -212,7 +212,11 @@ async function orchestratorApiCall(
 
 function jwtHasOperatingContext(token: string): boolean {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    const encodedPayload = token.split('.')[1]
+    if (!encodedPayload) return false
+    const base64Payload = encodedPayload.replace(/-/g, '+').replace(/_/g, '/')
+    const paddedPayload = base64Payload.padEnd(base64Payload.length + ((4 - base64Payload.length % 4) % 4), '=')
+    const payload = JSON.parse(atob(paddedPayload))
     return typeof payload.organization_id === 'string' && typeof payload.site_id === 'string'
   } catch {
     return false
@@ -1061,6 +1065,7 @@ function ChatInterface({
         )
         if (preflight.operator_confirmation_required) {
           setPendingRouting({ message: trimmedInput, decision: preflight })
+          setIsLoading(false)
           return
         }
         const confirmation = await threadRoutingCall<ThreadRoutingConfirmation>(

@@ -49,13 +49,24 @@ class _PendingDecision:
 
 
 _pending_decisions: dict[str, _PendingDecision] = {}
-_consumed_decision_ids: set[str] = set()
+_consumed_decision_ids: dict[str, float] = {}
 
 
 @functools.lru_cache(maxsize=1)
 def _get_institutional_indexer() -> InstitutionalMemoryIndexer:
     """Build the local institutional index provider lazily on first preflight."""
     return InstitutionalMemoryIndexer(VectorStore(_DEFAULT_INDEX_DIR), DocEmbedder())
+
+
+def _prune_expired_decisions(now: float | None = None) -> None:
+    """Bound in-memory routing state to the confirmation TTL."""
+    current_time = time.monotonic() if now is None else now
+    for decision_id, pending in list(_pending_decisions.items()):
+        if pending.expires_at <= current_time:
+            del _pending_decisions[decision_id]
+    for decision_id, expires_at in list(_consumed_decision_ids.items()):
+        if expires_at <= current_time:
+            del _consumed_decision_ids[decision_id]
 
 
 def _response_from_record(record: dict[str, object]) -> ThreadRoutingPreflightResponse:
@@ -172,6 +183,7 @@ async def preflight(
 
     record = preflight_result.decision.as_record()
     routing_session_id = req.session_id or "thread-routing"
+    _prune_expired_decisions()
     _pending_decisions[preflight_result.decision.decision_id] = _PendingDecision(
         decision=preflight_result.decision,
         session_id=routing_session_id,
@@ -200,15 +212,19 @@ async def confirm(
     """Confirm or override a preflight decision as auditable routing intent."""
     user = require_auth(await get_current_user(credentials))
     context = _active_context(user)
+    current_time = time.monotonic()
+    for consumed_id, expires_at in list(_consumed_decision_ids.items()):
+        if expires_at <= current_time:
+            del _consumed_decision_ids[consumed_id]
     if decision_id in _consumed_decision_ids:
         raise HTTPException(status_code=409, detail="Thread routing decision has already been applied")
     pending = _pending_decisions.get(decision_id)
     if pending is None:
         raise HTTPException(status_code=404, detail="Thread routing decision was not found")
-    if pending.expires_at <= time.monotonic():
+    if pending.expires_at <= current_time:
         del _pending_decisions[decision_id]
         raise HTTPException(status_code=410, detail="Thread routing decision has expired")
-
+    _prune_expired_decisions(current_time)
     decision = pending.decision
     if decision.actor_id != user["sub"]:
         raise HTTPException(status_code=403, detail="Thread routing decision belongs to another actor")
@@ -259,7 +275,7 @@ async def confirm(
         _cfg.PERSISTENCE.get_system_ledger_path(pending.session_id),
     )
     del _pending_decisions[decision_id]
-    _consumed_decision_ids.add(decision_id)
+    _consumed_decision_ids[decision_id] = time.monotonic() + _PENDING_DECISION_TTL_SECONDS
     return ThreadRoutingConfirmationResponse(
         application_id=application_id,
         decision_id=decision_id,
