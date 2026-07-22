@@ -1,5 +1,5 @@
 schema_version: 1.0.0
-last_updated: 2026-07-20
+last_updated: 2026-07-22
 artifacts:
 - path: docs/5-standards/manifest-regen-policy.md
   type: doc
@@ -141,6 +141,13 @@ artifacts:
   status: planned
   last_updated: 2026-07-20
   sha256: 9b5a025494cc1f9a008960ed95e53af3f6b87b8f174b427c3e7a1f7a1f78944d
+- path: docs/roadmap/slices/29-decision-precedent-frontend-handoff.md
+  type: doc
+  section: 0
+  doc_version: 0.1.0
+  status: delivered
+  last_updated: 2026-07-20
+  sha256: a6e305cbce6a664776f2888d66cc2ce54f586b4c1a0bed44dc07ea2d9713f0e9
 - path: docs/roadmap/slices/30-erpnext-adapter-foundation-and-fixtures.md
   type: doc
   section: 0
@@ -161,7 +168,7 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 3940e3422633bc26a86092648eb3da65d7d8db9b6ff3b48027ab102beb859c2d
+  sha256: 1dc48969ac6b66eb213b037ddd2199f5c1b4559a6a5c185f12eacea9c205fe75
 - path: docs/roadmap/slices/33-erpnext-reference-connector-and-fixtures.md
   type: doc
   section: 0
