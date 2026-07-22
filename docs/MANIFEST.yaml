@@ -147,7 +147,7 @@ artifacts:
   doc_version: 0.1.0
   status: delivered
   last_updated: 2026-07-20
-  sha256: a6e305cbce6a664776f2888d66cc2ce54f586b4c1a0bed44dc07ea2d9713f0e9
+  sha256: a2680d9227372a2fda699bebdde32819a5e20a5a0ed4ce582619b82ccafa563d
 - path: docs/roadmap/slices/30-erpnext-adapter-foundation-and-fixtures.md
   type: doc
   section: 0

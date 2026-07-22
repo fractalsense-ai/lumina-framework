@@ -64,6 +64,9 @@ type ThreadRoutingConfirmation = {
   decision: 'attach_existing' | 'create_new' | 'fork_from'
 }
 
+/** Shared tier union used by both preflight and confirmation responses. */
+type DecisionPrecedentTier = 'suggest_only' | 'require_confirmation' | 'mandatory_escalation'
+
 /**
  * Decision precedent preflight response.
  * Server decides tier based on similarity, recency, and policy-declared risk.
@@ -77,7 +80,7 @@ type DecisionPrecedentPreflight = {
   policy_version: number
   risk_class: string
   final_score: number
-  tier: 'suggest_only' | 'require_confirmation' | 'mandatory_escalation'
+  tier: DecisionPrecedentTier
   rationale_codes: string[]
   confirmation_required: boolean
   escalation_record_id: string | null
@@ -86,7 +89,7 @@ type DecisionPrecedentPreflight = {
 type DecisionPrecedentConfirmation = {
   confirmation_id: string
   confidence_record_id: string
-  tier: string
+  tier: DecisionPrecedentTier
 }
 
 /**
@@ -826,6 +829,11 @@ function ChatInterface({
     threadId: string | null
   } | null>(null)
   const [decisionPrecedentError, setDecisionPrecedentError] = useState<string | null>(null)
+  // Brief post-turn status for suggest_only (tier + rationale codes only, no sensitive data)
+  const [lastDecisionStatus, setLastDecisionStatus] = useState<{
+    tier: DecisionPrecedentTier
+    rationale_codes: string[]
+  } | null>(null)
   /**
    * Default risk class for decision-precedent preflight.
    * 'operational' is a conservative, explicit choice — not inferred from message content.
@@ -1203,8 +1211,12 @@ function ChatInterface({
             return
           }
 
-          // suggest_only: continue to chat, will show brief status after response
+          // suggest_only: continue to chat, show brief non-sensitive status after response
           setDecisionPrecedentError(null)
+          setLastDecisionStatus({
+            tier: dpPreflight.tier,
+            rationale_codes: dpPreflight.rationale_codes,
+          })
         } catch (dpError) {
           // Preflight failure: surface error, do not send chat
           const errorMsg = dpError instanceof Error ? dpError.message : 'Decision precedent preflight failed'
@@ -1394,8 +1406,13 @@ function ChatInterface({
               ts: Date.now() / 1000,
               domain_id: apiResponse.transcript_seal_metadata.domain_id,
             }]
+        if (!pendingDecisionPrecedent.sessionId) {
+          // Skip persist when sessionId is missing to avoid writing under an empty key
+          setPendingDecisionPrecedent(null)
+          return
+        }
         await transcriptStoreRef.current.saveSession({
-          sessionId: pendingDecisionPrecedent.sessionId ?? '',
+          sessionId: pendingDecisionPrecedent.sessionId,
           threadId: pendingDecisionPrecedent.threadId ?? undefined,
           messages: transcriptRef.current,
           seal: sealRef.current,
@@ -1565,13 +1582,17 @@ function ChatInterface({
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   Tier: {pendingDecisionPrecedent.preflight.tier} | Rationale: {pendingDecisionPrecedent.preflight.rationale_codes.join(', ')}
-                  {pendingDecisionPrecedent.preflight.escalation_record_id ? ' | Escalation record created' : ''}
                 </div>
               </div>
             )}
             {decisionPrecedentError && !pendingDecisionPrecedent && (
               <div className="max-w-3xl mx-auto mb-3 text-sm text-destructive">
                 {decisionPrecedentError}
+              </div>
+            )}
+            {lastDecisionStatus && !pendingDecisionPrecedent && (
+              <div className="max-w-3xl mx-auto mb-3 text-xs text-muted-foreground">
+                Decision check: {lastDecisionStatus.tier} | {lastDecisionStatus.rationale_codes.join(', ')}
               </div>
             )}
             {sessionFrozen && (
@@ -1593,9 +1614,10 @@ function ChatInterface({
               {jwtHasOperatingContext(auth.token) && (
                 <select
                   value={selectedRiskClass}
-                  onChange={(e) => setSelectedRiskClass(e.target.value as RiskClass) as void}
+                  onChange={(e) => { setSelectedRiskClass(e.target.value as RiskClass) }}
                   disabled={isLoading || pendingRouting !== null || pendingDecisionPrecedent !== null}
                   className="h-10 px-2 text-sm border border-border rounded-md bg-background text-foreground disabled:opacity-50"
+                  aria-label="Risk classification for decision precedent check"
                   title="Risk classification for decision precedent check"
                 >
                   {RISK_CLASSES.map((rc) => (

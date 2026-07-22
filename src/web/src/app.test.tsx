@@ -248,16 +248,23 @@ describe('App', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Suggest only response')).toBeInTheDocument()
-      const chatCall = fetchMock.mock.calls.find(([url]) => String(url).includes('/api/chat'))
-      expect(chatCall).toBeDefined()
     })
+
+    // Assert call ordering: routing preflight → routing confirm → decision preflight → chat
+    const callUrls = fetchMock.mock.calls.map((call: unknown[]) => String(call[0]))
+    const routingPreflightIdx = callUrls.findIndex((u: string) => u.includes('/api/thread-routing/preflight'))
+    const routingConfirmIdx = callUrls.findIndex((u: string) => u.includes('/api/thread-routing/decision-1/confirm'))
+    const decisionPreflightIdx = callUrls.findIndex((u: string) => u.includes('/api/decision-precedent/preflight'))
+    const chatIdx = callUrls.findIndex((u: string) => u.includes('/api/chat'))
+    expect(routingPreflightIdx).toBeGreaterThanOrEqual(0)
+    expect(routingConfirmIdx).toBeGreaterThan(routingPreflightIdx)
+    expect(decisionPreflightIdx).toBeGreaterThan(routingConfirmIdx)
+    expect(chatIdx).toBeGreaterThan(decisionPreflightIdx)
   })
 
   it('require_confirmation blocks chat until user clicks Continue', async () => {
     const scopedAuth = makeScopedAuth()
     window.localStorage.setItem('lumina.auth', JSON.stringify(scopedAuth))
-    let confirmationCalled = false
-    let chatCalled = false
     const fetchMock = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
       if (url.includes('/api/auth/me') || url.includes('/api/consent/accept')) return Promise.resolve({ ok: true })
       if (url.includes('/api/domain-info')) return Promise.resolve({ ok: true, json: async () => DOMAIN_INFO_RESPONSE })
@@ -281,13 +288,16 @@ describe('App', () => {
         }) })
       }
       if (url.includes('/api/decision-precedent/conf-2/confirm')) {
-        confirmationCalled = true
+        return Promise.resolve({ ok: true, json: async () => ({
+          confirmation_id: 'confirm-1', confidence_record_id: 'conf-2', tier: 'require_confirmation',
+        }) })
+      }
+      if (url.includes('/api/decision-precedent/conf-2/confirm')) {
         return Promise.resolve({ ok: true, json: async () => ({
           confirmation_id: 'confirm-1', confidence_record_id: 'conf-2', tier: 'require_confirmation',
         }) })
       }
       if (url.includes('/api/chat')) {
-        chatCalled = true
         return Promise.resolve({ ok: true, json: async () => ({
           session_id: 'session-1', response: 'Confirmed chat response', action: 'continue',
           prompt_type: 'standard', escalated: false,
@@ -307,19 +317,23 @@ describe('App', () => {
     // Should show confirmation panel and NOT call chat yet
     await waitFor(() => {
       expect(screen.getByText(/requires explicit confirmation/i)).toBeInTheDocument()
-      expect(chatCalled).toBe(false)
     })
+    // Assert no chat call yet
+    const chatCallsBefore = fetchMock.mock.calls.filter((call: unknown[]) => String(call[0]).includes('/api/chat'))
+    expect(chatCallsBefore.length).toBe(0)
 
     // Click Continue button
     const continueButton = screen.getByRole('button', { name: 'Continue' })
     fireEvent.click(continueButton)
 
-    // Now confirmation should be called and chat should proceed
+    // Now confirmation and chat should proceed — exactly one chat call
     await waitFor(() => {
-      expect(confirmationCalled).toBe(true)
-      expect(chatCalled).toBe(true)
       expect(screen.getByText('Confirmed chat response')).toBeInTheDocument()
     })
+    const confirmCalls = fetchMock.mock.calls.filter((call: unknown[]) => String(call[0]).includes('/api/decision-precedent/conf-2/confirm'))
+    const chatCallsAfter = fetchMock.mock.calls.filter((call: unknown[]) => String(call[0]).includes('/api/chat'))
+    expect(confirmCalls.length).toBe(1)
+    expect(chatCallsAfter.length).toBe(1)
   })
 
   it('mandatory_escalation blocks chat and shows no approval buttons', async () => {
@@ -369,12 +383,12 @@ describe('App', () => {
     // Should show escalation notice and NOT call chat
     await waitFor(() => {
       expect(screen.getByText(/human approval is required/i)).toBeInTheDocument()
-      expect(screen.getByText(/escalation record created/i)).toBeInTheDocument()
-      expect(chatCalled).toBe(false)
       // Should NOT have approve/reject buttons
       expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument()
     })
+    const chatCalls = fetchMock.mock.calls.filter((call: unknown[]) => String(call[0]).includes('/api/chat'))
+    expect(chatCalls.length).toBe(0)
   })
 
   it('preflight failure surfaces error and does not send chat', async () => {
@@ -422,6 +436,68 @@ describe('App', () => {
       expect(errorElements.length).toBeGreaterThan(0)
     })
     expect(chatCalled).toBe(false)
+  })
+
+  it('confirmation failure surfaces error and does not send chat', async () => {
+    const scopedAuth = makeScopedAuth()
+    window.localStorage.setItem('lumina.auth', JSON.stringify(scopedAuth))
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/api/auth/me') || url.includes('/api/consent/accept')) return Promise.resolve({ ok: true })
+      if (url.includes('/api/domain-info')) return Promise.resolve({ ok: true, json: async () => DOMAIN_INFO_RESPONSE })
+      if (url.includes('/api/thread-routing/preflight')) {
+        return Promise.resolve({ ok: true, json: async () => ({
+          decision_id: 'decision-1', decision: 'create_new', thread_id: 'thread-1',
+          operator_confirmation_required: false, candidates: [],
+        }) })
+      }
+      if (url.includes('/api/thread-routing/decision-1/confirm')) {
+        return Promise.resolve({ ok: true, json: async () => ({
+          thread_id: 'thread-1', session_id: 'session-1', decision: 'create_new',
+        }) })
+      }
+      if (url.includes('/api/decision-precedent/preflight')) {
+        return Promise.resolve({ ok: true, json: async () => ({
+          confidence_record_id: 'conf-5', organization_id: 'org-a', site_id: 'site-a',
+          actor_id: 'user1', policy_version: 1, risk_class: 'operational', final_score: 0.5,
+          tier: 'require_confirmation', rationale_codes: ['medium_confidence'], confirmation_required: true,
+          escalation_record_id: null,
+        }) })
+      }
+      if (url.includes('/api/decision-precedent/conf-5/confirm')) {
+        return Promise.resolve({ ok: false, status: 409, json: async () => ({ detail: 'Confirmation already consumed' }), text: async () => 'Confirmation already consumed' })
+      }
+      if (url.includes('/api/chat')) {
+        return Promise.resolve({ ok: true, json: async () => ({
+          session_id: 'session-1', response: 'Should not appear', action: 'continue',
+          prompt_type: 'standard', escalated: false,
+        }) })
+      }
+      return Promise.resolve({ ok: false, text: async () => 'unmocked route' })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<App />)
+    await screen.findByRole('button', { name: 'I Agree' })
+    fireEvent.click(screen.getByRole('button', { name: 'I Agree' }))
+    const input = await screen.findByRole('textbox')
+    fireEvent.change(input, { target: { value: 'test confirmation failure' } })
+    fireEvent.click(screen.getByRole('button', { name: '' }))
+
+    // Wait for confirmation panel
+    await waitFor(() => {
+      expect(screen.getByText(/requires explicit confirmation/i)).toBeInTheDocument()
+    })
+
+    // Click Continue — confirmation will fail with 409
+    const continueButton = screen.getByRole('button', { name: 'Continue' })
+    fireEvent.click(continueButton)
+
+    // Should show error and NOT call chat
+    await waitFor(() => {
+      expect(screen.getByText(/Confirmation already consumed/i)).toBeInTheDocument()
+    })
+    const chatCalls = fetchMock.mock.calls.filter((call: unknown[]) => String(call[0]).includes('/api/chat'))
+    expect(chatCalls.length).toBe(0)
   })
 
   it('UI never renders submitted message in decision-status panel', async () => {
