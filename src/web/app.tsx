@@ -64,6 +64,42 @@ type ThreadRoutingConfirmation = {
   decision: 'attach_existing' | 'create_new' | 'fork_from'
 }
 
+/** Shared tier union used by both preflight and confirmation responses. */
+type DecisionPrecedentTier = 'suggest_only' | 'require_confirmation' | 'mandatory_escalation'
+
+/**
+ * Decision precedent preflight response.
+ * Server decides tier based on similarity, recency, and policy-declared risk.
+ * The frontend does not choose authority — it only renders the server's decision.
+ */
+type DecisionPrecedentPreflight = {
+  confidence_record_id: string
+  organization_id: string
+  site_id: string
+  actor_id: string
+  policy_version: number
+  risk_class: string
+  final_score: number
+  tier: DecisionPrecedentTier
+  rationale_codes: string[]
+  confirmation_required: boolean
+  escalation_record_id: string | null
+}
+
+type DecisionPrecedentConfirmation = {
+  confirmation_id: string
+  confidence_record_id: string
+  tier: DecisionPrecedentTier
+}
+
+/**
+ * Risk class options for the decision-precedent preflight request.
+ * These are plain strings accepted by Business Ops policy — not policy authority.
+ * The server decides every tier. Default is 'operational' as a conservative choice.
+ */
+const RISK_CLASSES = ['routine', 'operational', 'financial', 'safety', 'legal'] as const
+type RiskClass = (typeof RISK_CLASSES)[number]
+
 interface UiManifest {
   title: string
   subtitle: string
@@ -235,6 +271,38 @@ async function threadRoutingCall<T>(
   })
   if (!res.ok) {
     throw new Error(`${res.status}:${await res.text()}`)
+  }
+  return (await res.json()) as T
+}
+
+/**
+ * Authenticated decision-precedent API helper.
+ * Uses VITE_LUMINA_API_BASE_URL through the existing API-base convention.
+ * Surfaces server `detail` text on non-success responses when available.
+ * Never writes the message to browser storage, logs, URL parameters, or action-card payload.
+ */
+async function decisionPrecedentCall<T>(
+  path: string,
+  body: Record<string, unknown> | null,
+  auth: AuthState,
+): Promise<T> {
+  const headers: Record<string, string> = { Authorization: `Bearer ${auth.token}` }
+  const init: RequestInit = { method: 'POST', headers }
+  if (body !== null) {
+    headers['Content-Type'] = 'application/json'
+    init.body = JSON.stringify(body)
+  }
+  const res = await fetch(`${getApiBase()}${path}`, init)
+  if (!res.ok) {
+    let detail = `Decision precedent request failed: ${res.status}`
+    try {
+      const errBody = await res.json()
+      if (errBody?.detail) detail = errBody.detail
+    } catch {
+      const text = await res.text().catch(() => '')
+      if (text) detail = text
+    }
+    throw new Error(detail)
   }
   return (await res.json()) as T
 }
@@ -753,6 +821,25 @@ function ChatInterface({
     message: string
     decision: ThreadRoutingPreflight
   } | null>(null)
+  // ── Decision precedent state (Slice 29) ──────────────────
+  const [pendingDecisionPrecedent, setPendingDecisionPrecedent] = useState<{
+    message: string
+    preflight: DecisionPrecedentPreflight
+    sessionId: string | null
+    threadId: string | null
+  } | null>(null)
+  const [decisionPrecedentError, setDecisionPrecedentError] = useState<string | null>(null)
+  // Brief post-turn status for suggest_only (tier + rationale codes only, no sensitive data)
+  const [lastDecisionStatus, setLastDecisionStatus] = useState<{
+    tier: DecisionPrecedentTier
+    rationale_codes: string[]
+  } | null>(null)
+  /**
+   * Default risk class for decision-precedent preflight.
+   * 'operational' is a conservative, explicit choice — not inferred from message content.
+   * Replace with a product-owned risk selector when available.
+   */
+  const [selectedRiskClass, setSelectedRiskClass] = useState<RiskClass>('operational')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // ── Client-side transcript persistence ───────────────────
@@ -778,6 +865,8 @@ function ChatInterface({
     activeModuleIdRef.current = ''
     threadIdRef.current = null
     setPendingRouting(null)
+    setPendingDecisionPrecedent(null)
+    setDecisionPrecedentError(null)
   }
 
   const saveCurrentSession = async () => {
@@ -958,6 +1047,11 @@ function ChatInterface({
     if (!trimmedInput || isLoading) return
 
     const userMessage: Message = {
+      // Per Slice 29, the user message is added to the UI immediately,
+      // but the API call may be blocked pending precedent checks.
+      // This provides immediate feedback to the user.
+      // The message is only persisted to the transcript store after a
+      // successful API response.
       role: 'user',
       content: trimmedInput,
       id: `user-${Date.now()}`,
@@ -1078,6 +1172,67 @@ function ChatInterface({
         threadIdRef.current = activeThreadId
         setSessionId(activeSessionId)
       }
+
+      // ── Decision precedent preflight (Slice 29) ─────────
+      // Runs after thread routing is resolved and before normal /api/chat request.
+      // Only for scoped authenticated turns (JWT has organization_id and site_id).
+      if (jwtHasOperatingContext(auth.token)) {
+        setDecisionPrecedentError(null) // Clear previous errors
+        try {
+          const dpPreflight = await decisionPrecedentCall<DecisionPrecedentPreflight>(
+            '/api/decision-precedent/preflight',
+            { message: trimmedInput, risk_class: selectedRiskClass, session_id: activeSessionId },
+            auth,
+          )
+
+          if (dpPreflight.tier === 'require_confirmation') {
+            // Block chat until user explicitly confirms
+            setPendingDecisionPrecedent({
+              message: trimmedInput,
+              preflight: dpPreflight,
+              sessionId: activeSessionId,
+              threadId: activeThreadId,
+            })
+            setDecisionPrecedentError(null)
+            setIsLoading(false)
+            return
+          }
+
+          if (dpPreflight.tier === 'mandatory_escalation') {
+            // Block chat — human approval required, no action buttons
+            setPendingDecisionPrecedent({
+              message: trimmedInput,
+              preflight: dpPreflight,
+              sessionId: activeSessionId,
+              threadId: activeThreadId,
+            })
+            setDecisionPrecedentError(null)
+            setIsLoading(false)
+            return
+          }
+
+          // suggest_only: continue to chat, show brief non-sensitive status after response
+          setDecisionPrecedentError(null)
+          setLastDecisionStatus({
+            tier: dpPreflight.tier,
+            rationale_codes: dpPreflight.rationale_codes,
+          })
+        } catch (dpError) {
+          // Preflight failure: surface error, do not send chat
+          const errorMsg = dpError instanceof Error ? dpError.message : 'Decision precedent preflight failed'
+          setMessages((prev) => [...prev, {
+            role: 'assistant',
+            content: `Decision precedent check failed: ${errorMsg}`,
+            id: `error-dp-${Date.now()}`,
+          }])
+          setIsLoading(false)
+          // Also set the component-level error to display in the composer area
+          setDecisionPrecedentError(`Decision precedent check failed: ${errorMsg}`)
+          // Do not proceed to orchestratorApiCall
+          return
+        }
+      }
+
       const apiResponse = await orchestratorApiCall(trimmedInput, activeSessionId, activeThreadId, auth)
 
       const assistantMessage: Message = {
@@ -1213,6 +1368,71 @@ function ChatInterface({
     }
   }
 
+  // ── Decision precedent confirmation handler (Slice 29) ───
+  const confirmDecisionPrecedent = async () => {
+    if (!pendingDecisionPrecedent || isLoading) return
+    setIsLoading(true)
+    setDecisionPrecedentError(null)
+    try {
+      await decisionPrecedentCall<DecisionPrecedentConfirmation>(
+        `/api/decision-precedent/${pendingDecisionPrecedent.preflight.confidence_record_id}/confirm`,
+        null,
+        auth,
+      )
+      // Confirmation succeeded — send the original chat exactly once
+      const apiResponse = await orchestratorApiCall(
+        pendingDecisionPrecedent.message,
+        pendingDecisionPrecedent.sessionId,
+        pendingDecisionPrecedent.threadId,
+        auth,
+      )
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        content: apiResponse.response,
+        id: `assistant-${Date.now()}`,
+        meta: { action: apiResponse.action, promptType: apiResponse.prompt_type, escalated: apiResponse.escalated },
+        structured_content: apiResponse.structured_content as ActionCardData | undefined,
+      }])
+      if (apiResponse.transcript_seal && apiResponse.transcript_seal_metadata) {
+        sealRef.current = apiResponse.transcript_seal
+        sealMetadataRef.current = apiResponse.transcript_seal_metadata
+        turnCounterRef.current += 1
+        transcriptRef.current = Array.isArray(apiResponse.transcript_snapshot)
+          ? apiResponse.transcript_snapshot as TranscriptTurn[]
+          : [...transcriptRef.current, {
+              turn: turnCounterRef.current,
+              user: pendingDecisionPrecedent.message,
+              assistant: apiResponse.response,
+              ts: Date.now() / 1000,
+              domain_id: apiResponse.transcript_seal_metadata.domain_id,
+            }]
+        if (!pendingDecisionPrecedent.sessionId) {
+          // Skip persist when sessionId is missing to avoid writing under an empty key
+          setPendingDecisionPrecedent(null)
+          return
+        }
+        await transcriptStoreRef.current.saveSession({
+          sessionId: pendingDecisionPrecedent.sessionId,
+          threadId: pendingDecisionPrecedent.threadId ?? undefined,
+          messages: transcriptRef.current,
+          seal: sealRef.current,
+          metadata: apiResponse.transcript_seal_metadata,
+          updatedAt: Date.now(),
+          label: sessionLabelRef.current || undefined,
+          moduleId: activeModuleIdRef.current || undefined,
+        })
+        setSessionRefreshKey((value) => value + 1)
+      }
+      setPendingDecisionPrecedent(null)
+    } catch (err) {
+      // Confirmation failed — retain pending UI, show error, do not auto-retry
+      const errorMsg = err instanceof Error ? err.message : 'Confirmation failed'
+      setDecisionPrecedentError(errorMsg)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const showSlashPalette = !sessionFrozen && inputValue.startsWith('/') && !inputValue.includes(' ')
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -1324,6 +1544,57 @@ function ChatInterface({
                 <Button variant="outline" size="sm" onClick={() => confirmPendingRouting('fork_from')}>Fork</Button>
               </div>
             )}
+            {/* Decision precedent panels (Slice 29) */}
+            {pendingDecisionPrecedent && pendingDecisionPrecedent.preflight.tier === 'require_confirmation' && (
+              <div className="max-w-3xl mx-auto mb-3 border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 text-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="flex-1">This action requires explicit confirmation to proceed.</span>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={confirmDecisionPrecedent}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Confirming...' : 'Continue'}
+                  </Button>
+                </div>
+                {decisionPrecedentError && (
+                  <div className="text-destructive text-xs mt-1">{decisionPrecedentError}</div>
+                )}
+                <div className="text-xs text-muted-foreground mt-1">
+                  Tier: {pendingDecisionPrecedent.preflight.tier} | Rationale: {pendingDecisionPrecedent.preflight.rationale_codes.join(', ')}
+                </div>
+              </div>
+            )}
+            {pendingDecisionPrecedent && pendingDecisionPrecedent.preflight.tier === 'mandatory_escalation' && (
+              <div className="max-w-3xl mx-auto mb-3 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Warning size={16} weight="bold" className="text-red-600 dark:text-red-400" />
+                  <span className="flex-1">Human approval is required before this action can proceed.</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPendingDecisionPrecedent(null)}
+                    disabled={isLoading}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Tier: {pendingDecisionPrecedent.preflight.tier} | Rationale: {pendingDecisionPrecedent.preflight.rationale_codes.join(', ')}
+                </div>
+              </div>
+            )}
+            {decisionPrecedentError && !pendingDecisionPrecedent && (
+              <div className="max-w-3xl mx-auto mb-3 text-sm text-destructive">
+                {decisionPrecedentError}
+              </div>
+            )}
+            {lastDecisionStatus && !pendingDecisionPrecedent && (
+              <div className="max-w-3xl mx-auto mb-3 text-xs text-muted-foreground">
+                Decision check: {lastDecisionStatus.tier} | {lastDecisionStatus.rationale_codes.join(', ')}
+              </div>
+            )}
             {sessionFrozen && (
               <div className="max-w-3xl mx-auto mb-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 px-4 py-2 text-sm text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
                 <Warning size={16} weight="bold" />
@@ -1339,6 +1610,21 @@ function ChatInterface({
                 onSelect={(text) => setInputValue(text)}
                 visible={showSlashPalette}
               />
+              {/* Risk class selector for decision precedent (Slice 29) */}
+              {jwtHasOperatingContext(auth.token) && (
+                <select
+                  value={selectedRiskClass}
+                  onChange={(e) => { setSelectedRiskClass(e.target.value as RiskClass) }}
+                  disabled={isLoading || pendingRouting !== null || pendingDecisionPrecedent !== null}
+                  className="h-10 px-2 text-sm border border-border rounded-md bg-background text-foreground disabled:opacity-50"
+                  aria-label="Risk classification for decision precedent check"
+                  title="Risk classification for decision precedent check"
+                >
+                  {RISK_CLASSES.map((rc) => (
+                    <option key={rc} value={rc}>{rc}</option>
+                  ))}
+                </select>
+              )}
               <Input
                 id="chat-input"
                 value={inputValue}
@@ -1353,14 +1639,14 @@ function ChatInterface({
                 }}
                 onKeyDown={handleKeyPress}
                 placeholder={sessionFrozen ? '6-digit PIN' : (manifest.input_placeholder ?? manifest.placeholder_text)}
-                disabled={isLoading || pendingRouting !== null}
+                disabled={isLoading || pendingRouting !== null || pendingDecisionPrecedent !== null}
                 className="flex-1 text-base"
                 inputMode={sessionFrozen ? 'numeric' : undefined}
                 pattern={sessionFrozen ? '\\d{6}' : undefined}
               />
               <Button
                 onClick={handleSend}
-                disabled={!inputValue.trim() || isLoading || pendingRouting !== null}
+                disabled={!inputValue.trim() || isLoading || pendingRouting !== null || pendingDecisionPrecedent !== null}
                 size="icon"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 w-10"
               >

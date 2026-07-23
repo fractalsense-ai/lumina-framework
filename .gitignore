@@ -32,6 +32,7 @@ coverage.xml
 .idea/
 .vscode/
 hermesport/
+.gemini/
 
 # Frontend (src/web/)
 src/web/node_modules/
