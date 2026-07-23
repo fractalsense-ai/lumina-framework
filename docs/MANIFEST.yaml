@@ -168,7 +168,7 @@ artifacts:
   doc_version: 1.0.0
   status: planned
   last_updated: 2026-07-11
-  sha256: 1dc48969ac6b66eb213b037ddd2199f5c1b4559a6a5c185f12eacea9c205fe75
+  sha256: 3940e3422633bc26a86092648eb3da65d7d8db9b6ff3b48027ab102beb859c2d
 - path: docs/roadmap/slices/33-erpnext-reference-connector-and-fixtures.md
   type: doc
   section: 0
